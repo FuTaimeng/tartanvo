@@ -39,20 +39,31 @@ np.set_printoptions(precision=4, suppress=True, threshold=10000)
 from Network.VONet import VONet
 
 class TartanVO(object):
-    def __init__(self, model_name):
+    def __init__(self, model_name=None, flow_model_name=None, pose_model_name=None,
+                device='cuda', use_imu=False, correct_scale=True):
+        
         # import ipdb;ipdb.set_trace()
         self.vonet = VONet()
 
         # load the whole model
-        if model_name.endswith('.pkl'):
+        if model_name is not None:
             modelname = 'models/' + model_name
             self.load_model(self.vonet, modelname)
-
-        self.vonet.cuda()
-
-        self.test_count = 0
-        self.pose_std = np.array([ 0.13,  0.13,  0.13,  0.013 ,  0.013,  0.013], dtype=np.float32) # the output scale factor
+        else:
+            print('load pwc network...')
+            data = torch.load('models/' + flow_model_name)
+            self.vonet.flowNet.load_state_dict(data)
+            print('load pose network...')
+            self.load_model(self.vonet.flowPoseNet, 'models/' + pose_model_name)
+            
+        self.pose_std = np.array([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=np.float32) # the output scale factor
         self.flow_norm = 20 # scale factor for flow
+
+        self.device = device
+        self.use_imu = use_imu
+        self.correct_scale = correct_scale
+        
+        self.vonet.to(self.device)
 
     def load_model(self, model, modelname):
         preTrainDict = torch.load(modelname)
@@ -74,13 +85,11 @@ class TartanVO(object):
         print('Model loaded...')
         return model
 
-    def test_batch(self, sample):
-        self.test_count += 1
-        
+    def test_batch(self, sample):        
         # import ipdb;ipdb.set_trace()
-        img0   = sample['img1'].cuda()
-        img1   = sample['img2'].cuda()
-        intrinsic = sample['intrinsic'].cuda()
+        img0   = sample['img1'].to(self.device)
+        img1   = sample['img2'].to(self.device)
+        intrinsic = sample['intrinsic'].to(self.device)
         inputs = [img0, img1, intrinsic]
 
         self.vonet.eval()
@@ -95,16 +104,52 @@ class TartanVO(object):
             flownp = flow.data.cpu().numpy()
             flownp = flownp * self.flow_norm
 
-        # calculate scale from GT posefile
-        if 'motion' in sample:
-            motions_gt = sample['motion']
-            scale = np.linalg.norm(motions_gt[:,:3], axis=1)
+        motion_tar = None
+        if self.use_imu and 'imu_motion' in sample:
+            motion_tar = sample['imu_motion']
+        elif 'motion' in sample:
+            motion_tar = sample['motion']
+        # calculate scale
+        if self.correct_scale and motion_tar is not None:
+            scale = np.linalg.norm(motion_tar[:,:3], axis=1)
             trans_est = posenp[:,:3]
             trans_est = trans_est/np.linalg.norm(trans_est,axis=1).reshape(-1,1)*scale.reshape(-1,1)
             posenp[:,:3] = trans_est 
         else:
-            print('    scale is not given, using 1 as the default scale value..')
+            print('    scale is not given, using 1 as the default scale value.')
 
-        print("{} Pose inference using {}s: \n{}".format(self.test_count, inferencetime, posenp))
         return posenp, flownp
+
+    def train_batch(self, sample):
+        # import ipdb;ipdb.set_trace()
+        img0 = sample['img1'].to(self.device)
+        img1 = sample['img2'].to(self.device)
+        intrinsic = sample['intrinsic'].to(self.device)
+        inputs = [img0, img1, intrinsic]
+
+        self.vonet.train()
+
+        starttime = time.time()
+        flow, pose = self.vonet(inputs)
+        inferencetime = time.time()-starttime
+        # import ipdb;ipdb.set_trace()
+        pose = pose * torch.from_numpy(self.pose_std).to(self.device) # The output is normalized during training, now scale it back
+        flow = flow * self.flow_norm
+
+        motion_tar = None
+        if self.use_imu and 'imu_motion' in sample:
+            motion_tar = sample['imu_motion']
+        elif 'motion' in sample:
+            motion_tar = sample['motion']
+        # calculate scale
+        if self.correct_scale and motion_tar is not None:
+            scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).to(self.device)
+            trans_est = pose[:,:3]
+            trans_est = trans_est/torch.linalg.norm(trans_est,dim=1).view(-1,1)*scale.view(-1,1)
+            pose = torch.cat((trans_est, pose[:,3:]), dim=1)
+        else:
+            print('    scale is not given, using 1 as the default scale value.')
+
+        # print("Pose inference using {}s".format(inferencetime))
+        return pose, flow
 

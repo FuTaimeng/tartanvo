@@ -1,0 +1,22 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: train_results/test_imu-vo-pvgo_lw=(0.1,0.1,10,0.1)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='test_imu-vo-pvgo_lw=(0.1,0.1,10,0.1)', result_dir='train_results/test_imu-vo-pvgo_lw=(0.1,0.1,10,0.1)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:2', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(0.1, 0.1, 10, 0.1))
+imu preintegration time: 3.837190339996596
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+StopOnPlateau on step 0 Loss 1.466202e-01 --> Loss 1.147166e-02 (reduction/loss: 9.2176e-01).
+StopOnPlateau on step 1 Loss 1.147166e-02 --> Loss 5.942424e-04 (reduction/loss: 9.4820e-01).
+StopOnPlateau on step 2 Loss 5.942424e-04 --> Loss 1.907995e-04 (reduction/loss: 6.7892e-01).
+StopOnPlateau on step 3 Loss 1.907995e-04 --> Loss 1.801808e-04 (reduction/loss: 5.5654e-02).
+StopOnPlateau on step 4 Loss 1.801808e-04 --> Loss 1.799934e-04 (reduction/loss: 1.0400e-03).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_imu-vo-pvgo_lw=(0.1,0.1,10,0.1) #0 - loss:1.105946 - lr:0.000100 - [avgtime] vo:4.58, cvt:0.00, pgo:32.38, opt:2.59
+	adj.	loop	tot.
+R	0.2542	0.7369	0.4931
+t	0.0034	0.0079	0.0056
+[time] step: 39.55578535000677, print: 0.007502692998968996, snapshot: 0.08428764599375427

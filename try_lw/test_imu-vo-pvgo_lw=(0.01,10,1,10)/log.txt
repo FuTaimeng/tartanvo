@@ -1,0 +1,63 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: train_results/test_imu-vo-pvgo_lw=(0.01,10,1,10)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='test_imu-vo-pvgo_lw=(0.01,10,1,10)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:2', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(0.01, 10, 1, 10))
+imu preintegration time: 6.524945018813014
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.  0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0243 -0.0042  0.0044]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.  0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0243 -0.0042  0.0044]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.  0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0243 -0.0042  0.0044]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0367 -0.0982  0.0302 -0.0017  0.0001  0.0027]
+adjvelerr:    torch.Size([50, 3]) [ 0.0025 -0.0012  0.0015]
+imuroterr:    torch.Size([50, 3]) [ 0.0012  0.     -0.0024]
+transvelerr:  torch.Size([50, 3]) [0.0655 0.0848 0.0075]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0283 -0.0781  0.0276 -0.0015  0.0002  0.0021]
+adjvelerr:    torch.Size([50, 3]) [ 0.0035 -0.0017  0.0021]
+imuroterr:    torch.Size([50, 3]) [ 0.0014  0.     -0.003 ]
+transvelerr:  torch.Size([50, 3]) [0.0523 0.0679 0.0096]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0133 -0.0433  0.0221 -0.0011  0.0002  0.001 ]
+adjvelerr:    torch.Size([50, 3]) [ 0.0042 -0.002   0.0023]
+imuroterr:    torch.Size([50, 3]) [ 0.0018  0.0001 -0.004 ]
+transvelerr:  torch.Size([50, 3]) [0.0289 0.0382 0.0122]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0.0022 -0.0026  0.0119 -0.0006  0.0001 -0.0001]
+adjvelerr:    torch.Size([50, 3]) [ 0.0039 -0.0027  0.0022]
+imuroterr:    torch.Size([50, 3]) [ 0.0023 -0.     -0.0052]
+transvelerr:  torch.Size([50, 3]) [0.0011 0.0035 0.011 ]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0.0107  0.0129  0.011  -0.0003  0.0002 -0.0006]
+adjvelerr:    torch.Size([50, 3]) [-0.0045 -0.0038  0.0003]
+imuroterr:    torch.Size([50, 3]) [ 0.0026  0.0001 -0.0056]
+transvelerr:  torch.Size([50, 3]) [-0.0076 -0.0124  0.0152]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0.0027  0.0011  0.0045 -0.0001  0.0001 -0.0001]
+adjvelerr:    torch.Size([50, 3]) [-0.0194 -0.0039  0.0031]
+imuroterr:    torch.Size([50, 3]) [ 0.0028 -0.     -0.0051]
+transvelerr:  torch.Size([50, 3]) [ 0.0016 -0.0044  0.0051]
+StopOnPlateau on step 0 Loss 8.746592e+00 --> Loss 6.015252e+00 (reduction/loss: 3.1227e-01).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_imu-vo-pvgo_lw=(0.01,10,1,10) #0 - loss:1.345726 - lr:0.000100 - [avgtime] vo:13.95, cvt:0.00, pgo:6.58, opt:2.26
+	adj.	loop	tot.
+R	0.2542	0.7370	0.4931
+t	0.0034	0.0080	0.0056
+[time] step: 22.79169002175331, print: 0.007004665210843086, snapshot: 0.007062023971229792

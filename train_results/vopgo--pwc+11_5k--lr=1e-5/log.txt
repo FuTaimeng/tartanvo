@@ -1,0 +1,1010 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+load pwc network...
+load pose network...
+Model loaded...
+Find 51 image files (sample_setp=1) in /data/datasets/tartanair/abandonedfactory/Easy/P000/image_left
+Train root: train_results/test_run_pwc+1_1_5000_bp
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_5000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/tartanair/abandonedfactory/Easy/P000/image_left', pose_file='/data/datasets/tartanair/abandonedfactory/Easy/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=100, lr=1e-05, print_interval=1, snapshot_interval=1, train_name='test_run_pwc+1_1_5000_bp', only_backpropagate_loop_edge=False)
+Start train step 0 ...
+StopOnPlateau on step 0 Loss 1.152500e-02 --> Loss 3.106533e-03 (reduction/loss: 7.3045e-01).
+StopOnPlateau on step 1 Loss 3.106533e-03 --> Loss 3.104164e-03 (reduction/loss: 7.6260e-04).
+Cholesky decomposition failed. Check your matrix (may not be positive-definite) 
+Linear solver failed. Breaking optimization step...
+StopOnPlateau on step 2 Loss 3.104164e-03 --> Loss 3.104164e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #0 - loss:1.181186 - lr:0.000010 - [avgtime] vo:5.74, pgo:7.60, opt:2.28
+	adj.	loop	tot.
+R	1.2077	2.4562	1.8257
+t	0.0137	0.0298	0.0216
+Start train step 1 ...
+StopOnPlateau on step 0 Loss 1.052790e-02 --> Loss 2.879856e-03 (reduction/loss: 7.2645e-01).
+StopOnPlateau on step 1 Loss 2.879856e-03 --> Loss 2.877848e-03 (reduction/loss: 6.9699e-04).
+StopOnPlateau on step 2 Loss 2.877848e-03 --> Loss 2.877844e-03 (reduction/loss: 1.5372e-06).
+StopOnPlateau on step 3 Loss 2.877844e-03 --> Loss 2.877844e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #1 - loss:1.160133 - lr:0.000010 - [avgtime] vo:3.70, pgo:9.90, opt:2.28
+	adj.	loop	tot.
+R	1.2038	2.4479	1.8196
+t	0.0136	0.0293	0.0213
+Start train step 2 ...
+StopOnPlateau on step 0 Loss 9.603579e-03 --> Loss 2.671214e-03 (reduction/loss: 7.2185e-01).
+StopOnPlateau on step 1 Loss 2.671214e-03 --> Loss 2.669524e-03 (reduction/loss: 6.3254e-04).
+StopOnPlateau on step 2 Loss 2.669524e-03 --> Loss 2.669523e-03 (reduction/loss: 1.7444e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #2 - loss:1.140189 - lr:0.000010 - [avgtime] vo:4.21, pgo:7.33, opt:2.27
+	adj.	loop	tot.
+R	1.1996	2.4402	1.8136
+t	0.0136	0.0289	0.0212
+Start train step 3 ...
+StopOnPlateau on step 0 Loss 8.841467e-03 --> Loss 2.495371e-03 (reduction/loss: 7.1777e-01).
+StopOnPlateau on step 1 Loss 2.495371e-03 --> Loss 2.493952e-03 (reduction/loss: 5.6860e-04).
+StopOnPlateau on step 2 Loss 2.493952e-03 --> Loss 2.493950e-03 (reduction/loss: 1.0269e-06).
+StopOnPlateau on step 3 Loss 2.493950e-03 --> Loss 2.493950e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #3 - loss:1.122331 - lr:0.000010 - [avgtime] vo:3.86, pgo:9.77, opt:2.25
+	adj.	loop	tot.
+R	1.1952	2.4328	1.8077
+t	0.0136	0.0286	0.0210
+Start train step 4 ...
+StopOnPlateau on step 0 Loss 8.227591e-03 --> Loss 2.350549e-03 (reduction/loss: 7.1431e-01).
+StopOnPlateau on step 1 Loss 2.350549e-03 --> Loss 2.349370e-03 (reduction/loss: 5.0151e-04).
+StopOnPlateau on step 2 Loss 2.349370e-03 --> Loss 2.349368e-03 (reduction/loss: 7.9283e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #4 - loss:1.106602 - lr:0.000010 - [avgtime] vo:4.24, pgo:7.30, opt:2.27
+	adj.	loop	tot.
+R	1.1908	2.4259	1.8021
+t	0.0137	0.0284	0.0210
+Start train step 5 ...
+StopOnPlateau on step 0 Loss 7.738329e-03 --> Loss 2.233109e-03 (reduction/loss: 7.1142e-01).
+StopOnPlateau on step 1 Loss 2.233109e-03 --> Loss 2.232136e-03 (reduction/loss: 4.3582e-04).
+StopOnPlateau on step 2 Loss 2.232136e-03 --> Loss 2.232134e-03 (reduction/loss: 6.2585e-07).
+StopOnPlateau on step 3 Loss 2.232134e-03 --> Loss 2.232134e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #5 - loss:1.092855 - lr:0.000010 - [avgtime] vo:4.35, pgo:9.76, opt:2.28
+	adj.	loop	tot.
+R	1.1866	2.4196	1.7969
+t	0.0139	0.0282	0.0210
+Start train step 6 ...
+StopOnPlateau on step 0 Loss 7.369875e-03 --> Loss 2.146789e-03 (reduction/loss: 7.0871e-01).
+StopOnPlateau on step 1 Loss 2.146789e-03 --> Loss 2.145981e-03 (reduction/loss: 3.7634e-04).
+StopOnPlateau on step 2 Loss 2.145981e-03 --> Loss 2.145980e-03 (reduction/loss: 3.2549e-07).
+StopOnPlateau on step 3 Loss 2.145980e-03 --> Loss 2.145979e-03 (reduction/loss: 5.4248e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #6 - loss:1.082021 - lr:0.000010 - [avgtime] vo:4.50, pgo:9.71, opt:2.27
+	adj.	loop	tot.
+R	1.1829	2.4143	1.7923
+t	0.0140	0.0280	0.0210
+Start train step 7 ...
+StopOnPlateau on step 0 Loss 7.090179e-03 --> Loss 2.077716e-03 (reduction/loss: 7.0696e-01).
+StopOnPlateau on step 1 Loss 2.077716e-03 --> Loss 2.077035e-03 (reduction/loss: 3.2789e-04).
+StopOnPlateau on step 2 Loss 2.077035e-03 --> Loss 2.077035e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #7 - loss:1.074285 - lr:0.000010 - [avgtime] vo:4.42, pgo:7.31, opt:2.27
+	adj.	loop	tot.
+R	1.1792	2.4086	1.7877
+t	0.0142	0.0279	0.0210
+Start train step 8 ...
+StopOnPlateau on step 0 Loss 6.829873e-03 --> Loss 2.002788e-03 (reduction/loss: 7.0676e-01).
+StopOnPlateau on step 1 Loss 2.002788e-03 --> Loss 2.002210e-03 (reduction/loss: 2.8866e-04).
+StopOnPlateau on step 2 Loss 2.002210e-03 --> Loss 2.002209e-03 (reduction/loss: 2.3257e-07).
+StopOnPlateau on step 3 Loss 2.002209e-03 --> Loss 2.002209e-03 (reduction/loss: 2.3257e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #8 - loss:1.068127 - lr:0.000010 - [avgtime] vo:3.83, pgo:9.44, opt:2.25
+	adj.	loop	tot.
+R	1.1758	2.4028	1.7831
+t	0.0143	0.0278	0.0210
+Start train step 9 ...
+StopOnPlateau on step 0 Loss 6.626930e-03 --> Loss 1.943902e-03 (reduction/loss: 7.0667e-01).
+StopOnPlateau on step 1 Loss 1.943902e-03 --> Loss 1.943402e-03 (reduction/loss: 2.5716e-04).
+StopOnPlateau on step 2 Loss 1.943402e-03 --> Loss 1.943402e-03 (reduction/loss: 2.9951e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #9 - loss:1.063148 - lr:0.000010 - [avgtime] vo:3.83, pgo:7.37, opt:2.27
+	adj.	loop	tot.
+R	1.1729	2.3973	1.7789
+t	0.0144	0.0277	0.0209
+Start train step 10 ...
+StopOnPlateau on step 0 Loss 6.482184e-03 --> Loss 1.900501e-03 (reduction/loss: 7.0681e-01).
+StopOnPlateau on step 1 Loss 1.900501e-03 --> Loss 1.900052e-03 (reduction/loss: 2.3638e-04).
+StopOnPlateau on step 2 Loss 1.900052e-03 --> Loss 1.900051e-03 (reduction/loss: 3.6762e-07).
+StopOnPlateau on step 3 Loss 1.900051e-03 --> Loss 1.900050e-03 (reduction/loss: 5.5143e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #10 - loss:1.058725 - lr:0.000010 - [avgtime] vo:3.78, pgo:9.73, opt:2.27
+	adj.	loop	tot.
+R	1.1704	2.3923	1.7752
+t	0.0144	0.0275	0.0209
+Start train step 11 ...
+StopOnPlateau on step 0 Loss 6.368643e-03 --> Loss 1.862693e-03 (reduction/loss: 7.0752e-01).
+StopOnPlateau on step 1 Loss 1.862693e-03 --> Loss 1.862275e-03 (reduction/loss: 2.2437e-04).
+StopOnPlateau on step 2 Loss 1.862275e-03 --> Loss 1.862275e-03 (reduction/loss: 3.7507e-07).
+StopOnPlateau on step 3 Loss 1.862275e-03 --> Loss 1.862275e-03 (reduction/loss: 6.2512e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #11 - loss:1.055025 - lr:0.000010 - [avgtime] vo:3.75, pgo:9.36, opt:2.26
+	adj.	loop	tot.
+R	1.1680	2.3869	1.7713
+t	0.0145	0.0273	0.0208
+Start train step 12 ...
+StopOnPlateau on step 0 Loss 6.276654e-03 --> Loss 1.829815e-03 (reduction/loss: 7.0847e-01).
+StopOnPlateau on step 1 Loss 1.829815e-03 --> Loss 1.829413e-03 (reduction/loss: 2.1994e-04).
+StopOnPlateau on step 2 Loss 1.829413e-03 --> Loss 1.829413e-03 (reduction/loss: 6.3635e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #12 - loss:1.052311 - lr:0.000010 - [avgtime] vo:4.39, pgo:7.32, opt:2.26
+	adj.	loop	tot.
+R	1.1654	2.3810	1.7670
+t	0.0145	0.0272	0.0208
+Start train step 13 ...
+StopOnPlateau on step 0 Loss 6.211955e-03 --> Loss 1.804326e-03 (reduction/loss: 7.0954e-01).
+StopOnPlateau on step 1 Loss 1.804326e-03 --> Loss 1.803933e-03 (reduction/loss: 2.1795e-04).
+StopOnPlateau on step 2 Loss 1.803933e-03 --> Loss 1.803933e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #13 - loss:1.050460 - lr:0.000010 - [avgtime] vo:4.26, pgo:7.49, opt:2.29
+	adj.	loop	tot.
+R	1.1626	2.3746	1.7625
+t	0.0145	0.0270	0.0207
+Start train step 14 ...
+StopOnPlateau on step 0 Loss 6.146793e-03 --> Loss 1.778903e-03 (reduction/loss: 7.1060e-01).
+StopOnPlateau on step 1 Loss 1.778903e-03 --> Loss 1.778520e-03 (reduction/loss: 2.1524e-04).
+StopOnPlateau on step 2 Loss 1.778520e-03 --> Loss 1.778519e-03 (reduction/loss: 6.5456e-07).
+StopOnPlateau on step 3 Loss 1.778519e-03 --> Loss 1.778519e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #14 - loss:1.048834 - lr:0.000010 - [avgtime] vo:4.33, pgo:9.94, opt:2.27
+	adj.	loop	tot.
+R	1.1598	2.3683	1.7579
+t	0.0144	0.0268	0.0205
+Start train step 15 ...
+StopOnPlateau on step 0 Loss 6.071366e-03 --> Loss 1.752672e-03 (reduction/loss: 7.1132e-01).
+StopOnPlateau on step 1 Loss 1.752672e-03 --> Loss 1.752297e-03 (reduction/loss: 2.1414e-04).
+StopOnPlateau on step 2 Loss 1.752297e-03 --> Loss 1.752296e-03 (reduction/loss: 5.3149e-07).
+StopOnPlateau on step 3 Loss 1.752296e-03 --> Loss 1.752296e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #15 - loss:1.047301 - lr:0.000010 - [avgtime] vo:4.38, pgo:9.73, opt:2.26
+	adj.	loop	tot.
+R	1.1570	2.3621	1.7535
+t	0.0143	0.0265	0.0204
+Start train step 16 ...
+StopOnPlateau on step 0 Loss 5.990833e-03 --> Loss 1.724167e-03 (reduction/loss: 7.1220e-01).
+StopOnPlateau on step 1 Loss 1.724167e-03 --> Loss 1.723803e-03 (reduction/loss: 2.1154e-04).
+StopOnPlateau on step 2 Loss 1.723803e-03 --> Loss 1.723802e-03 (reduction/loss: 2.7014e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #16 - loss:1.045767 - lr:0.000010 - [avgtime] vo:4.62, pgo:7.27, opt:2.27
+	adj.	loop	tot.
+R	1.1536	2.3557	1.7486
+t	0.0142	0.0263	0.0202
+Start train step 17 ...
+StopOnPlateau on step 0 Loss 5.906844e-03 --> Loss 1.696976e-03 (reduction/loss: 7.1271e-01).
+StopOnPlateau on step 1 Loss 1.696976e-03 --> Loss 1.696624e-03 (reduction/loss: 2.0759e-04).
+StopOnPlateau on step 2 Loss 1.696624e-03 --> Loss 1.696624e-03 (reduction/loss: 2.7446e-07).
+StopOnPlateau on step 3 Loss 1.696624e-03 --> Loss 1.696623e-03 (reduction/loss: 6.8616e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #17 - loss:1.044481 - lr:0.000010 - [avgtime] vo:4.41, pgo:9.75, opt:2.31
+	adj.	loop	tot.
+R	1.1505	2.3500	1.7442
+t	0.0141	0.0261	0.0200
+Start train step 18 ...
+StopOnPlateau on step 0 Loss 5.816591e-03 --> Loss 1.669856e-03 (reduction/loss: 7.1292e-01).
+StopOnPlateau on step 1 Loss 1.669856e-03 --> Loss 1.669519e-03 (reduction/loss: 2.0204e-04).
+StopOnPlateau on step 2 Loss 1.669519e-03 --> Loss 1.669519e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 1.669519e-03 --> Loss 1.669518e-03 (reduction/loss: 5.5784e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #18 - loss:1.043256 - lr:0.000010 - [avgtime] vo:3.99, pgo:10.04, opt:2.42
+	adj.	loop	tot.
+R	1.1470	2.3442	1.7395
+t	0.0140	0.0258	0.0198
+Start train step 19 ...
+StopOnPlateau on step 0 Loss 5.718926e-03 --> Loss 1.637049e-03 (reduction/loss: 7.1375e-01).
+StopOnPlateau on step 1 Loss 1.637049e-03 --> Loss 1.636729e-03 (reduction/loss: 1.9570e-04).
+StopOnPlateau on step 2 Loss 1.636729e-03 --> Loss 1.636729e-03 (reduction/loss: 7.1127e-08).
+StopOnPlateau on step 3 Loss 1.636729e-03 --> Loss 1.636729e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #19 - loss:1.042012 - lr:0.000010 - [avgtime] vo:4.17, pgo:10.24, opt:2.44
+	adj.	loop	tot.
+R	1.1436	2.3383	1.7349
+t	0.0138	0.0255	0.0196
+Start train step 20 ...
+StopOnPlateau on step 0 Loss 5.611396e-03 --> Loss 1.599857e-03 (reduction/loss: 7.1489e-01).
+StopOnPlateau on step 1 Loss 1.599857e-03 --> Loss 1.599558e-03 (reduction/loss: 1.8679e-04).
+StopOnPlateau on step 2 Loss 1.599558e-03 --> Loss 1.599558e-03 (reduction/loss: 1.4556e-07).
+StopOnPlateau on step 3 Loss 1.599558e-03 --> Loss 1.599558e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #20 - loss:1.040828 - lr:0.000010 - [avgtime] vo:4.58, pgo:10.20, opt:2.41
+	adj.	loop	tot.
+R	1.1406	2.3330	1.7308
+t	0.0137	0.0253	0.0194
+Start train step 21 ...
+StopOnPlateau on step 0 Loss 5.491115e-03 --> Loss 1.556783e-03 (reduction/loss: 7.1649e-01).
+StopOnPlateau on step 1 Loss 1.556783e-03 --> Loss 1.556508e-03 (reduction/loss: 1.7670e-04).
+StopOnPlateau on step 2 Loss 1.556508e-03 --> Loss 1.556508e-03 (reduction/loss: 7.4793e-08).
+StopOnPlateau on step 3 Loss 1.556508e-03 --> Loss 1.556508e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #21 - loss:1.039486 - lr:0.000010 - [avgtime] vo:4.46, pgo:9.86, opt:2.41
+	adj.	loop	tot.
+R	1.1380	2.3281	1.7270
+t	0.0135	0.0251	0.0192
+Start train step 22 ...
+StopOnPlateau on step 0 Loss 5.372595e-03 --> Loss 1.514218e-03 (reduction/loss: 7.1816e-01).
+StopOnPlateau on step 1 Loss 1.514218e-03 --> Loss 1.513968e-03 (reduction/loss: 1.6530e-04).
+StopOnPlateau on step 2 Loss 1.513968e-03 --> Loss 1.513968e-03 (reduction/loss: 2.3068e-07).
+StopOnPlateau on step 3 Loss 1.513968e-03 --> Loss 1.513968e-03 (reduction/loss: 7.6894e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #22 - loss:1.038029 - lr:0.000010 - [avgtime] vo:4.68, pgo:10.24, opt:2.41
+	adj.	loop	tot.
+R	1.1356	2.3234	1.7235
+t	0.0133	0.0248	0.0190
+Start train step 23 ...
+StopOnPlateau on step 0 Loss 5.272832e-03 --> Loss 1.477970e-03 (reduction/loss: 7.1970e-01).
+StopOnPlateau on step 1 Loss 1.477970e-03 --> Loss 1.477742e-03 (reduction/loss: 1.5423e-04).
+StopOnPlateau on step 2 Loss 1.477742e-03 --> Loss 1.477742e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 1.477742e-03 --> Loss 1.477742e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #23 - loss:1.036644 - lr:0.000010 - [avgtime] vo:4.23, pgo:9.86, opt:2.37
+	adj.	loop	tot.
+R	1.1336	2.3192	1.7205
+t	0.0132	0.0245	0.0188
+Start train step 24 ...
+StopOnPlateau on step 0 Loss 5.178471e-03 --> Loss 1.444101e-03 (reduction/loss: 7.2113e-01).
+StopOnPlateau on step 1 Loss 1.444101e-03 --> Loss 1.443896e-03 (reduction/loss: 1.4188e-04).
+StopOnPlateau on step 2 Loss 1.443896e-03 --> Loss 1.443896e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #24 - loss:1.035412 - lr:0.000010 - [avgtime] vo:4.17, pgo:7.35, opt:2.35
+	adj.	loop	tot.
+R	1.1321	2.3156	1.7179
+t	0.0130	0.0243	0.0186
+Start train step 25 ...
+StopOnPlateau on step 0 Loss 5.082654e-03 --> Loss 1.409424e-03 (reduction/loss: 7.2270e-01).
+StopOnPlateau on step 1 Loss 1.409424e-03 --> Loss 1.409239e-03 (reduction/loss: 1.3092e-04).
+StopOnPlateau on step 2 Loss 1.409239e-03 --> Loss 1.409239e-03 (reduction/loss: 1.6522e-07).
+StopOnPlateau on step 3 Loss 1.409239e-03 --> Loss 1.409239e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #25 - loss:1.034386 - lr:0.000010 - [avgtime] vo:3.97, pgo:10.05, opt:2.33
+	adj.	loop	tot.
+R	1.1308	2.3123	1.7156
+t	0.0128	0.0240	0.0184
+Start train step 26 ...
+StopOnPlateau on step 0 Loss 5.022159e-03 --> Loss 1.387120e-03 (reduction/loss: 7.2380e-01).
+StopOnPlateau on step 1 Loss 1.387120e-03 --> Loss 1.386948e-03 (reduction/loss: 1.2438e-04).
+StopOnPlateau on step 2 Loss 1.386948e-03 --> Loss 1.386948e-03 (reduction/loss: 2.5181e-07).
+StopOnPlateau on step 3 Loss 1.386948e-03 --> Loss 1.386947e-03 (reduction/loss: 8.3936e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #26 - loss:1.033591 - lr:0.000010 - [avgtime] vo:4.33, pgo:10.08, opt:2.45
+	adj.	loop	tot.
+R	1.1293	2.3086	1.7130
+t	0.0126	0.0238	0.0181
+Start train step 27 ...
+StopOnPlateau on step 0 Loss 4.947076e-03 --> Loss 1.362418e-03 (reduction/loss: 7.2460e-01).
+StopOnPlateau on step 1 Loss 1.362418e-03 --> Loss 1.362256e-03 (reduction/loss: 1.1903e-04).
+StopOnPlateau on step 2 Loss 1.362256e-03 --> Loss 1.362256e-03 (reduction/loss: 3.4183e-07).
+StopOnPlateau on step 3 Loss 1.362256e-03 --> Loss 1.362256e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #27 - loss:1.032727 - lr:0.000010 - [avgtime] vo:3.97, pgo:10.17, opt:2.42
+	adj.	loop	tot.
+R	1.1285	2.3062	1.7114
+t	0.0125	0.0235	0.0180
+Start train step 28 ...
+StopOnPlateau on step 0 Loss 4.878275e-03 --> Loss 1.341424e-03 (reduction/loss: 7.2502e-01).
+StopOnPlateau on step 1 Loss 1.341424e-03 --> Loss 1.341274e-03 (reduction/loss: 1.1178e-04).
+StopOnPlateau on step 2 Loss 1.341274e-03 --> Loss 1.341274e-03 (reduction/loss: 4.3397e-07).
+StopOnPlateau on step 3 Loss 1.341274e-03 --> Loss 1.341274e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #28 - loss:1.031945 - lr:0.000010 - [avgtime] vo:4.63, pgo:10.15, opt:2.45
+	adj.	loop	tot.
+R	1.1277	2.3042	1.7100
+t	0.0123	0.0233	0.0178
+Start train step 29 ...
+StopOnPlateau on step 0 Loss 4.802468e-03 --> Loss 1.318172e-03 (reduction/loss: 7.2552e-01).
+StopOnPlateau on step 1 Loss 1.318172e-03 --> Loss 1.318029e-03 (reduction/loss: 1.0854e-04).
+StopOnPlateau on step 2 Loss 1.318029e-03 --> Loss 1.318029e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #29 - loss:1.031265 - lr:0.000010 - [avgtime] vo:4.43, pgo:7.46, opt:2.28
+	adj.	loop	tot.
+R	1.1270	2.3026	1.7089
+t	0.0122	0.0232	0.0176
+Start train step 30 ...
+StopOnPlateau on step 0 Loss 4.730113e-03 --> Loss 1.296490e-03 (reduction/loss: 7.2591e-01).
+StopOnPlateau on step 1 Loss 1.296490e-03 --> Loss 1.296354e-03 (reduction/loss: 1.0452e-04).
+StopOnPlateau on step 2 Loss 1.296354e-03 --> Loss 1.296354e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #30 - loss:1.030655 - lr:0.000010 - [avgtime] vo:4.54, pgo:7.53, opt:2.42
+	adj.	loop	tot.
+R	1.1258	2.3009	1.7074
+t	0.0121	0.0230	0.0175
+Start train step 31 ...
+StopOnPlateau on step 0 Loss 4.664913e-03 --> Loss 1.276645e-03 (reduction/loss: 7.2633e-01).
+StopOnPlateau on step 1 Loss 1.276645e-03 --> Loss 1.276515e-03 (reduction/loss: 1.0177e-04).
+StopOnPlateau on step 2 Loss 1.276515e-03 --> Loss 1.276515e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #31 - loss:1.029912 - lr:0.000010 - [avgtime] vo:4.57, pgo:7.63, opt:2.49
+	adj.	loop	tot.
+R	1.1242	2.2991	1.7057
+t	0.0119	0.0229	0.0173
+Start train step 32 ...
+StopOnPlateau on step 0 Loss 4.599908e-03 --> Loss 1.254279e-03 (reduction/loss: 7.2733e-01).
+StopOnPlateau on step 1 Loss 1.254279e-03 --> Loss 1.254151e-03 (reduction/loss: 1.0172e-04).
+StopOnPlateau on step 2 Loss 1.254151e-03 --> Loss 1.254151e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 1.254151e-03 --> Loss 1.254151e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #32 - loss:1.029166 - lr:0.000010 - [avgtime] vo:4.38, pgo:10.24, opt:2.46
+	adj.	loop	tot.
+R	1.1227	2.2977	1.7043
+t	0.0118	0.0227	0.0172
+Start train step 33 ...
+StopOnPlateau on step 0 Loss 4.546887e-03 --> Loss 1.233734e-03 (reduction/loss: 7.2866e-01).
+StopOnPlateau on step 1 Loss 1.233734e-03 --> Loss 1.233607e-03 (reduction/loss: 1.0295e-04).
+StopOnPlateau on step 2 Loss 1.233607e-03 --> Loss 1.233607e-03 (reduction/loss: 9.4370e-08).
+StopOnPlateau on step 3 Loss 1.233607e-03 --> Loss 1.233607e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #33 - loss:1.028508 - lr:0.000010 - [avgtime] vo:4.45, pgo:10.10, opt:2.46
+	adj.	loop	tot.
+R	1.1209	2.2962	1.7026
+t	0.0117	0.0226	0.0171
+Start train step 34 ...
+StopOnPlateau on step 0 Loss 4.488145e-03 --> Loss 1.210906e-03 (reduction/loss: 7.3020e-01).
+StopOnPlateau on step 1 Loss 1.210906e-03 --> Loss 1.210782e-03 (reduction/loss: 1.0258e-04).
+StopOnPlateau on step 2 Loss 1.210782e-03 --> Loss 1.210782e-03 (reduction/loss: 9.6149e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #34 - loss:1.027883 - lr:0.000010 - [avgtime] vo:4.95, pgo:7.77, opt:2.43
+	adj.	loop	tot.
+R	1.1198	2.2956	1.7018
+t	0.0116	0.0225	0.0170
+Start train step 35 ...
+StopOnPlateau on step 0 Loss 4.438776e-03 --> Loss 1.189134e-03 (reduction/loss: 7.3210e-01).
+StopOnPlateau on step 1 Loss 1.189134e-03 --> Loss 1.189008e-03 (reduction/loss: 1.0583e-04).
+StopOnPlateau on step 2 Loss 1.189008e-03 --> Loss 1.189008e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #35 - loss:1.027230 - lr:0.000010 - [avgtime] vo:5.24, pgo:7.70, opt:2.46
+	adj.	loop	tot.
+R	1.1190	2.2952	1.7012
+t	0.0115	0.0224	0.0169
+Start train step 36 ...
+StopOnPlateau on step 0 Loss 4.401479e-03 --> Loss 1.171453e-03 (reduction/loss: 7.3385e-01).
+StopOnPlateau on step 1 Loss 1.171453e-03 --> Loss 1.171330e-03 (reduction/loss: 1.0514e-04).
+StopOnPlateau on step 2 Loss 1.171330e-03 --> Loss 1.171330e-03 (reduction/loss: 1.9877e-07).
+StopOnPlateau on step 3 Loss 1.171330e-03 --> Loss 1.171330e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #36 - loss:1.026595 - lr:0.000010 - [avgtime] vo:4.94, pgo:10.10, opt:2.45
+	adj.	loop	tot.
+R	1.1181	2.2946	1.7004
+t	0.0114	0.0223	0.0168
+Start train step 37 ...
+StopOnPlateau on step 0 Loss 4.372232e-03 --> Loss 1.155846e-03 (reduction/loss: 7.3564e-01).
+StopOnPlateau on step 1 Loss 1.155846e-03 --> Loss 1.155720e-03 (reduction/loss: 1.0847e-04).
+StopOnPlateau on step 2 Loss 1.155720e-03 --> Loss 1.155720e-03 (reduction/loss: 1.0073e-07).
+StopOnPlateau on step 3 Loss 1.155720e-03 --> Loss 1.155720e-03 (reduction/loss: 1.0073e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #37 - loss:1.025964 - lr:0.000010 - [avgtime] vo:4.52, pgo:10.24, opt:2.45
+	adj.	loop	tot.
+R	1.1173	2.2941	1.6997
+t	0.0113	0.0222	0.0167
+Start train step 38 ...
+StopOnPlateau on step 0 Loss 4.330245e-03 --> Loss 1.137234e-03 (reduction/loss: 7.3737e-01).
+StopOnPlateau on step 1 Loss 1.137234e-03 --> Loss 1.137110e-03 (reduction/loss: 1.0871e-04).
+StopOnPlateau on step 2 Loss 1.137110e-03 --> Loss 1.137109e-03 (reduction/loss: 6.1427e-07).
+StopOnPlateau on step 3 Loss 1.137109e-03 --> Loss 1.137109e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #38 - loss:1.025242 - lr:0.000010 - [avgtime] vo:4.82, pgo:10.30, opt:2.46
+	adj.	loop	tot.
+R	1.1175	2.2942	1.6999
+t	0.0113	0.0222	0.0167
+Start train step 39 ...
+StopOnPlateau on step 0 Loss 4.295064e-03 --> Loss 1.120717e-03 (reduction/loss: 7.3907e-01).
+StopOnPlateau on step 1 Loss 1.120717e-03 --> Loss 1.120595e-03 (reduction/loss: 1.0948e-04).
+StopOnPlateau on step 2 Loss 1.120595e-03 --> Loss 1.120595e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #39 - loss:1.024486 - lr:0.000010 - [avgtime] vo:4.27, pgo:7.65, opt:2.45
+	adj.	loop	tot.
+R	1.1180	2.2947	1.7004
+t	0.0112	0.0222	0.0167
+Start train step 40 ...
+StopOnPlateau on step 0 Loss 4.256530e-03 --> Loss 1.105279e-03 (reduction/loss: 7.4033e-01).
+StopOnPlateau on step 1 Loss 1.105279e-03 --> Loss 1.105159e-03 (reduction/loss: 1.0891e-04).
+StopOnPlateau on step 2 Loss 1.105159e-03 --> Loss 1.105159e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 1.105159e-03 --> Loss 1.105159e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #40 - loss:1.023819 - lr:0.000010 - [avgtime] vo:4.49, pgo:10.22, opt:2.46
+	adj.	loop	tot.
+R	1.1189	2.2952	1.7011
+t	0.0112	0.0222	0.0166
+Start train step 41 ...
+StopOnPlateau on step 0 Loss 4.230847e-03 --> Loss 1.092813e-03 (reduction/loss: 7.4170e-01).
+StopOnPlateau on step 1 Loss 1.092813e-03 --> Loss 1.092692e-03 (reduction/loss: 1.1004e-04).
+StopOnPlateau on step 2 Loss 1.092692e-03 --> Loss 1.092692e-03 (reduction/loss: 2.1308e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #41 - loss:1.023300 - lr:0.000010 - [avgtime] vo:3.89, pgo:7.75, opt:2.53
+	adj.	loop	tot.
+R	1.1192	2.2950	1.7012
+t	0.0112	0.0221	0.0166
+Start train step 42 ...
+StopOnPlateau on step 0 Loss 4.180159e-03 --> Loss 1.073382e-03 (reduction/loss: 7.4322e-01).
+StopOnPlateau on step 1 Loss 1.073382e-03 --> Loss 1.073266e-03 (reduction/loss: 1.0835e-04).
+StopOnPlateau on step 2 Loss 1.073266e-03 --> Loss 1.073266e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #42 - loss:1.022697 - lr:0.000010 - [avgtime] vo:4.89, pgo:7.73, opt:2.46
+	adj.	loop	tot.
+R	1.1208	2.2965	1.7027
+t	0.0112	0.0221	0.0166
+Start train step 43 ...
+StopOnPlateau on step 0 Loss 4.112548e-03 --> Loss 1.048782e-03 (reduction/loss: 7.4498e-01).
+StopOnPlateau on step 1 Loss 1.048782e-03 --> Loss 1.048670e-03 (reduction/loss: 1.0612e-04).
+StopOnPlateau on step 2 Loss 1.048670e-03 --> Loss 1.048670e-03 (reduction/loss: 2.2202e-07).
+StopOnPlateau on step 3 Loss 1.048670e-03 --> Loss 1.048670e-03 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #43 - loss:1.022119 - lr:0.000010 - [avgtime] vo:4.72, pgo:10.24, opt:2.46
+	adj.	loop	tot.
+R	1.1233	2.2991	1.7053
+t	0.0113	0.0222	0.0167
+Start train step 44 ...
+StopOnPlateau on step 0 Loss 4.037406e-03 --> Loss 1.022079e-03 (reduction/loss: 7.4685e-01).
+StopOnPlateau on step 1 Loss 1.022079e-03 --> Loss 1.021974e-03 (reduction/loss: 1.0251e-04).
+StopOnPlateau on step 2 Loss 1.021974e-03 --> Loss 1.021974e-03 (reduction/loss: 2.2782e-07).
+StopOnPlateau on step 3 Loss 1.021974e-03 --> Loss 1.021974e-03 (reduction/loss: 1.1391e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #44 - loss:1.021486 - lr:0.000010 - [avgtime] vo:4.09, pgo:10.23, opt:2.46
+	adj.	loop	tot.
+R	1.1266	2.3028	1.7088
+t	0.0113	0.0223	0.0168
+Start train step 45 ...
+StopOnPlateau on step 0 Loss 3.960433e-03 --> Loss 9.958934e-04 (reduction/loss: 7.4854e-01).
+StopOnPlateau on step 1 Loss 9.958934e-04 --> Loss 9.957941e-04 (reduction/loss: 9.9712e-05).
+StopOnPlateau on step 2 Loss 9.957941e-04 --> Loss 9.957938e-04 (reduction/loss: 2.3381e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #45 - loss:1.020834 - lr:0.000010 - [avgtime] vo:4.38, pgo:7.42, opt:2.42
+	adj.	loop	tot.
+R	1.1307	2.3074	1.7131
+t	0.0114	0.0225	0.0169
+Start train step 46 ...
+StopOnPlateau on step 0 Loss 3.889886e-03 --> Loss 9.732857e-04 (reduction/loss: 7.4979e-01).
+StopOnPlateau on step 1 Loss 9.732857e-04 --> Loss 9.731913e-04 (reduction/loss: 9.6944e-05).
+StopOnPlateau on step 2 Loss 9.731913e-04 --> Loss 9.731913e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #46 - loss:1.020222 - lr:0.000010 - [avgtime] vo:4.56, pgo:7.34, opt:2.27
+	adj.	loop	tot.
+R	1.1349	2.3122	1.7176
+t	0.0115	0.0226	0.0170
+Start train step 47 ...
+StopOnPlateau on step 0 Loss 3.819073e-03 --> Loss 9.507062e-04 (reduction/loss: 7.5106e-01).
+StopOnPlateau on step 1 Loss 9.507062e-04 --> Loss 9.506167e-04 (reduction/loss: 9.4165e-05).
+StopOnPlateau on step 2 Loss 9.506167e-04 --> Loss 9.506167e-04 (reduction/loss: 6.1231e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #47 - loss:1.019596 - lr:0.000010 - [avgtime] vo:4.09, pgo:7.34, opt:2.29
+	adj.	loop	tot.
+R	1.1398	2.3180	1.7229
+t	0.0117	0.0228	0.0172
+Start train step 48 ...
+StopOnPlateau on step 0 Loss 3.758470e-03 --> Loss 9.305452e-04 (reduction/loss: 7.5241e-01).
+StopOnPlateau on step 1 Loss 9.305452e-04 --> Loss 9.304591e-04 (reduction/loss: 9.2577e-05).
+StopOnPlateau on step 2 Loss 9.304591e-04 --> Loss 9.304588e-04 (reduction/loss: 3.1279e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #48 - loss:1.019001 - lr:0.000010 - [avgtime] vo:3.76, pgo:7.36, opt:2.27
+	adj.	loop	tot.
+R	1.1446	2.3234	1.7281
+t	0.0118	0.0230	0.0174
+Start train step 49 ...
+StopOnPlateau on step 0 Loss 3.702740e-03 --> Loss 9.120477e-04 (reduction/loss: 7.5368e-01).
+StopOnPlateau on step 1 Loss 9.120477e-04 --> Loss 9.119640e-04 (reduction/loss: 9.1838e-05).
+StopOnPlateau on step 2 Loss 9.119640e-04 --> Loss 9.119640e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 9.119640e-04 --> Loss 9.119638e-04 (reduction/loss: 1.9148e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #49 - loss:1.018398 - lr:0.000010 - [avgtime] vo:3.77, pgo:9.59, opt:2.29
+	adj.	loop	tot.
+R	1.1493	2.3286	1.7330
+t	0.0119	0.0233	0.0175
+Start train step 50 ...
+StopOnPlateau on step 0 Loss 3.653946e-03 --> Loss 8.948087e-04 (reduction/loss: 7.5511e-01).
+StopOnPlateau on step 1 Loss 8.948087e-04 --> Loss 8.947250e-04 (reduction/loss: 9.3608e-05).
+StopOnPlateau on step 2 Loss 8.947250e-04 --> Loss 8.947249e-04 (reduction/loss: 1.3011e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #50 - loss:1.017832 - lr:0.000010 - [avgtime] vo:4.72, pgo:7.41, opt:2.30
+	adj.	loop	tot.
+R	1.1544	2.3342	1.7383
+t	0.0120	0.0235	0.0177
+Start train step 51 ...
+StopOnPlateau on step 0 Loss 3.626171e-03 --> Loss 8.865420e-04 (reduction/loss: 7.5552e-01).
+StopOnPlateau on step 1 Loss 8.865420e-04 --> Loss 8.864583e-04 (reduction/loss: 9.4349e-05).
+StopOnPlateau on step 2 Loss 8.864583e-04 --> Loss 8.864583e-04 (reduction/loss: 6.5663e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #51 - loss:1.017334 - lr:0.000010 - [avgtime] vo:3.84, pgo:7.42, opt:2.31
+	adj.	loop	tot.
+R	1.1595	2.3395	1.7435
+t	0.0122	0.0237	0.0179
+Start train step 52 ...
+StopOnPlateau on step 0 Loss 3.616225e-03 --> Loss 8.854151e-04 (reduction/loss: 7.5515e-01).
+StopOnPlateau on step 1 Loss 8.854151e-04 --> Loss 8.853286e-04 (reduction/loss: 9.7690e-05).
+StopOnPlateau on step 2 Loss 8.853286e-04 --> Loss 8.853285e-04 (reduction/loss: 1.3149e-07).
+StopOnPlateau on step 3 Loss 8.853285e-04 --> Loss 8.853285e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #52 - loss:1.016997 - lr:0.000010 - [avgtime] vo:4.21, pgo:9.69, opt:2.28
+	adj.	loop	tot.
+R	1.1641	2.3446	1.7484
+t	0.0123	0.0240	0.0181
+Start train step 53 ...
+StopOnPlateau on step 0 Loss 3.613018e-03 --> Loss 8.882999e-04 (reduction/loss: 7.5414e-01).
+StopOnPlateau on step 1 Loss 8.882999e-04 --> Loss 8.882097e-04 (reduction/loss: 1.0157e-04).
+StopOnPlateau on step 2 Loss 8.882097e-04 --> Loss 8.882095e-04 (reduction/loss: 1.9660e-07).
+StopOnPlateau on step 3 Loss 8.882095e-04 --> Loss 8.882095e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #53 - loss:1.016806 - lr:0.000010 - [avgtime] vo:4.21, pgo:9.85, opt:2.28
+	adj.	loop	tot.
+R	1.1690	2.3499	1.7535
+t	0.0125	0.0243	0.0184
+Start train step 54 ...
+StopOnPlateau on step 0 Loss 3.614553e-03 --> Loss 8.914027e-04 (reduction/loss: 7.5339e-01).
+StopOnPlateau on step 1 Loss 8.914027e-04 --> Loss 8.913096e-04 (reduction/loss: 1.0448e-04).
+StopOnPlateau on step 2 Loss 8.913096e-04 --> Loss 8.913095e-04 (reduction/loss: 6.5306e-08).
+StopOnPlateau on step 3 Loss 8.913095e-04 --> Loss 8.913093e-04 (reduction/loss: 1.9592e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #54 - loss:1.016639 - lr:0.000010 - [avgtime] vo:4.17, pgo:9.76, opt:2.28
+	adj.	loop	tot.
+R	1.1732	2.3541	1.7577
+t	0.0127	0.0246	0.0186
+Start train step 55 ...
+StopOnPlateau on step 0 Loss 3.622242e-03 --> Loss 8.962966e-04 (reduction/loss: 7.5256e-01).
+StopOnPlateau on step 1 Loss 8.962966e-04 --> Loss 8.962001e-04 (reduction/loss: 1.0767e-04).
+StopOnPlateau on step 2 Loss 8.962001e-04 --> Loss 8.961998e-04 (reduction/loss: 3.2475e-07).
+StopOnPlateau on step 3 Loss 8.961998e-04 --> Loss 8.961997e-04 (reduction/loss: 6.4949e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #55 - loss:1.016559 - lr:0.000010 - [avgtime] vo:4.28, pgo:9.75, opt:2.29
+	adj.	loop	tot.
+R	1.1771	2.3581	1.7617
+t	0.0128	0.0249	0.0188
+Start train step 56 ...
+StopOnPlateau on step 0 Loss 3.637430e-03 --> Loss 9.031225e-04 (reduction/loss: 7.5171e-01).
+StopOnPlateau on step 1 Loss 9.031225e-04 --> Loss 9.030227e-04 (reduction/loss: 1.1047e-04).
+StopOnPlateau on step 2 Loss 9.030227e-04 --> Loss 9.030226e-04 (reduction/loss: 1.2892e-07).
+StopOnPlateau on step 3 Loss 9.030226e-04 --> Loss 9.030224e-04 (reduction/loss: 2.5783e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #56 - loss:1.016491 - lr:0.000010 - [avgtime] vo:4.35, pgo:9.94, opt:2.28
+	adj.	loop	tot.
+R	1.1805	2.3619	1.7652
+t	0.0129	0.0251	0.0190
+Start train step 57 ...
+StopOnPlateau on step 0 Loss 3.647295e-03 --> Loss 9.069326e-04 (reduction/loss: 7.5134e-01).
+StopOnPlateau on step 1 Loss 9.069326e-04 --> Loss 9.068287e-04 (reduction/loss: 1.1456e-04).
+StopOnPlateau on step 2 Loss 9.068287e-04 --> Loss 9.068287e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #57 - loss:1.016399 - lr:0.000010 - [avgtime] vo:4.37, pgo:7.36, opt:2.28
+	adj.	loop	tot.
+R	1.1836	2.3649	1.7683
+t	0.0131	0.0253	0.0191
+Start train step 58 ...
+StopOnPlateau on step 0 Loss 3.656685e-03 --> Loss 9.101888e-04 (reduction/loss: 7.5109e-01).
+StopOnPlateau on step 1 Loss 9.101888e-04 --> Loss 9.100832e-04 (reduction/loss: 1.1601e-04).
+StopOnPlateau on step 2 Loss 9.100832e-04 --> Loss 9.100823e-04 (reduction/loss: 9.5938e-07).
+StopOnPlateau on step 3 Loss 9.100823e-04 --> Loss 9.100823e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #58 - loss:1.016325 - lr:0.000010 - [avgtime] vo:4.56, pgo:9.73, opt:2.28
+	adj.	loop	tot.
+R	1.1866	2.3680	1.7714
+t	0.0132	0.0255	0.0193
+Start train step 59 ...
+StopOnPlateau on step 0 Loss 3.658759e-03 --> Loss 9.100040e-04 (reduction/loss: 7.5128e-01).
+StopOnPlateau on step 1 Loss 9.100040e-04 --> Loss 9.098978e-04 (reduction/loss: 1.1673e-04).
+StopOnPlateau on step 2 Loss 9.098978e-04 --> Loss 9.098976e-04 (reduction/loss: 2.5589e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #59 - loss:1.016147 - lr:0.000010 - [avgtime] vo:4.44, pgo:7.24, opt:2.28
+	adj.	loop	tot.
+R	1.1898	2.3712	1.7745
+t	0.0133	0.0257	0.0194
+Start train step 60 ...
+StopOnPlateau on step 0 Loss 3.655940e-03 --> Loss 9.084916e-04 (reduction/loss: 7.5150e-01).
+StopOnPlateau on step 1 Loss 9.084916e-04 --> Loss 9.083836e-04 (reduction/loss: 1.1879e-04).
+StopOnPlateau on step 2 Loss 9.083836e-04 --> Loss 9.083835e-04 (reduction/loss: 1.9223e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #60 - loss:1.015937 - lr:0.000010 - [avgtime] vo:4.31, pgo:7.41, opt:2.31
+	adj.	loop	tot.
+R	1.1928	2.3740	1.7774
+t	0.0133	0.0258	0.0195
+Start train step 61 ...
+StopOnPlateau on step 0 Loss 3.647834e-03 --> Loss 9.043288e-04 (reduction/loss: 7.5209e-01).
+StopOnPlateau on step 1 Loss 9.043288e-04 --> Loss 9.042230e-04 (reduction/loss: 1.1702e-04).
+StopOnPlateau on step 2 Loss 9.042230e-04 --> Loss 9.042228e-04 (reduction/loss: 2.5749e-07).
+StopOnPlateau on step 3 Loss 9.042228e-04 --> Loss 9.042228e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #61 - loss:1.015605 - lr:0.000010 - [avgtime] vo:4.34, pgo:9.78, opt:2.29
+	adj.	loop	tot.
+R	1.1958	2.3769	1.7804
+t	0.0134	0.0259	0.0196
+Start train step 62 ...
+StopOnPlateau on step 0 Loss 3.635740e-03 --> Loss 8.986464e-04 (reduction/loss: 7.5283e-01).
+StopOnPlateau on step 1 Loss 8.986464e-04 --> Loss 8.985422e-04 (reduction/loss: 1.1601e-04).
+StopOnPlateau on step 2 Loss 8.985422e-04 --> Loss 8.985418e-04 (reduction/loss: 3.8868e-07).
+StopOnPlateau on step 3 Loss 8.985418e-04 --> Loss 8.985418e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #62 - loss:1.015215 - lr:0.000010 - [avgtime] vo:4.00, pgo:9.79, opt:2.30
+	adj.	loop	tot.
+R	1.1988	2.3800	1.7834
+t	0.0135	0.0260	0.0197
+Start train step 63 ...
+StopOnPlateau on step 0 Loss 3.616540e-03 --> Loss 8.926661e-04 (reduction/loss: 7.5317e-01).
+StopOnPlateau on step 1 Loss 8.926661e-04 --> Loss 8.925636e-04 (reduction/loss: 1.1476e-04).
+StopOnPlateau on step 2 Loss 8.925636e-04 --> Loss 8.925635e-04 (reduction/loss: 6.5214e-08).
+StopOnPlateau on step 3 Loss 8.925635e-04 --> Loss 8.925635e-04 (reduction/loss: 6.5214e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #63 - loss:1.014914 - lr:0.000010 - [avgtime] vo:4.51, pgo:9.81, opt:2.29
+	adj.	loop	tot.
+R	1.2018	2.3830	1.7864
+t	0.0135	0.0261	0.0197
+Start train step 64 ...
+StopOnPlateau on step 0 Loss 3.598555e-03 --> Loss 8.856423e-04 (reduction/loss: 7.5389e-01).
+StopOnPlateau on step 1 Loss 8.856423e-04 --> Loss 8.855440e-04 (reduction/loss: 1.1101e-04).
+StopOnPlateau on step 2 Loss 8.855440e-04 --> Loss 8.855433e-04 (reduction/loss: 7.8877e-07).
+StopOnPlateau on step 3 Loss 8.855433e-04 --> Loss 8.855433e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #64 - loss:1.014637 - lr:0.000010 - [avgtime] vo:4.19, pgo:9.93, opt:2.31
+	adj.	loop	tot.
+R	1.2046	2.3859	1.7893
+t	0.0136	0.0262	0.0198
+Start train step 65 ...
+StopOnPlateau on step 0 Loss 3.592416e-03 --> Loss 8.819532e-04 (reduction/loss: 7.5450e-01).
+StopOnPlateau on step 1 Loss 8.819532e-04 --> Loss 8.818558e-04 (reduction/loss: 1.1035e-04).
+StopOnPlateau on step 2 Loss 8.818558e-04 --> Loss 8.818553e-04 (reduction/loss: 6.6006e-07).
+StopOnPlateau on step 3 Loss 8.818553e-04 --> Loss 8.818551e-04 (reduction/loss: 1.3201e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #65 - loss:1.014372 - lr:0.000010 - [avgtime] vo:4.58, pgo:9.83, opt:2.30
+	adj.	loop	tot.
+R	1.2075	2.3891	1.7924
+t	0.0136	0.0262	0.0199
+Start train step 66 ...
+StopOnPlateau on step 0 Loss 3.578834e-03 --> Loss 8.764460e-04 (reduction/loss: 7.5510e-01).
+StopOnPlateau on step 1 Loss 8.764460e-04 --> Loss 8.763516e-04 (reduction/loss: 1.0766e-04).
+StopOnPlateau on step 2 Loss 8.763516e-04 --> Loss 8.763513e-04 (reduction/loss: 3.9852e-07).
+StopOnPlateau on step 3 Loss 8.763513e-04 --> Loss 8.763511e-04 (reduction/loss: 1.3284e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #66 - loss:1.014131 - lr:0.000010 - [avgtime] vo:4.03, pgo:9.77, opt:2.33
+	adj.	loop	tot.
+R	1.2103	2.3922	1.7953
+t	0.0137	0.0263	0.0200
+Start train step 67 ...
+StopOnPlateau on step 0 Loss 3.563995e-03 --> Loss 8.706880e-04 (reduction/loss: 7.5570e-01).
+StopOnPlateau on step 1 Loss 8.706880e-04 --> Loss 8.705965e-04 (reduction/loss: 1.0509e-04).
+StopOnPlateau on step 2 Loss 8.705965e-04 --> Loss 8.705960e-04 (reduction/loss: 5.3488e-07).
+StopOnPlateau on step 3 Loss 8.705960e-04 --> Loss 8.705960e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #67 - loss:1.013852 - lr:0.000010 - [avgtime] vo:4.54, pgo:9.76, opt:2.29
+	adj.	loop	tot.
+R	1.2128	2.3950	1.7979
+t	0.0138	0.0265	0.0200
+Start train step 68 ...
+StopOnPlateau on step 0 Loss 3.550211e-03 --> Loss 8.653167e-04 (reduction/loss: 7.5626e-01).
+StopOnPlateau on step 1 Loss 8.653167e-04 --> Loss 8.652272e-04 (reduction/loss: 1.0346e-04).
+StopOnPlateau on step 2 Loss 8.652272e-04 --> Loss 8.652270e-04 (reduction/loss: 2.6910e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #68 - loss:1.013603 - lr:0.000010 - [avgtime] vo:3.79, pgo:7.44, opt:2.29
+	adj.	loop	tot.
+R	1.2155	2.3981	1.8008
+t	0.0138	0.0266	0.0201
+Start train step 69 ...
+StopOnPlateau on step 0 Loss 3.530589e-03 --> Loss 8.581916e-04 (reduction/loss: 7.5693e-01).
+StopOnPlateau on step 1 Loss 8.581916e-04 --> Loss 8.581050e-04 (reduction/loss: 1.0093e-04).
+StopOnPlateau on step 2 Loss 8.581050e-04 --> Loss 8.581050e-04 (reduction/loss: 6.7833e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #69 - loss:1.013352 - lr:0.000010 - [avgtime] vo:4.35, pgo:7.17, opt:2.29
+	adj.	loop	tot.
+R	1.2176	2.4004	1.8030
+t	0.0139	0.0266	0.0202
+Start train step 70 ...
+StopOnPlateau on step 0 Loss 3.510343e-03 --> Loss 8.515869e-04 (reduction/loss: 7.5741e-01).
+StopOnPlateau on step 1 Loss 8.515869e-04 --> Loss 8.515024e-04 (reduction/loss: 9.9315e-05).
+StopOnPlateau on step 2 Loss 8.515024e-04 --> Loss 8.515021e-04 (reduction/loss: 3.4179e-07).
+StopOnPlateau on step 3 Loss 8.515021e-04 --> Loss 8.515019e-04 (reduction/loss: 1.3672e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #70 - loss:1.013040 - lr:0.000010 - [avgtime] vo:3.96, pgo:9.74, opt:2.28
+	adj.	loop	tot.
+R	1.2194	2.4022	1.8048
+t	0.0139	0.0267	0.0202
+Start train step 71 ...
+StopOnPlateau on step 0 Loss 3.486888e-03 --> Loss 8.435050e-04 (reduction/loss: 7.5809e-01).
+StopOnPlateau on step 1 Loss 8.435050e-04 --> Loss 8.434225e-04 (reduction/loss: 9.7852e-05).
+StopOnPlateau on step 2 Loss 8.434225e-04 --> Loss 8.434225e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 8.434225e-04 --> Loss 8.434225e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #71 - loss:1.012717 - lr:0.000010 - [avgtime] vo:4.42, pgo:9.88, opt:2.28
+	adj.	loop	tot.
+R	1.2210	2.4034	1.8062
+t	0.0139	0.0267	0.0202
+Start train step 72 ...
+StopOnPlateau on step 0 Loss 3.460034e-03 --> Loss 8.350144e-04 (reduction/loss: 7.5867e-01).
+StopOnPlateau on step 1 Loss 8.350144e-04 --> Loss 8.349326e-04 (reduction/loss: 9.8010e-05).
+StopOnPlateau on step 2 Loss 8.349326e-04 --> Loss 8.349323e-04 (reduction/loss: 2.7886e-07).
+StopOnPlateau on step 3 Loss 8.349323e-04 --> Loss 8.349320e-04 (reduction/loss: 4.1829e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #72 - loss:1.012402 - lr:0.000010 - [avgtime] vo:4.05, pgo:9.78, opt:2.26
+	adj.	loop	tot.
+R	1.2220	2.4041	1.8071
+t	0.0139	0.0267	0.0202
+Start train step 73 ...
+StopOnPlateau on step 0 Loss 3.435638e-03 --> Loss 8.270566e-04 (reduction/loss: 7.5927e-01).
+StopOnPlateau on step 1 Loss 8.270566e-04 --> Loss 8.269752e-04 (reduction/loss: 9.8531e-05).
+StopOnPlateau on step 2 Loss 8.269752e-04 --> Loss 8.269751e-04 (reduction/loss: 7.0386e-08).
+StopOnPlateau on step 3 Loss 8.269751e-04 --> Loss 8.269748e-04 (reduction/loss: 3.5193e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #73 - loss:1.012132 - lr:0.000010 - [avgtime] vo:3.77, pgo:9.72, opt:2.29
+	adj.	loop	tot.
+R	1.2227	2.4039	1.8073
+t	0.0139	0.0267	0.0202
+Start train step 74 ...
+StopOnPlateau on step 0 Loss 3.407230e-03 --> Loss 8.178959e-04 (reduction/loss: 7.5995e-01).
+StopOnPlateau on step 1 Loss 8.178959e-04 --> Loss 8.178125e-04 (reduction/loss: 1.0191e-04).
+StopOnPlateau on step 2 Loss 8.178125e-04 --> Loss 8.178121e-04 (reduction/loss: 4.9822e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #74 - loss:1.011929 - lr:0.000010 - [avgtime] vo:3.71, pgo:7.41, opt:2.28
+	adj.	loop	tot.
+R	1.2237	2.4044	1.8081
+t	0.0139	0.0267	0.0202
+Start train step 75 ...
+StopOnPlateau on step 0 Loss 3.379062e-03 --> Loss 8.097743e-04 (reduction/loss: 7.6036e-01).
+StopOnPlateau on step 1 Loss 8.097743e-04 --> Loss 8.096903e-04 (reduction/loss: 1.0380e-04).
+StopOnPlateau on step 2 Loss 8.096903e-04 --> Loss 8.096903e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #75 - loss:1.011807 - lr:0.000010 - [avgtime] vo:4.42, pgo:7.44, opt:2.28
+	adj.	loop	tot.
+R	1.2246	2.4051	1.8089
+t	0.0139	0.0267	0.0202
+Start train step 76 ...
+StopOnPlateau on step 0 Loss 3.356652e-03 --> Loss 8.025701e-04 (reduction/loss: 7.6090e-01).
+StopOnPlateau on step 1 Loss 8.025701e-04 --> Loss 8.024839e-04 (reduction/loss: 1.0748e-04).
+StopOnPlateau on step 2 Loss 8.024839e-04 --> Loss 8.024835e-04 (reduction/loss: 4.3521e-07).
+StopOnPlateau on step 3 Loss 8.024835e-04 --> Loss 8.024835e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #76 - loss:1.011695 - lr:0.000010 - [avgtime] vo:4.34, pgo:9.90, opt:2.31
+	adj.	loop	tot.
+R	1.2254	2.4052	1.8093
+t	0.0139	0.0267	0.0202
+Start train step 77 ...
+StopOnPlateau on step 0 Loss 3.335239e-03 --> Loss 7.964965e-04 (reduction/loss: 7.6119e-01).
+StopOnPlateau on step 1 Loss 7.964965e-04 --> Loss 7.964076e-04 (reduction/loss: 1.1159e-04).
+StopOnPlateau on step 2 Loss 7.964076e-04 --> Loss 7.964073e-04 (reduction/loss: 3.6544e-07).
+StopOnPlateau on step 3 Loss 7.964073e-04 --> Loss 7.964073e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #77 - loss:1.011565 - lr:0.000010 - [avgtime] vo:4.13, pgo:9.79, opt:2.27
+	adj.	loop	tot.
+R	1.2256	2.4051	1.8094
+t	0.0139	0.0266	0.0202
+Start train step 78 ...
+StopOnPlateau on step 0 Loss 3.313354e-03 --> Loss 7.903338e-04 (reduction/loss: 7.6147e-01).
+StopOnPlateau on step 1 Loss 7.903338e-04 --> Loss 7.902423e-04 (reduction/loss: 1.1578e-04).
+StopOnPlateau on step 2 Loss 7.902423e-04 --> Loss 7.902423e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #78 - loss:1.011442 - lr:0.000010 - [avgtime] vo:4.53, pgo:7.36, opt:2.27
+	adj.	loop	tot.
+R	1.2253	2.4046	1.8090
+t	0.0138	0.0265	0.0201
+Start train step 79 ...
+StopOnPlateau on step 0 Loss 3.294112e-03 --> Loss 7.844183e-04 (reduction/loss: 7.6187e-01).
+StopOnPlateau on step 1 Loss 7.844183e-04 --> Loss 7.843236e-04 (reduction/loss: 1.2081e-04).
+StopOnPlateau on step 2 Loss 7.843236e-04 --> Loss 7.843236e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #79 - loss:1.011324 - lr:0.000010 - [avgtime] vo:4.07, pgo:7.36, opt:2.27
+	adj.	loop	tot.
+R	1.2247	2.4040	1.8084
+t	0.0137	0.0264	0.0200
+Start train step 80 ...
+StopOnPlateau on step 0 Loss 3.274670e-03 --> Loss 7.783839e-04 (reduction/loss: 7.6230e-01).
+StopOnPlateau on step 1 Loss 7.783839e-04 --> Loss 7.782872e-04 (reduction/loss: 1.2428e-04).
+StopOnPlateau on step 2 Loss 7.782872e-04 --> Loss 7.782872e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #80 - loss:1.011158 - lr:0.000010 - [avgtime] vo:4.42, pgo:7.07, opt:2.24
+	adj.	loop	tot.
+R	1.2237	2.4033	1.8076
+t	0.0137	0.0263	0.0199
+Start train step 81 ...
+StopOnPlateau on step 0 Loss 3.256038e-03 --> Loss 7.716881e-04 (reduction/loss: 7.6300e-01).
+StopOnPlateau on step 1 Loss 7.716881e-04 --> Loss 7.715863e-04 (reduction/loss: 1.3185e-04).
+StopOnPlateau on step 2 Loss 7.715863e-04 --> Loss 7.715863e-04 (reduction/loss: 7.5439e-08).
+StopOnPlateau on step 3 Loss 7.715863e-04 --> Loss 7.715862e-04 (reduction/loss: 7.5439e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #81 - loss:1.010982 - lr:0.000010 - [avgtime] vo:4.22, pgo:9.42, opt:2.25
+	adj.	loop	tot.
+R	1.2232	2.4032	1.8072
+t	0.0136	0.0262	0.0198
+Start train step 82 ...
+StopOnPlateau on step 0 Loss 3.247123e-03 --> Loss 7.671590e-04 (reduction/loss: 7.6374e-01).
+StopOnPlateau on step 1 Loss 7.671590e-04 --> Loss 7.670523e-04 (reduction/loss: 1.3908e-04).
+StopOnPlateau on step 2 Loss 7.670523e-04 --> Loss 7.670523e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #82 - loss:1.010820 - lr:0.000010 - [avgtime] vo:4.50, pgo:7.33, opt:2.27
+	adj.	loop	tot.
+R	1.2237	2.4043	1.8080
+t	0.0136	0.0262	0.0198
+Start train step 83 ...
+StopOnPlateau on step 0 Loss 3.237706e-03 --> Loss 7.626734e-04 (reduction/loss: 7.6444e-01).
+StopOnPlateau on step 1 Loss 7.626734e-04 --> Loss 7.625629e-04 (reduction/loss: 1.4493e-04).
+StopOnPlateau on step 2 Loss 7.625629e-04 --> Loss 7.625628e-04 (reduction/loss: 1.5266e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #83 - loss:1.010725 - lr:0.000010 - [avgtime] vo:3.95, pgo:7.39, opt:2.28
+	adj.	loop	tot.
+R	1.2250	2.4065	1.8098
+t	0.0135	0.0262	0.0198
+Start train step 84 ...
+StopOnPlateau on step 0 Loss 3.231006e-03 --> Loss 7.585291e-04 (reduction/loss: 7.6523e-01).
+StopOnPlateau on step 1 Loss 7.585291e-04 --> Loss 7.584158e-04 (reduction/loss: 1.4941e-04).
+StopOnPlateau on step 2 Loss 7.584158e-04 --> Loss 7.584158e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau on step 3 Loss 7.584158e-04 --> Loss 7.584158e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #84 - loss:1.010608 - lr:0.000010 - [avgtime] vo:3.68, pgo:9.77, opt:2.28
+	adj.	loop	tot.
+R	1.2271	2.4097	1.8124
+t	0.0135	0.0262	0.0198
+Start train step 85 ...
+StopOnPlateau on step 0 Loss 3.220984e-03 --> Loss 7.534723e-04 (reduction/loss: 7.6607e-01).
+StopOnPlateau on step 1 Loss 7.534723e-04 --> Loss 7.533577e-04 (reduction/loss: 1.5219e-04).
+StopOnPlateau on step 2 Loss 7.533577e-04 --> Loss 7.533576e-04 (reduction/loss: 7.7264e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #85 - loss:1.010491 - lr:0.000010 - [avgtime] vo:4.74, pgo:7.40, opt:2.32
+	adj.	loop	tot.
+R	1.2293	2.4131	1.8152
+t	0.0135	0.0262	0.0198
+Start train step 86 ...
+StopOnPlateau on step 0 Loss 3.216964e-03 --> Loss 7.510267e-04 (reduction/loss: 7.6654e-01).
+StopOnPlateau on step 1 Loss 7.510267e-04 --> Loss 7.509102e-04 (reduction/loss: 1.5516e-04).
+StopOnPlateau on step 2 Loss 7.509102e-04 --> Loss 7.509100e-04 (reduction/loss: 2.3255e-07).
+StopOnPlateau on step 3 Loss 7.509100e-04 --> Loss 7.509100e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #86 - loss:1.010417 - lr:0.000010 - [avgtime] vo:4.02, pgo:9.41, opt:2.26
+	adj.	loop	tot.
+R	1.2321	2.4171	1.8186
+t	0.0135	0.0262	0.0198
+Start train step 87 ...
+StopOnPlateau on step 0 Loss 3.208926e-03 --> Loss 7.474958e-04 (reduction/loss: 7.6706e-01).
+StopOnPlateau on step 1 Loss 7.474958e-04 --> Loss 7.473747e-04 (reduction/loss: 1.6197e-04).
+StopOnPlateau on step 2 Loss 7.473747e-04 --> Loss 7.473744e-04 (reduction/loss: 4.6730e-07).
+StopOnPlateau on step 3 Loss 7.473744e-04 --> Loss 7.473741e-04 (reduction/loss: 3.1153e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #87 - loss:1.010226 - lr:0.000010 - [avgtime] vo:4.27, pgo:9.78, opt:2.26
+	adj.	loop	tot.
+R	1.2355	2.4215	1.8225
+t	0.0136	0.0262	0.0198
+Start train step 88 ...
+StopOnPlateau on step 0 Loss 3.199158e-03 --> Loss 7.443708e-04 (reduction/loss: 7.6732e-01).
+StopOnPlateau on step 1 Loss 7.443708e-04 --> Loss 7.442486e-04 (reduction/loss: 1.6414e-04).
+StopOnPlateau on step 2 Loss 7.442486e-04 --> Loss 7.442486e-04 (reduction/loss: 7.8210e-08).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #88 - loss:1.010102 - lr:0.000010 - [avgtime] vo:4.27, pgo:7.08, opt:2.24
+	adj.	loop	tot.
+R	1.2389	2.4260	1.8264
+t	0.0136	0.0263	0.0199
+Start train step 89 ...
+StopOnPlateau on step 0 Loss 3.195375e-03 --> Loss 7.423519e-04 (reduction/loss: 7.6768e-01).
+StopOnPlateau on step 1 Loss 7.423519e-04 --> Loss 7.422260e-04 (reduction/loss: 1.6960e-04).
+StopOnPlateau on step 2 Loss 7.422260e-04 --> Loss 7.422255e-04 (reduction/loss: 7.0581e-07).
+StopOnPlateau on step 3 Loss 7.422255e-04 --> Loss 7.422255e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #89 - loss:1.009997 - lr:0.000010 - [avgtime] vo:3.86, pgo:9.79, opt:2.26
+	adj.	loop	tot.
+R	1.2423	2.4304	1.8303
+t	0.0136	0.0264	0.0199
+Start train step 90 ...
+StopOnPlateau on step 0 Loss 3.192637e-03 --> Loss 7.408157e-04 (reduction/loss: 7.6796e-01).
+StopOnPlateau on step 1 Loss 7.408157e-04 --> Loss 7.406868e-04 (reduction/loss: 1.7404e-04).
+StopOnPlateau on step 2 Loss 7.406868e-04 --> Loss 7.406867e-04 (reduction/loss: 7.8586e-08).
+StopOnPlateau on step 3 Loss 7.406867e-04 --> Loss 7.406867e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #90 - loss:1.009922 - lr:0.000010 - [avgtime] vo:3.91, pgo:9.82, opt:2.26
+	adj.	loop	tot.
+R	1.2465	2.4359	1.8352
+t	0.0137	0.0265	0.0200
+Start train step 91 ...
+StopOnPlateau on step 0 Loss 3.190669e-03 --> Loss 7.397976e-04 (reduction/loss: 7.6814e-01).
+StopOnPlateau on step 1 Loss 7.397976e-04 --> Loss 7.396649e-04 (reduction/loss: 1.7931e-04).
+StopOnPlateau on step 2 Loss 7.396649e-04 --> Loss 7.396648e-04 (reduction/loss: 1.5739e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #91 - loss:1.009773 - lr:0.000010 - [avgtime] vo:4.40, pgo:7.36, opt:2.26
+	adj.	loop	tot.
+R	1.2511	2.4416	1.8403
+t	0.0138	0.0266	0.0201
+Start train step 92 ...
+StopOnPlateau on step 0 Loss 3.192359e-03 --> Loss 7.394032e-04 (reduction/loss: 7.6838e-01).
+StopOnPlateau on step 1 Loss 7.394032e-04 --> Loss 7.392669e-04 (reduction/loss: 1.8437e-04).
+StopOnPlateau on step 2 Loss 7.392669e-04 --> Loss 7.392663e-04 (reduction/loss: 7.0863e-07).
+StopOnPlateau on step 3 Loss 7.392663e-04 --> Loss 7.392663e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #92 - loss:1.009629 - lr:0.000010 - [avgtime] vo:4.13, pgo:9.85, opt:2.28
+	adj.	loop	tot.
+R	1.2560	2.4476	1.8458
+t	0.0139	0.0267	0.0202
+Start train step 93 ...
+StopOnPlateau on step 0 Loss 3.189582e-03 --> Loss 7.385244e-04 (reduction/loss: 7.6846e-01).
+StopOnPlateau on step 1 Loss 7.385244e-04 --> Loss 7.383832e-04 (reduction/loss: 1.9121e-04).
+StopOnPlateau on step 2 Loss 7.383832e-04 --> Loss 7.383826e-04 (reduction/loss: 7.8831e-07).
+StopOnPlateau on step 3 Loss 7.383826e-04 --> Loss 7.383825e-04 (reduction/loss: 1.5766e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #93 - loss:1.009544 - lr:0.000010 - [avgtime] vo:3.97, pgo:9.79, opt:2.27
+	adj.	loop	tot.
+R	1.2614	2.4541	1.8517
+t	0.0139	0.0269	0.0203
+Start train step 94 ...
+StopOnPlateau on step 0 Loss 3.187821e-03 --> Loss 7.373410e-04 (reduction/loss: 7.6870e-01).
+StopOnPlateau on step 1 Loss 7.373410e-04 --> Loss 7.371938e-04 (reduction/loss: 1.9965e-04).
+StopOnPlateau on step 2 Loss 7.371938e-04 --> Loss 7.371937e-04 (reduction/loss: 7.8958e-08).
+StopOnPlateau on step 3 Loss 7.371937e-04 --> Loss 7.371935e-04 (reduction/loss: 3.1583e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #94 - loss:1.009439 - lr:0.000010 - [avgtime] vo:4.25, pgo:9.70, opt:2.26
+	adj.	loop	tot.
+R	1.2666	2.4602	1.8573
+t	0.0140	0.0270	0.0205
+Start train step 95 ...
+StopOnPlateau on step 0 Loss 3.187022e-03 --> Loss 7.365957e-04 (reduction/loss: 7.6888e-01).
+StopOnPlateau on step 1 Loss 7.365957e-04 --> Loss 7.364440e-04 (reduction/loss: 2.0593e-04).
+StopOnPlateau on step 2 Loss 7.364440e-04 --> Loss 7.364437e-04 (reduction/loss: 4.7423e-07).
+StopOnPlateau on step 3 Loss 7.364437e-04 --> Loss 7.364436e-04 (reduction/loss: 7.9039e-08).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #95 - loss:1.009359 - lr:0.000010 - [avgtime] vo:3.83, pgo:9.75, opt:2.27
+	adj.	loop	tot.
+R	1.2716	2.4665	1.8630
+t	0.0141	0.0272	0.0206
+Start train step 96 ...
+StopOnPlateau on step 0 Loss 3.191183e-03 --> Loss 7.367716e-04 (reduction/loss: 7.6912e-01).
+StopOnPlateau on step 1 Loss 7.367716e-04 --> Loss 7.366145e-04 (reduction/loss: 2.1331e-04).
+StopOnPlateau on step 2 Loss 7.366145e-04 --> Loss 7.366143e-04 (reduction/loss: 1.5804e-07).
+StopOnPlateau on step 3 Loss 7.366143e-04 --> Loss 7.366142e-04 (reduction/loss: 1.5804e-07).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #96 - loss:1.009275 - lr:0.000010 - [avgtime] vo:4.31, pgo:9.74, opt:2.27
+	adj.	loop	tot.
+R	1.2765	2.4721	1.8683
+t	0.0142	0.0274	0.0207
+Start train step 97 ...
+StopOnPlateau on step 0 Loss 3.197570e-03 --> Loss 7.369877e-04 (reduction/loss: 7.6952e-01).
+StopOnPlateau on step 1 Loss 7.369877e-04 --> Loss 7.368279e-04 (reduction/loss: 2.1680e-04).
+StopOnPlateau on step 2 Loss 7.368279e-04 --> Loss 7.368277e-04 (reduction/loss: 2.3699e-07).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #97 - loss:1.009174 - lr:0.000010 - [avgtime] vo:4.10, pgo:7.44, opt:2.31
+	adj.	loop	tot.
+R	1.2810	2.4777	1.8733
+t	0.0143	0.0275	0.0209
+Start train step 98 ...
+StopOnPlateau on step 0 Loss 3.202704e-03 --> Loss 7.367763e-04 (reduction/loss: 7.6995e-01).
+StopOnPlateau on step 1 Loss 7.367763e-04 --> Loss 7.366130e-04 (reduction/loss: 2.2160e-04).
+StopOnPlateau on step 2 Loss 7.366130e-04 --> Loss 7.366128e-04 (reduction/loss: 2.3706e-07).
+StopOnPlateau on step 3 Loss 7.366128e-04 --> Loss 7.366128e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #98 - loss:1.008983 - lr:0.000010 - [avgtime] vo:4.26, pgo:9.44, opt:2.24
+	adj.	loop	tot.
+R	1.2847	2.4822	1.8774
+t	0.0144	0.0277	0.0210
+Start train step 99 ...
+StopOnPlateau on step 0 Loss 3.215129e-03 --> Loss 7.376427e-04 (reduction/loss: 7.7057e-01).
+StopOnPlateau on step 1 Loss 7.376427e-04 --> Loss 7.374774e-04 (reduction/loss: 2.2411e-04).
+StopOnPlateau on step 2 Loss 7.374774e-04 --> Loss 7.374774e-04 (reduction/loss: 0.0000e+00).
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+test_run_pwc+1_1_5000_bp #99 - loss:1.008827 - lr:0.000010 - [avgtime] vo:4.25, pgo:7.41, opt:2.27
+	adj.	loop	tot.
+R	1.2886	2.4870	1.8817
+t	0.0145	0.0279	0.0212
+total train time: 13.934913955628872
+avg step time: 13.934913955628872

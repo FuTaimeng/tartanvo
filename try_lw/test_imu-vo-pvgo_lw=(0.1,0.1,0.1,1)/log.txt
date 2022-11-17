@@ -1,0 +1,70 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: train_results/test_imu-vo-pvgo_lw=(0.1,0.1,0.1,1)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='test_imu-vo-pvgo_lw=(0.1,0.1,0.1,1)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:2', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(0.1, 0.1, 0.1, 1))
+imu preintegration time: 6.542780143208802
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0. -0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0245 -0.0042  0.0043]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.0051]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0. -0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0245 -0.0042  0.0043]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.0051]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [-0. -0. -0.  0. -0.  0.]
+adjvelerr:    torch.Size([50, 3]) [-0.0245 -0.0042  0.0043]
+imuroterr:    torch.Size([50, 3]) [ 0.0029 -0.0001 -0.0051]
+transvelerr:  torch.Size([50, 3]) [ 0.0026 -0.0036 -0.0002]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0017 -0.0001 -0.0008  0.     -0.      0.0001]
+adjvelerr:    torch.Size([50, 3]) [ 0.0074 -0.0025  0.0032]
+imuroterr:    torch.Size([50, 3]) [ 0.003  -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0011  0.0014 -0.0017]
+StopOnPlateau on step 0 Loss 2.015663e-03 --> Loss 1.050920e-03 (reduction/loss: 4.7862e-01).
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0017 -0.0001 -0.0008  0.     -0.      0.0001]
+adjvelerr:    torch.Size([50, 3]) [ 0.0074 -0.0025  0.0032]
+imuroterr:    torch.Size([50, 3]) [ 0.003  -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0011  0.0014 -0.0017]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0017 -0.0001 -0.0008  0.     -0.      0.0001]
+adjvelerr:    torch.Size([50, 3]) [ 0.0074 -0.0025  0.0032]
+imuroterr:    torch.Size([50, 3]) [ 0.003  -0.0001 -0.005 ]
+transvelerr:  torch.Size([50, 3]) [ 0.0011  0.0014 -0.0017]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0013 -0.0003 -0.001   0.0001  0.      0.0002]
+adjvelerr:    torch.Size([50, 3]) [ 0.0072 -0.0027  0.0037]
+imuroterr:    torch.Size([50, 3]) [ 0.0031 -0.0001 -0.0049]
+transvelerr:  torch.Size([50, 3]) [ 0.0009  0.0011 -0.0012]
+StopOnPlateau on step 1 Loss 1.050920e-03 --> Loss 1.030997e-03 (reduction/loss: 1.8958e-02).
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0013 -0.0003 -0.001   0.0001  0.      0.0002]
+adjvelerr:    torch.Size([50, 3]) [ 0.0072 -0.0027  0.0037]
+imuroterr:    torch.Size([50, 3]) [ 0.0031 -0.0001 -0.0049]
+transvelerr:  torch.Size([50, 3]) [ 0.0009  0.0011 -0.0012]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0013 -0.0003 -0.001   0.0001  0.      0.0002]
+adjvelerr:    torch.Size([50, 3]) [ 0.0072 -0.0027  0.0037]
+imuroterr:    torch.Size([50, 3]) [ 0.0031 -0.0001 -0.0049]
+transvelerr:  torch.Size([50, 3]) [ 0.0009  0.0011 -0.0012]
+pvgo errs:
+pgerr:        torch.Size([99, 6]) [ 0.0012 -0.0003 -0.001   0.0002  0.      0.0003]
+adjvelerr:    torch.Size([50, 3]) [ 0.0071 -0.0026  0.0038]
+imuroterr:    torch.Size([50, 3]) [ 0.0031 -0.0001 -0.0048]
+transvelerr:  torch.Size([50, 3]) [ 0.0009  0.0011 -0.0012]
+StopOnPlateau on step 2 Loss 1.030997e-03 --> Loss 1.028863e-03 (reduction/loss: 2.0697e-03).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+test_imu-vo-pvgo_lw=(0.1,0.1,0.1,1) #0 - loss:1.138218 - lr:0.000100 - [avgtime] vo:13.88, cvt:0.00, pgo:17.61, opt:2.20
+	adj.	loop	tot.
+R	0.2542	0.7370	0.4932
+t	0.0034	0.0080	0.0056
+[time] step: 33.69560824614018, print: 0.007556666154414415, snapshot: 0.007625797763466835

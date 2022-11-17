@@ -21,13 +21,14 @@ def motion2pose(data):
         all_pose[i+1,:] = pose_line
     return all_pose
 
-def pose2motion(data, skip=0):
-    data_size = data.shape[0]
-    all_motion = np.zeros((data_size-1,12))
-    for i in range(0,data_size-1-skip):
-        pose_curr = line2mat(data[i,:])
-        pose_next = line2mat(data[i+1+skip,:])
-        motion = pose_curr.I*pose_next
+def pose2motion(data, skip=0, links=None):
+    if links is None:
+        links = [(i, i+skip+1) for i in range(data.shape[0]-skip-1)]
+    all_motion = np.zeros((len(links), 12))
+    for i, l in enumerate(links):
+        pose_curr = line2mat(data[l[0],:])
+        pose_next = line2mat(data[l[1],:])
+        motion = pose_curr.I * pose_next
         motion_line = np.array(motion[0:3,:]).reshape(1,12)
         all_motion[i,:] = motion_line
     return all_motion
@@ -38,10 +39,10 @@ def SE2se(SE_data):
     result[3:6] = SO2so(SE_data[0:3,0:3]).T
     return result
 def SO2so(SO_data):
-    return R.from_dcm(SO_data).as_rotvec()
+    return R.from_matrix(SO_data).as_rotvec()
 
 def so2SO(so_data):
-    return R.from_rotvec(so_data).as_dcm()
+    return R.from_rotvec(so_data).as_matrix()
 
 def se2SE(se_data):
     result_mat = np.matrix(np.eye(4))
@@ -96,6 +97,16 @@ def ses2poses_quat(data):
         all_pose_quat[i+1,:3] = np.array([pose[0,3], pose[1,3], pose[2,3]])
         all_pose_quat[i+1,3:] = quat      
     return all_pose_quat
+
+def ses2pos_quat(data):
+    '''
+    ses: N x 6
+    '''
+    data_size = data.shape[0]
+    pos_quat = np.zeros((data_size,7))
+    for i in range(0,data_size):
+        pos_quat[i] = SE2pos_quat(se2SE(data[i,:]))
+    return pos_quat
     
 def SEs2ses(motion_data):
     data_size = motion_data.shape[0]
@@ -139,15 +150,15 @@ def sos2quats(so_datas,mean_std=[[1],[1]]):
     return quat_datas
 
 def SO2quat(SO_data):
-    rr = R.from_dcm(SO_data)
+    rr = R.from_matrix(SO_data)
     return rr.as_quat()
 
 def quat2SO(quat_data):
-    return R.from_quat(quat_data).as_dcm()
+    return R.from_quat(quat_data).as_matrix()
 
 
 def pos_quat2SE(quat_data):
-    SO = R.from_quat(quat_data[3:7]).as_dcm()
+    SO = R.from_quat(quat_data[3:7]).as_matrix()
     SE = np.matrix(np.eye(4))
     SE[0:3,0:3] = np.matrix(SO)
     SE[0:3,3]   = np.matrix(quat_data[0:3]).T
@@ -168,7 +179,7 @@ def pos_quats2SE_matrices(quat_datas):
     data_len = quat_datas.shape[0]
     SEs = []
     for quat in quat_datas:
-        SO = R.from_quat(quat[3:7]).as_dcm()
+        SO = R.from_quat(quat[3:7]).as_matrix()
         SE = np.eye(4)
         SE[0:3,0:3] = SO
         SE[0:3,3]   = quat[0:3]

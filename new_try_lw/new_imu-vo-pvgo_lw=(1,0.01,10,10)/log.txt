@@ -1,0 +1,27 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: new_try_lw/new_imu-vo-pvgo_lw=(1,0.01,10,10)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='new_imu-vo-pvgo_lw=(1,0.01,10,10)', result_dir='new_try_lw/new_imu-vo-pvgo_lw=(1,0.01,10,10)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:3', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(1, 0.01, 10, 10))
+imu preintegration time: 4.2961043829564005
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+StopOnPlateau on step 0 Loss 1.261287e-01 --> Loss 1.070378e-01 (reduction/loss: 1.5136e-01).
+StopOnPlateau on step 1 Loss 1.070378e-01 --> Loss 4.114372e-02 (reduction/loss: 6.1561e-01).
+StopOnPlateau on step 2 Loss 4.114372e-02 --> Loss 3.936563e-02 (reduction/loss: 4.3217e-02).
+StopOnPlateau on step 3 Loss 3.936563e-02 --> Loss 3.449852e-02 (reduction/loss: 1.2364e-01).
+StopOnPlateau on step 4 Loss 3.449852e-02 --> Loss 3.175084e-02 (reduction/loss: 7.9647e-02).
+StopOnPlateau on step 5 Loss 3.175084e-02 --> Loss 2.984469e-02 (reduction/loss: 6.0034e-02).
+StopOnPlateau on step 6 Loss 2.984469e-02 --> Loss 2.837231e-02 (reduction/loss: 4.9335e-02).
+StopOnPlateau on step 7 Loss 2.837231e-02 --> Loss 2.717993e-02 (reduction/loss: 4.2026e-02).
+StopOnPlateau on step 8 Loss 2.717993e-02 --> Loss 2.619291e-02 (reduction/loss: 3.6314e-02).
+StopOnPlateau on step 9 Loss 2.619291e-02 --> Loss 2.536784e-02 (reduction/loss: 3.1500e-02).
+StopOnPlateau: Maximum steps reached, Quiting..
+new_imu-vo-pvgo_lw=(1,0.01,10,10) #0 - loss:1.097788 - lr:0.000100 - [avgtime] vo:8.38, cvt:0.00, pgo:62.49, opt:2.38
+	adj.	loop	tot.
+R	0.2541	0.7370	0.4931
+t	0.0034	0.0079	0.0056
+[time] step: 73.24836074700579, print: 0.00707089202478528, snapshot: 0.005970107042230666

@@ -1,0 +1,22 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: new_try_lw/new_imu-vo-pvgo_lw=(1,1,100,10)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='new_imu-vo-pvgo_lw=(1,1,100,10)', result_dir='new_try_lw/new_imu-vo-pvgo_lw=(1,1,100,10)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:3', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(1, 1, 100, 10))
+imu preintegration time: 3.985584713984281
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+StopOnPlateau on step 0 Loss 2.127987e-01 --> Loss 2.735217e-02 (reduction/loss: 8.7146e-01).
+StopOnPlateau on step 1 Loss 2.735217e-02 --> Loss 2.207321e-02 (reduction/loss: 1.9300e-01).
+StopOnPlateau on step 2 Loss 2.207321e-02 --> Loss 2.155771e-02 (reduction/loss: 2.3354e-02).
+StopOnPlateau on step 3 Loss 2.155771e-02 --> Loss 2.152376e-02 (reduction/loss: 1.5749e-03).
+StopOnPlateau on step 4 Loss 2.152376e-02 --> Loss 2.152135e-02 (reduction/loss: 1.1164e-04).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(1,1,100,10) #0 - loss:1.151201 - lr:0.000100 - [avgtime] vo:7.38, cvt:0.00, pgo:29.60, opt:2.64
+	adj.	loop	tot.
+R	0.2542	0.7371	0.4932
+t	0.0034	0.0079	0.0056
+[time] step: 39.62316581106279, print: 0.008249006001278758, snapshot: 0.006476311013102531

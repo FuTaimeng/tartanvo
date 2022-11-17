@@ -1,0 +1,22 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: new_try_lw/new_imu-vo-pvgo_lw=(1,1,10,1)
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, model_name='', flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=1, lr=0.0001, print_interval=1, snapshot_interval=10, train_name='new_imu-vo-pvgo_lw=(1,1,10,1)', result_dir='new_try_lw/new_imu-vo-pvgo_lw=(1,1,10,1)', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:3', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(1, 1, 10, 1))
+imu preintegration time: 4.481063190032728
+load pwc network...
+load pose network...
+Model loaded...
+Start train step 0 ...
+StopOnPlateau on step 0 Loss 1.064319e-01 --> Loss 1.812358e-02 (reduction/loss: 8.2972e-01).
+StopOnPlateau on step 1 Loss 1.812358e-02 --> Loss 1.797485e-02 (reduction/loss: 8.2064e-03).
+StopOnPlateau on step 2 Loss 1.797485e-02 --> Loss 1.796995e-02 (reduction/loss: 2.7253e-04).
+StopOnPlateau on step 3 Loss 1.796995e-02 --> Loss 1.793850e-02 (reduction/loss: 1.7506e-03).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+StopOnPlateau: Maximum rejected steps reached, Quiting..
+new_imu-vo-pvgo_lw=(1,1,10,1) #0 - loss:1.105667 - lr:0.000100 - [avgtime] vo:6.67, cvt:0.01, pgo:26.09, opt:3.01
+	adj.	loop	tot.
+R	0.2538	0.7370	0.4930
+t	0.0034	0.0080	0.0056
+[time] step: 35.77294343605172, print: 0.010364354006014764, snapshot: 0.007912585977464914
