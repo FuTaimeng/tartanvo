@@ -84,6 +84,8 @@ def get_args():
                         help='frame/image fps (default: 10.0)')
     parser.add_argument('--loss-weight', default='(1,1,1,1)',
                         help='weight of the loss terms (default: \'(1,1,1,1)\')')
+    parser.add_argument('--mode', default='train-all',
+                        help='running mode: test, train-all (default: train-all)')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -153,7 +155,7 @@ if __name__ == '__main__':
                 imu_poses = np.concatenate((imu_trans, imu_rots), axis=1)
                 np.savetxt(trainroot+'/imu_pose.txt', imu_poses)
                 np.savetxt(trainroot+'/imu_vel.txt', imu_vels)
-                # trainDataset.load_imu_motion(imu_poses)
+                trainDataset.load_imu_motion(imu_poses)
 
             imu_motion_mode = True
 
@@ -194,8 +196,10 @@ if __name__ == '__main__':
         device=args.device, use_imu=(trainDataset.imu_motions is not None), correct_scale=True)
     posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
 
+    if args.mode == 'test':
+        args.train_step = 1
     for train_step_cnt in range(args.train_step):
-        print('Start train step {} ...'.format(train_step_cnt))
+        print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
 
         timer.tic('vo')
@@ -212,9 +216,13 @@ if __name__ == '__main__':
                 break
             
             batch_cnt += 1
-            # print('Batch {}/{} ...'.format(batch_cnt, tot_batch), end='\r')
+            if args.mode.startswith('test'):
+                print('Batch {}/{} ...'.format(batch_cnt, tot_batch), end='\r')
 
-            motion, flow = tartanvo.train_batch(sample)
+            if args.mode.startswith('train'):
+                motion, flow = tartanvo.train_batch(sample)
+            else:
+                motion, flow = tartanvo.test_batch(sample)
             motionlist.extend(motion)
             flowlist.extend(flow)
 
@@ -245,13 +253,14 @@ if __name__ == '__main__':
         
         timer.tic('opt')
 
-        posenetOptimizer.zero_grad()
-        if args.only_backpropagate_loop_edge:
-            N = trainDataset.num_img - 1
-            loss[N:].backward(torch.ones_like(loss[N:]))
-        else:
-            loss.backward(torch.ones_like(loss))
-        posenetOptimizer.step()
+        if args.mode.startswith('train'):
+            posenetOptimizer.zero_grad()
+            if args.only_backpropagate_loop_edge:
+                N = trainDataset.num_img - 1
+                loss[N:].backward(torch.ones_like(loss[N:]))
+            else:
+                loss.backward(torch.ones_like(loss))
+            posenetOptimizer.step()
 
         timer.toc('opt')
 

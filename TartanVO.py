@@ -98,27 +98,18 @@ class TartanVO(object):
             starttime = time.time()
             flow, pose = self.vonet(inputs)
             inferencetime = time.time()-starttime
+            # print("Pose inference using {}s".format(inferencetime))
+
             # import ipdb;ipdb.set_trace()
-            posenp = pose.data.cpu().numpy()
-            posenp = posenp * self.pose_std # The output is normalized during training, now scale it back
-            flownp = flow.data.cpu().numpy()
-            flownp = flownp * self.flow_norm
+            pose = pose * torch.from_numpy(self.pose_std).to(self.device) # The output is normalized during training, now scale it back
+            flow = flow * self.flow_norm
 
-        motion_tar = None
-        if self.use_imu and 'imu_motion' in sample:
-            motion_tar = sample['imu_motion']
-        elif 'motion' in sample:
-            motion_tar = sample['motion']
-        # calculate scale
-        if self.correct_scale and motion_tar is not None:
-            scale = np.linalg.norm(motion_tar[:,:3], axis=1)
-            trans_est = posenp[:,:3]
-            trans_est = trans_est/np.linalg.norm(trans_est,axis=1).reshape(-1,1)*scale.reshape(-1,1)
-            posenp[:,:3] = trans_est 
-        else:
-            print('    scale is not given, using 1 as the default scale value.')
+            pose = self.handle_scale(sample, pose)
 
-        return posenp, flownp
+            pose = pose.cpu()
+            flow = flow.cpu()
+
+        return pose, flow
 
     def train_batch(self, sample):
         # import ipdb;ipdb.set_trace()
@@ -132,15 +123,23 @@ class TartanVO(object):
         starttime = time.time()
         flow, pose = self.vonet(inputs)
         inferencetime = time.time()-starttime
+        # print("Pose inference using {}s".format(inferencetime))
+
         # import ipdb;ipdb.set_trace()
         pose = pose * torch.from_numpy(self.pose_std).to(self.device) # The output is normalized during training, now scale it back
         flow = flow * self.flow_norm
 
+        pose = self.handle_scale(sample, pose)
+
+        return pose, flow
+
+    def handle_scale(self, sample, pose):
         motion_tar = None
         if self.use_imu and 'imu_motion' in sample:
             motion_tar = sample['imu_motion']
         elif 'motion' in sample:
             motion_tar = sample['motion']
+
         # calculate scale
         if self.correct_scale and motion_tar is not None:
             scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).to(self.device)
@@ -149,7 +148,6 @@ class TartanVO(object):
             pose = torch.cat((trans_est, pose[:,3:]), dim=1)
         else:
             print('    scale is not given, using 1 as the default scale value.')
-
-        # print("Pose inference using {}s".format(inferencetime))
-        return pose, flow
+        
+        return pose
 

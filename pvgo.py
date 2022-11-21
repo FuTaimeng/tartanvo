@@ -95,9 +95,10 @@ class PoseVelGraph(nn.Module):
         node2 = nodes[edges[..., 1]].detach()
         motion = node1.Inv() @ node2
         error = poses.Inv() @ motion 
-        trans_loss = torch.norm(error.translation(), dim=1, p=1) / torch.norm(motion.translation(), dim=1, p=1)
-        rot_loss = torch.norm(error.rotation(), dim=1, p=1)
-        loss = rot_loss + trans_loss
+        # trans_loss = torch.norm(error.translation(), dim=1, p=1) / torch.norm(motion.translation(), dim=1, p=1)
+        # rot_loss = torch.norm(error.rotation(), dim=1, p=1)
+        # loss = rot_loss + trans_loss
+        loss = torch.norm(error, dim=1, p=1)
         return loss
 
 

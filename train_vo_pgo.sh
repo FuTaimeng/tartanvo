@@ -3,7 +3,8 @@
 data_dir=/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000
 
 loss_weight='(0.01,0.1,10,1)'
-train_name=new_imu-vo-pvgo_lw=${loss_weight}
+lr=1e-5
+train_name=new_imu-vo-pvgo_lw=${loss_weight}_lr=${lr}_imuscale
 
 rm -r train_results/${train_name}
 mkdir train_results/${train_name}
@@ -19,11 +20,11 @@ python train.py \
     --pose-file ${data_dir}/pose_left.txt \
     --sample-step 1 \
     --start-frame 850 \
-    --end-frame 880 \
-    --train-step 10 \
+    --end-frame 900 \
+    --train-step 200 \
     --print-interval 1 \
     --snapshot-interval 1 \
-    --lr 1e-4 \
+    --lr ${lr} \
     --imu-dir ${data_dir}/imu \
     --device cuda:3 \
     --loss-weight ${loss_weight} \
