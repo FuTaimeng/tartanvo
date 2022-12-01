@@ -34,8 +34,6 @@ def get_args():
                         help='image width (default: 640)')
     parser.add_argument('--image-height', type=int, default=448,
                         help='image height (default: 448)')
-    parser.add_argument('--model-name', default='',
-                        help='name of pretrained model (default: "")')
     parser.add_argument('--flow-model-name', default='',
                         help='name of pretrained flow model (default: "")')
     parser.add_argument('--pose-model-name', default='',
@@ -84,8 +82,14 @@ def get_args():
                         help='frame/image fps (default: 10.0)')
     parser.add_argument('--loss-weight', default='(1,1,1,1)',
                         help='weight of the loss terms (default: \'(1,1,1,1)\')')
-    parser.add_argument('--mode', default='train-all',
+    parser.add_argument('--mode', default='train-all', choices=['test', 'train-all'],
                         help='running mode: test, train-all (default: train-all)')
+    parser.add_argument('--vo-optimizer', default='adam', choices=['adam', 'rmsprop', 'sgd'],
+                        help='VO optimizer: adam, rmsprop, sgd (default: adam)')
+    parser.add_argument('--use-loop-closure', action='store_true', default=False,
+                        help='use loop closure or not (default: False)')
+    parser.add_argument('--use-stop-constraint', action='store_true', default=False,
+                        help='use stop constraint or not (default: False)')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -117,7 +121,8 @@ if __name__ == '__main__':
     trainDataset = TrajFolderDataset(args.test_dir, posefile = args.pose_file, transform=transform, 
                                         focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,
                                         sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
-                                        imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10)
+                                        imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10,
+                                        use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
     trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, 
                                         shuffle=False, num_workers=args.worker_num)
 
@@ -131,6 +136,7 @@ if __name__ == '__main__':
         f.write(str(args))
     np.savetxt(trainroot+'/gt_pose.txt', trainDataset.poses)
     np.savetxt(trainroot+'/link.txt', np.array(trainDataset.links), fmt='%d')
+    np.savetxt(trainroot+'/stop_frame.txt', np.array(trainDataset.stop_frames), fmt='%d')
 
     if args.use_imu:
         if trainDataset.accels is not None:
@@ -194,7 +200,12 @@ if __name__ == '__main__':
 
     tartanvo = TartanVO(flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name, 
         device=args.device, use_imu=(trainDataset.imu_motions is not None), correct_scale=True)
-    posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+    if args.vo_optimizer == 'adam':
+        posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+    elif args.vo_optimizer == 'rmsprop':
+        posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+    elif args.vo_optimizer == 'sgd':
+        posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
 
     if args.mode == 'test':
         args.train_step = 1
@@ -244,8 +255,8 @@ if __name__ == '__main__':
 
         if args.use_imu and args.use_pvgo:
             loss, pgo_poses, pgo_vels = run_pvgo(poses_np, motions, trainDataset.links, 
-                imu_rots, imu_trans, imu_vels, trainDataset.imu_init, 
-                1.0/args.frame_fps, device=args.device, loss_weight=args.loss_weight)
+                imu_rots, imu_trans, imu_vels, trainDataset.imu_init, 1.0/args.frame_fps, 
+                device=args.device, loss_weight=args.loss_weight, stop_frames=trainDataset.stop_frames)
         else:
             loss, pgo_poses = run_pgo(poses_np, motions, trainDataset.links, device=args.device)
             

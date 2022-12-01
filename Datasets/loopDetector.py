@@ -1,7 +1,7 @@
-import numpy as np
-from .transformation import pos_quats2SE_matrices
 import cv2
+import numpy as np
 from scipy.spatial.transform import Rotation
+from .transformation import pos_quats2SE_matrices
 
 
 def is_pose_approximate(T1, T2, trans_th, rot_th):
@@ -16,9 +16,6 @@ def gt_pose_loop_detector(poses, loop_min_interval, trans_th, rot_th):
     Ts = pos_quats2SE_matrices(poses)
 
     links = []
-    for i in range(N-1):
-        links.append((i, i+1))
-
     i = 0
     while i < N:
         flag = False

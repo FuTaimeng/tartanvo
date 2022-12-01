@@ -39,15 +39,15 @@ np.set_printoptions(precision=4, suppress=True, threshold=10000)
 from Network.VONet import VONet
 
 class TartanVO(object):
-    def __init__(self, model_name=None, flow_model_name=None, pose_model_name=None,
+    def __init__(self, pose_model_name, flow_model_name=None, 
                 device='cuda', use_imu=False, correct_scale=True):
         
         # import ipdb;ipdb.set_trace()
         self.vonet = VONet()
 
         # load the whole model
-        if model_name is not None:
-            modelname = 'models/' + model_name
+        if flow_model_name is None or len(flow_model_name) == 0:
+            modelname = 'models/' + pose_model_name
             self.load_model(self.vonet, modelname)
         else:
             print('load pwc network...')
@@ -56,7 +56,7 @@ class TartanVO(object):
             print('load pose network...')
             self.load_model(self.vonet.flowPoseNet, 'models/' + pose_model_name)
             
-        self.pose_std = np.array([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=np.float32) # the output scale factor
+        self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
         self.flow_norm = 20 # scale factor for flow
 
         self.device = device
@@ -101,13 +101,10 @@ class TartanVO(object):
             # print("Pose inference using {}s".format(inferencetime))
 
             # import ipdb;ipdb.set_trace()
-            pose = pose * torch.from_numpy(self.pose_std).to(self.device) # The output is normalized during training, now scale it back
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
             flow = flow * self.flow_norm
 
             pose = self.handle_scale(sample, pose)
-
-            pose = pose.cpu()
-            flow = flow.cpu()
 
         return pose, flow
 
@@ -126,7 +123,7 @@ class TartanVO(object):
         # print("Pose inference using {}s".format(inferencetime))
 
         # import ipdb;ipdb.set_trace()
-        pose = pose * torch.from_numpy(self.pose_std).to(self.device) # The output is normalized during training, now scale it back
+        pose = pose * self.pose_std # The output is normalized during training, now scale it back
         flow = flow * self.flow_norm
 
         pose = self.handle_scale(sample, pose)

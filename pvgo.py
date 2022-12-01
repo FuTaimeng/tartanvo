@@ -16,7 +16,7 @@ from pypose.optim.scheduler import StopOnPlateau
 
  
 class PoseVelGraph(nn.Module):
-    def __init__(self, nodes, vels, device, loss_weight):
+    def __init__(self, nodes, vels, device, loss_weight, stop_frames=[]):
         super().__init__()
         assert nodes.size(0) == vels.size(0)
         # self.nodes = pp.Parameter(nodes)
@@ -36,11 +36,15 @@ class PoseVelGraph(nn.Module):
         self.l3 = loss_weight[2]
         self.l4 = loss_weight[3]
 
+        self.stop_frames = stop_frames
+
+
     def nodes(self):
         return torch.cat([self.node0.to(self.device).view(1, -1), self.para_nodes], dim=0)
     
     def vels(self):
         return torch.cat([self.vel0.to(self.device).view(1, -1), self.para_vels], dim=0)
+
 
     def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dt):
         nodes = self.nodes()
@@ -69,6 +73,9 @@ class PoseVelGraph(nn.Module):
         # trans vel constraint
         transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dt + imu_dtrans)
 
+        # stop constraint
+        stopvelerr = vels[self.stop_frames]
+
         # print("pvgo errs:")
         # print('pgerr:       ', pgerr.size(), pgerr[5].detach().cpu().numpy())
         # print('adjvelerr:   ', adjvelerr.size(), adjvelerr[5].detach().cpu().numpy())
@@ -79,13 +86,15 @@ class PoseVelGraph(nn.Module):
         return torch.cat((  self.l1 * pgerr.view(-1), 
                             self.l2 * adjvelerr.view(-1), 
                             self.l3 * imuroterr.view(-1),
-                            self.l4 * transvelerr.view(-1)  ), dim=0)
+                            self.l4 * transvelerr.view(-1),
+                            self.l2*100 * stopvelerr.view(-1)  ), dim=0)
 
         # # test_run_pg
         # return pgerr.view(-1, 1)
 
         # # test_run_pg-imurot
         # return torch.cat((pgerr.view(-1, 1), imuroterr.view(-1, 1)), dim=0)
+
 
     def vo_loss(self, edges, poses):
         nodes = self.nodes()
@@ -103,7 +112,7 @@ class PoseVelGraph(nn.Module):
 
 
 def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, 
-                device='cuda:0', radius=1e4, loss_weight=(1,1,1,1)):
+                device='cuda:0', radius=1e4, loss_weight=(1,1,1,1), stop_frames=[]):
 
     data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, device)
     nodes, vels = data.nodes, data.vels
@@ -111,32 +120,7 @@ def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np
     imu_drots, imu_dtrans, imu_dvels = data.imu_drots, data.imu_dtrans, data.imu_dvels
     dt, node0, vel0 = data.dt, data.node0, data.vel0
 
-    
-
-    ############################## for test ##############################
-    # temp_lw = list(loss_weight)
-    # temp_lw[-1] = 0
-    # graph = PoseVelGraph(nodes, vels, device, temp_lw).to(device)
-    # solver = ppos.Cholesky()
-    # strategy = ppost.TrustRegion(radius=radius)
-    # optimizer = pp.optim.LM(graph, solver=solver, strategy=strategy, min=1e-4, vectorize=False)
-    # scheduler = StopOnPlateau(optimizer, steps=10, patience=3, decreasing=1e-3, verbose=True)
-
-    # ### the 1st implementation: for customization and easy to extend
-    # while scheduler.continual:
-    #     # TODO: weights
-    #     loss = optimizer.step(input=(edges, poses, imu_drots, imu_dtrans, imu_dvels, dt))
-    #     scheduler.step(loss)
-    #     # graph.nodes[0].data = node0
-    #     # graph.vels[0].data = vel0
-
-    # nodes = graph.nodes().detach()
-    # vels = graph.vels().detach()
-    ############################## test end ##############################
-
-
-
-    graph = PoseVelGraph(nodes, vels, device, loss_weight).to(device)
+    graph = PoseVelGraph(nodes, vels, device, loss_weight, stop_frames).to(device)
     solver = ppos.Cholesky()
     strategy = ppost.TrustRegion(radius=radius)
     optimizer = pp.optim.LM(graph, solver=solver, strategy=strategy, min=1e-4, vectorize=False)

@@ -1,0 +1,2210 @@
+Environment variable DISPLAY is not present in the system.
+Switch the backend of matplotlib to agg.
+Load 51 of 2176 image files (st:850, end:901, step:1) in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left
+Load (50, 10) of 21750 IMU frames in /data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu
+Train root: train_results/new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale
+Namespace(batch_size=1, worker_num=1, image_width=640, image_height=448, flow_model_name='pwc_net.pth.tar', pose_model_name='1_1_sample_voflow_200000.pkl', euroc=False, kitti=False, kitti_intrinsics_file='', test_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/image_left', pose_file='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/pose_left.txt', save_flow=False, sample_step=1, start_frame=850, end_frame=900, train_step=200, lr=1e-05, print_interval=1, snapshot_interval=1, train_name='new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale', result_dir='train_results/new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale', only_backpropagate_loop_edge=False, imu_dir='/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000/imu', device='cuda:5', use_imu=True, use_pvgo=True, frame_fps=10.0, loss_weight=(0.01, 0.1, 10, 1), mode='train-all', vo_optimizer='sgd')
+imu preintegration time: 21.95920688100159
+load pwc network...
+load pose network...
+Model loaded...
+Start train-all step 0 ...
+StopOnPlateau on step 0 Loss 2.170872e-03 --> Loss 1.139938e-05 (reduction/loss: 9.9475e-01).
+StopOnPlateau on step 1 Loss 1.139938e-05 --> Loss 9.089526e-06 (reduction/loss: 2.0263e-01).
+StopOnPlateau on step 2 Loss 9.089526e-06 --> Loss 8.355351e-06 (reduction/loss: 8.0772e-02).
+StopOnPlateau on step 3 Loss 8.355351e-06 --> Loss 7.639857e-06 (reduction/loss: 8.5633e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #0 - loss:1.016926 - lr:0.000010 - [avgtime] vo:28.38, cvt:0.02, pgo:274.24, opt:4.55
+	adj.	loop	tot.
+R	0.2539	0.7369	0.4930
+t	0.0051	0.0109	0.0079
+[time] step: 307.1915690610185, print: 0.013981952099129558, snapshot: 0.008679765975102782
+Start train-all step 1 ...
+StopOnPlateau on step 0 Loss 2.178814e-03 --> Loss 1.134923e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.134923e-05 --> Loss 9.057444e-06 (reduction/loss: 2.0193e-01).
+StopOnPlateau on step 2 Loss 9.057444e-06 --> Loss 8.327883e-06 (reduction/loss: 8.0548e-02).
+StopOnPlateau on step 3 Loss 8.327883e-06 --> Loss 7.614025e-06 (reduction/loss: 8.5719e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #1 - loss:1.016854 - lr:0.000010 - [avgtime] vo:12.51, cvt:0.02, pgo:272.53, opt:3.70
+	adj.	loop	tot.
+R	0.2516	0.7325	0.4896
+t	0.0051	0.0108	0.0079
+[time] step: 288.7527854091022, print: 0.018982741981744766, snapshot: 0.007997786859050393
+Start train-all step 2 ...
+StopOnPlateau on step 0 Loss 2.174967e-03 --> Loss 1.128928e-05 (reduction/loss: 9.9481e-01).
+StopOnPlateau on step 1 Loss 1.128928e-05 --> Loss 9.021397e-06 (reduction/loss: 2.0089e-01).
+StopOnPlateau on step 2 Loss 9.021397e-06 --> Loss 8.297620e-06 (reduction/loss: 8.0229e-02).
+StopOnPlateau on step 3 Loss 8.297620e-06 --> Loss 7.585566e-06 (reduction/loss: 8.5814e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #2 - loss:1.016778 - lr:0.000010 - [avgtime] vo:11.30, cvt:0.02, pgo:272.84, opt:3.68
+	adj.	loop	tot.
+R	0.2489	0.7270	0.4855
+t	0.0050	0.0108	0.0079
+[time] step: 287.8462662899401, print: 0.02071505901403725, snapshot: 0.008082046872004867
+Start train-all step 3 ...
+StopOnPlateau on step 0 Loss 2.168340e-03 --> Loss 1.125043e-05 (reduction/loss: 9.9481e-01).
+StopOnPlateau on step 1 Loss 1.125043e-05 --> Loss 8.994510e-06 (reduction/loss: 2.0052e-01).
+StopOnPlateau on step 2 Loss 8.994510e-06 --> Loss 8.273748e-06 (reduction/loss: 8.0134e-02).
+StopOnPlateau on step 3 Loss 8.273748e-06 --> Loss 7.561556e-06 (reduction/loss: 8.6079e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #3 - loss:1.016703 - lr:0.000010 - [avgtime] vo:13.38, cvt:0.02, pgo:272.31, opt:3.68
+	adj.	loop	tot.
+R	0.2459	0.7219	0.4815
+t	0.0050	0.0108	0.0079
+[time] step: 289.3823409951292, print: 0.02063150890171528, snapshot: 0.0062637850642204285
+Start train-all step 4 ...
+StopOnPlateau on step 0 Loss 2.146655e-03 --> Loss 1.119415e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.119415e-05 --> Loss 8.955813e-06 (reduction/loss: 1.9996e-01).
+StopOnPlateau on step 2 Loss 8.955813e-06 --> Loss 8.238609e-06 (reduction/loss: 8.0082e-02).
+StopOnPlateau on step 3 Loss 8.238609e-06 --> Loss 7.529745e-06 (reduction/loss: 8.6042e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #4 - loss:1.016620 - lr:0.000010 - [avgtime] vo:13.46, cvt:0.02, pgo:272.85, opt:3.68
+	adj.	loop	tot.
+R	0.2434	0.7174	0.4780
+t	0.0050	0.0108	0.0079
+[time] step: 290.00762372789904, print: 0.022849733941257, snapshot: 0.007399377878755331
+Start train-all step 5 ...
+StopOnPlateau on step 0 Loss 2.152320e-03 --> Loss 1.115653e-05 (reduction/loss: 9.9482e-01).
+StopOnPlateau on step 1 Loss 1.115653e-05 --> Loss 8.931343e-06 (reduction/loss: 1.9945e-01).
+StopOnPlateau on step 2 Loss 8.931343e-06 --> Loss 8.216340e-06 (reduction/loss: 8.0055e-02).
+StopOnPlateau on step 3 Loss 8.216340e-06 --> Loss 7.507180e-06 (reduction/loss: 8.6311e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #5 - loss:1.016549 - lr:0.000010 - [avgtime] vo:13.46, cvt:0.02, pgo:272.80, opt:3.70
+	adj.	loop	tot.
+R	0.2404	0.7123	0.4740
+t	0.0050	0.0107	0.0078
+[time] step: 289.9907393909525, print: 0.022726378869265318, snapshot: 0.009884489001706243
+Start train-all step 6 ...
+StopOnPlateau on step 0 Loss 2.135981e-03 --> Loss 1.110022e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.110022e-05 --> Loss 8.895992e-06 (reduction/loss: 1.9858e-01).
+StopOnPlateau on step 2 Loss 8.895992e-06 --> Loss 8.186558e-06 (reduction/loss: 7.9748e-02).
+StopOnPlateau on step 3 Loss 8.186558e-06 --> Loss 7.479196e-06 (reduction/loss: 8.6405e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #6 - loss:1.016475 - lr:0.000010 - [avgtime] vo:13.38, cvt:0.02, pgo:272.71, opt:3.68
+	adj.	loop	tot.
+R	0.2379	0.7077	0.4704
+t	0.0050	0.0107	0.0078
+[time] step: 289.7861104418989, print: 0.020696863997727633, snapshot: 0.006450210930779576
+Start train-all step 7 ...
+StopOnPlateau on step 0 Loss 2.131175e-03 --> Loss 1.105758e-05 (reduction/loss: 9.9481e-01).
+StopOnPlateau on step 1 Loss 1.105758e-05 --> Loss 8.867907e-06 (reduction/loss: 1.9802e-01).
+StopOnPlateau on step 2 Loss 8.867907e-06 --> Loss 8.161093e-06 (reduction/loss: 7.9705e-02).
+StopOnPlateau on step 3 Loss 8.161093e-06 --> Loss 7.453971e-06 (reduction/loss: 8.6646e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #7 - loss:1.016400 - lr:0.000010 - [avgtime] vo:12.97, cvt:0.02, pgo:272.59, opt:3.69
+	adj.	loop	tot.
+R	0.2349	0.7023	0.4662
+t	0.0050	0.0107	0.0078
+[time] step: 289.27180785592645, print: 0.018530800007283688, snapshot: 0.006789195816963911
+Start train-all step 8 ...
+StopOnPlateau on step 0 Loss 2.120166e-03 --> Loss 1.101523e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.101523e-05 --> Loss 8.837807e-06 (reduction/loss: 1.9767e-01).
+StopOnPlateau on step 2 Loss 8.837807e-06 --> Loss 8.133269e-06 (reduction/loss: 7.9719e-02).
+StopOnPlateau on step 3 Loss 8.133269e-06 --> Loss 7.427663e-06 (reduction/loss: 8.6756e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #8 - loss:1.016330 - lr:0.000010 - [avgtime] vo:12.89, cvt:0.02, pgo:272.84, opt:3.68
+	adj.	loop	tot.
+R	0.2325	0.6980	0.4629
+t	0.0049	0.0107	0.0078
+[time] step: 289.43019833695143, print: 0.021651781164109707, snapshot: 0.006632216041907668
+Start train-all step 9 ...
+StopOnPlateau on step 0 Loss 2.103464e-03 --> Loss 1.097641e-05 (reduction/loss: 9.9478e-01).
+StopOnPlateau on step 1 Loss 1.097641e-05 --> Loss 8.812777e-06 (reduction/loss: 1.9712e-01).
+StopOnPlateau on step 2 Loss 8.812777e-06 --> Loss 8.110497e-06 (reduction/loss: 7.9689e-02).
+StopOnPlateau on step 3 Loss 8.110497e-06 --> Loss 7.404862e-06 (reduction/loss: 8.7003e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #9 - loss:1.016247 - lr:0.000010 - [avgtime] vo:12.31, cvt:0.02, pgo:272.73, opt:3.68
+	adj.	loop	tot.
+R	0.2291	0.6925	0.4585
+t	0.0049	0.0106	0.0077
+[time] step: 288.7350173711311, print: 0.022799364989623427, snapshot: 0.007509617134928703
+Start train-all step 10 ...
+StopOnPlateau on step 0 Loss 2.100101e-03 --> Loss 1.094368e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.094368e-05 --> Loss 8.791170e-06 (reduction/loss: 1.9669e-01).
+StopOnPlateau on step 2 Loss 8.791170e-06 --> Loss 8.090612e-06 (reduction/loss: 7.9689e-02).
+StopOnPlateau on step 3 Loss 8.090612e-06 --> Loss 7.384527e-06 (reduction/loss: 8.7272e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #10 - loss:1.016171 - lr:0.000010 - [avgtime] vo:13.21, cvt:0.02, pgo:272.56, opt:3.68
+	adj.	loop	tot.
+R	0.2263	0.6868	0.4542
+t	0.0049	0.0106	0.0077
+[time] step: 289.47131493501365, print: 0.020389107055962086, snapshot: 0.006949740927666426
+Start train-all step 11 ...
+StopOnPlateau on step 0 Loss 2.108059e-03 --> Loss 1.090322e-05 (reduction/loss: 9.9483e-01).
+StopOnPlateau on step 1 Loss 1.090322e-05 --> Loss 8.768040e-06 (reduction/loss: 1.9583e-01).
+StopOnPlateau on step 2 Loss 8.768040e-06 --> Loss 8.071847e-06 (reduction/loss: 7.9401e-02).
+StopOnPlateau on step 3 Loss 8.071847e-06 --> Loss 7.367291e-06 (reduction/loss: 8.7286e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #11 - loss:1.016121 - lr:0.000010 - [avgtime] vo:12.48, cvt:0.02, pgo:272.50, opt:3.68
+	adj.	loop	tot.
+R	0.2248	0.6833	0.4517
+t	0.0049	0.0106	0.0077
+[time] step: 288.68495096010156, print: 0.026840782025828958, snapshot: 0.00861654500477016
+Start train-all step 12 ...
+StopOnPlateau on step 0 Loss 2.098631e-03 --> Loss 1.086069e-05 (reduction/loss: 9.9482e-01).
+StopOnPlateau on step 1 Loss 1.086069e-05 --> Loss 8.742578e-06 (reduction/loss: 1.9503e-01).
+StopOnPlateau on step 2 Loss 8.742578e-06 --> Loss 8.050016e-06 (reduction/loss: 7.9217e-02).
+StopOnPlateau on step 3 Loss 8.050016e-06 --> Loss 7.344899e-06 (reduction/loss: 8.7592e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #12 - loss:1.016039 - lr:0.000010 - [avgtime] vo:13.52, cvt:0.02, pgo:272.82, opt:3.68
+	adj.	loop	tot.
+R	0.2216	0.6775	0.4473
+t	0.0049	0.0106	0.0077
+[time] step: 290.0395942539908, print: 0.02058237697929144, snapshot: 0.008190845139324665
+Start train-all step 13 ...
+StopOnPlateau on step 0 Loss 2.088255e-03 --> Loss 1.081921e-05 (reduction/loss: 9.9482e-01).
+StopOnPlateau on step 1 Loss 1.081921e-05 --> Loss 8.716622e-06 (reduction/loss: 1.9434e-01).
+StopOnPlateau on step 2 Loss 8.716622e-06 --> Loss 8.027395e-06 (reduction/loss: 7.9070e-02).
+StopOnPlateau on step 3 Loss 8.027395e-06 --> Loss 7.323208e-06 (reduction/loss: 8.7723e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #13 - loss:1.015978 - lr:0.000010 - [avgtime] vo:12.18, cvt:0.02, pgo:272.93, opt:3.67
+	adj.	loop	tot.
+R	0.2196	0.6738	0.4444
+t	0.0049	0.0105	0.0077
+[time] step: 288.7949165632017, print: 0.022153300931677222, snapshot: 0.0070537300780415535
+Start train-all step 14 ...
+StopOnPlateau on step 0 Loss 2.086828e-03 --> Loss 1.077828e-05 (reduction/loss: 9.9484e-01).
+StopOnPlateau on step 1 Loss 1.077828e-05 --> Loss 8.689045e-06 (reduction/loss: 1.9384e-01).
+StopOnPlateau on step 2 Loss 8.689045e-06 --> Loss 8.003181e-06 (reduction/loss: 7.8934e-02).
+StopOnPlateau on step 3 Loss 8.003181e-06 --> Loss 7.298578e-06 (reduction/loss: 8.8040e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #14 - loss:1.015896 - lr:0.000010 - [avgtime] vo:11.59, cvt:0.02, pgo:272.97, opt:3.68
+	adj.	loop	tot.
+R	0.2168	0.6677	0.4400
+t	0.0049	0.0105	0.0077
+[time] step: 288.2545415791683, print: 0.02278860006481409, snapshot: 0.008848436875268817
+Start train-all step 15 ...
+StopOnPlateau on step 0 Loss 2.073016e-03 --> Loss 1.074887e-05 (reduction/loss: 9.9481e-01).
+StopOnPlateau on step 1 Loss 1.074887e-05 --> Loss 8.669067e-06 (reduction/loss: 1.9349e-01).
+StopOnPlateau on step 2 Loss 8.669067e-06 --> Loss 7.983514e-06 (reduction/loss: 7.9080e-02).
+StopOnPlateau on step 3 Loss 7.983514e-06 --> Loss 7.280254e-06 (reduction/loss: 8.8089e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #15 - loss:1.015836 - lr:0.000010 - [avgtime] vo:16.33, cvt:0.02, pgo:273.33, opt:3.68
+	adj.	loop	tot.
+R	0.2145	0.6637	0.4368
+t	0.0049	0.0105	0.0076
+[time] step: 293.3688633260317, print: 0.02063922700472176, snapshot: 0.008052913006395102
+Start train-all step 16 ...
+StopOnPlateau on step 0 Loss 2.058787e-03 --> Loss 1.071287e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.071287e-05 --> Loss 8.643029e-06 (reduction/loss: 1.9321e-01).
+StopOnPlateau on step 2 Loss 8.643029e-06 --> Loss 7.959388e-06 (reduction/loss: 7.9097e-02).
+StopOnPlateau on step 3 Loss 7.959388e-06 --> Loss 7.256413e-06 (reduction/loss: 8.8320e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #16 - loss:1.015759 - lr:0.000010 - [avgtime] vo:11.64, cvt:0.02, pgo:273.02, opt:3.68
+	adj.	loop	tot.
+R	0.2114	0.6586	0.4328
+t	0.0048	0.0105	0.0076
+[time] step: 288.3560940308962, print: 0.018450089963153005, snapshot: 0.005860607838258147
+Start train-all step 17 ...
+StopOnPlateau on step 0 Loss 2.047457e-03 --> Loss 1.067184e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.067184e-05 --> Loss 8.616147e-06 (reduction/loss: 1.9263e-01).
+StopOnPlateau on step 2 Loss 8.616147e-06 --> Loss 7.935172e-06 (reduction/loss: 7.9035e-02).
+StopOnPlateau on step 3 Loss 7.935172e-06 --> Loss 7.233069e-06 (reduction/loss: 8.8480e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #17 - loss:1.015697 - lr:0.000010 - [avgtime] vo:13.52, cvt:0.02, pgo:273.38, opt:3.68
+	adj.	loop	tot.
+R	0.2092	0.6538	0.4293
+t	0.0048	0.0104	0.0076
+[time] step: 290.5960957140196, print: 0.024804908083751798, snapshot: 0.014078675070777535
+Start train-all step 18 ...
+StopOnPlateau on step 0 Loss 2.042322e-03 --> Loss 1.062903e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.062903e-05 --> Loss 8.589572e-06 (reduction/loss: 1.9188e-01).
+StopOnPlateau on step 2 Loss 8.589572e-06 --> Loss 7.912126e-06 (reduction/loss: 7.8868e-02).
+StopOnPlateau on step 3 Loss 7.912126e-06 --> Loss 7.211319e-06 (reduction/loss: 8.8574e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #18 - loss:1.015624 - lr:0.000010 - [avgtime] vo:12.18, cvt:0.02, pgo:272.97, opt:3.69
+	adj.	loop	tot.
+R	0.2066	0.6489	0.4255
+t	0.0048	0.0104	0.0076
+[time] step: 288.8471505648922, print: 0.023862043162807822, snapshot: 0.008446803083643317
+Start train-all step 19 ...
+StopOnPlateau on step 0 Loss 2.032630e-03 --> Loss 1.059704e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.059704e-05 --> Loss 8.567098e-06 (reduction/loss: 1.9156e-01).
+StopOnPlateau on step 2 Loss 8.567098e-06 --> Loss 7.890569e-06 (reduction/loss: 7.8968e-02).
+StopOnPlateau on step 3 Loss 7.890569e-06 --> Loss 7.189797e-06 (reduction/loss: 8.8811e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #19 - loss:1.015558 - lr:0.000010 - [avgtime] vo:12.65, cvt:0.02, pgo:272.80, opt:3.68
+	adj.	loop	tot.
+R	0.2042	0.6446	0.4222
+t	0.0048	0.0104	0.0076
+[time] step: 289.1531397339422, print: 0.020445107016712427, snapshot: 0.00673860008828342
+Start train-all step 20 ...
+StopOnPlateau on step 0 Loss 2.032443e-03 --> Loss 1.056862e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.056862e-05 --> Loss 8.550648e-06 (reduction/loss: 1.9094e-01).
+StopOnPlateau on step 2 Loss 8.550648e-06 --> Loss 7.876321e-06 (reduction/loss: 7.8863e-02).
+StopOnPlateau on step 3 Loss 7.876321e-06 --> Loss 7.175311e-06 (reduction/loss: 8.9002e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #20 - loss:1.015497 - lr:0.000010 - [avgtime] vo:12.39, cvt:0.02, pgo:274.21, opt:3.67
+	adj.	loop	tot.
+R	0.2019	0.6400	0.4187
+t	0.0048	0.0104	0.0076
+[time] step: 290.29513897304423, print: 0.024768908973783255, snapshot: 0.023216212866827846
+Start train-all step 21 ...
+StopOnPlateau on step 0 Loss 2.022627e-03 --> Loss 1.054658e-05 (reduction/loss: 9.9479e-01).
+StopOnPlateau on step 1 Loss 1.054658e-05 --> Loss 8.536812e-06 (reduction/loss: 1.9056e-01).
+StopOnPlateau on step 2 Loss 8.536812e-06 --> Loss 7.862620e-06 (reduction/loss: 7.8975e-02).
+StopOnPlateau on step 3 Loss 7.862620e-06 --> Loss 7.160312e-06 (reduction/loss: 8.9322e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #21 - loss:1.015432 - lr:0.000010 - [avgtime] vo:12.47, cvt:0.02, pgo:272.90, opt:3.68
+	adj.	loop	tot.
+R	0.1995	0.6352	0.4151
+t	0.0048	0.0104	0.0075
+[time] step: 289.0700547071174, print: 0.02074074000120163, snapshot: 0.022350826067849994
+Start train-all step 22 ...
+StopOnPlateau on step 0 Loss 2.020155e-03 --> Loss 1.051312e-05 (reduction/loss: 9.9480e-01).
+StopOnPlateau on step 1 Loss 1.051312e-05 --> Loss 8.516819e-06 (reduction/loss: 1.8989e-01).
+StopOnPlateau on step 2 Loss 8.516819e-06 --> Loss 7.845259e-06 (reduction/loss: 7.8851e-02).
+StopOnPlateau on step 3 Loss 7.845259e-06 --> Loss 7.143766e-06 (reduction/loss: 8.9416e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #22 - loss:1.015371 - lr:0.000010 - [avgtime] vo:14.18, cvt:0.02, pgo:272.97, opt:3.69
+	adj.	loop	tot.
+R	0.1975	0.6310	0.4121
+t	0.0048	0.0103	0.0075
+[time] step: 290.856308856979, print: 0.02062110207043588, snapshot: 0.00732018705457449
+Start train-all step 23 ...
+StopOnPlateau on step 0 Loss 2.005771e-03 --> Loss 1.048186e-05 (reduction/loss: 9.9477e-01).
+StopOnPlateau on step 1 Loss 1.048186e-05 --> Loss 8.495551e-06 (reduction/loss: 1.8950e-01).
+StopOnPlateau on step 2 Loss 8.495551e-06 --> Loss 7.825714e-06 (reduction/loss: 7.8846e-02).
+StopOnPlateau on step 3 Loss 7.825714e-06 --> Loss 7.123183e-06 (reduction/loss: 8.9772e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #23 - loss:1.015302 - lr:0.000010 - [avgtime] vo:12.83, cvt:0.02, pgo:273.08, opt:3.68
+	adj.	loop	tot.
+R	0.1950	0.6251	0.4079
+t	0.0048	0.0103	0.0075
+[time] step: 289.60738948290236, print: 0.025096822064369917, snapshot: 0.006741455057635903
+Start train-all step 24 ...
+StopOnPlateau on step 0 Loss 1.992934e-03 --> Loss 1.046202e-05 (reduction/loss: 9.9475e-01).
+StopOnPlateau on step 1 Loss 1.046202e-05 --> Loss 8.477589e-06 (reduction/loss: 1.8968e-01).
+StopOnPlateau on step 2 Loss 8.477589e-06 --> Loss 7.805937e-06 (reduction/loss: 7.9227e-02).
+StopOnPlateau on step 3 Loss 7.805937e-06 --> Loss 7.103532e-06 (reduction/loss: 8.9983e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #24 - loss:1.015230 - lr:0.000010 - [avgtime] vo:16.34, cvt:0.02, pgo:272.72, opt:3.67
+	adj.	loop	tot.
+R	0.1921	0.6214	0.4046
+t	0.0047	0.0103	0.0075
+[time] step: 292.75312751112506, print: 0.02272957400418818, snapshot: 0.008246561046689749
+Start train-all step 25 ...
+StopOnPlateau on step 0 Loss 1.993967e-03 --> Loss 1.042384e-05 (reduction/loss: 9.9477e-01).
+StopOnPlateau on step 1 Loss 1.042384e-05 --> Loss 8.456025e-06 (reduction/loss: 1.8878e-01).
+StopOnPlateau on step 2 Loss 8.456025e-06 --> Loss 7.787931e-06 (reduction/loss: 7.9008e-02).
+StopOnPlateau on step 3 Loss 7.787931e-06 --> Loss 7.086092e-06 (reduction/loss: 9.0119e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #25 - loss:1.015173 - lr:0.000010 - [avgtime] vo:13.55, cvt:0.02, pgo:272.30, opt:3.68
+	adj.	loop	tot.
+R	0.1901	0.6161	0.4010
+t	0.0047	0.0103	0.0075
+[time] step: 289.55490646418184, print: 0.018551248125731945, snapshot: 0.006902711000293493
+Start train-all step 26 ...
+StopOnPlateau on step 0 Loss 1.988109e-03 --> Loss 1.040183e-05 (reduction/loss: 9.9477e-01).
+StopOnPlateau on step 1 Loss 1.040183e-05 --> Loss 8.444231e-06 (reduction/loss: 1.8820e-01).
+StopOnPlateau on step 2 Loss 8.444231e-06 --> Loss 7.777173e-06 (reduction/loss: 7.8996e-02).
+StopOnPlateau on step 3 Loss 7.777173e-06 --> Loss 7.075117e-06 (reduction/loss: 9.0271e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #26 - loss:1.015121 - lr:0.000010 - [avgtime] vo:13.13, cvt:0.02, pgo:272.37, opt:3.67
+	adj.	loop	tot.
+R	0.1882	0.6128	0.3983
+t	0.0047	0.0103	0.0075
+[time] step: 289.1931926570833, print: 0.018161005806177855, snapshot: 0.007095237961038947
+Start train-all step 27 ...
+StopOnPlateau on step 0 Loss 1.985592e-03 --> Loss 1.037888e-05 (reduction/loss: 9.9477e-01).
+StopOnPlateau on step 1 Loss 1.037888e-05 --> Loss 8.431802e-06 (reduction/loss: 1.8760e-01).
+StopOnPlateau on step 2 Loss 8.431802e-06 --> Loss 7.765930e-06 (reduction/loss: 7.8971e-02).
+StopOnPlateau on step 3 Loss 7.765930e-06 --> Loss 7.061785e-06 (reduction/loss: 9.0671e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #27 - loss:1.015056 - lr:0.000010 - [avgtime] vo:12.87, cvt:0.02, pgo:272.49, opt:3.67
+	adj.	loop	tot.
+R	0.1856	0.6074	0.3943
+t	0.0047	0.0102	0.0074
+[time] step: 289.05272397585213, print: 0.02485649287700653, snapshot: 0.007475903024896979
+Start train-all step 28 ...
+StopOnPlateau on step 0 Loss 1.981852e-03 --> Loss 1.034893e-05 (reduction/loss: 9.9478e-01).
+StopOnPlateau on step 1 Loss 1.034893e-05 --> Loss 8.415514e-06 (reduction/loss: 1.8682e-01).
+StopOnPlateau on step 2 Loss 8.415514e-06 --> Loss 7.752871e-06 (reduction/loss: 7.8741e-02).
+StopOnPlateau on step 3 Loss 7.752871e-06 --> Loss 7.048380e-06 (reduction/loss: 9.0868e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #28 - loss:1.015002 - lr:0.000010 - [avgtime] vo:12.81, cvt:0.02, pgo:273.25, opt:3.67
+	adj.	loop	tot.
+R	0.1839	0.6033	0.3915
+t	0.0047	0.0102	0.0074
+[time] step: 289.7475490788929, print: 0.021044245222583413, snapshot: 0.007940958021208644
+Start train-all step 29 ...
+StopOnPlateau on step 0 Loss 1.972964e-03 --> Loss 1.032918e-05 (reduction/loss: 9.9476e-01).
+StopOnPlateau on step 1 Loss 1.032918e-05 --> Loss 8.405408e-06 (reduction/loss: 1.8625e-01).
+StopOnPlateau on step 2 Loss 8.405408e-06 --> Loss 7.743100e-06 (reduction/loss: 7.8796e-02).
+StopOnPlateau on step 3 Loss 7.743100e-06 --> Loss 7.038044e-06 (reduction/loss: 9.1056e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #29 - loss:1.014940 - lr:0.000010 - [avgtime] vo:11.59, cvt:0.02, pgo:272.63, opt:3.69
+	adj.	loop	tot.
+R	0.1816	0.5980	0.3877
+t	0.0047	0.0102	0.0074
+[time] step: 287.93234356609173, print: 0.01903415913693607, snapshot: 0.00698605109937489
+Start train-all step 30 ...
+StopOnPlateau on step 0 Loss 1.971819e-03 --> Loss 1.032322e-05 (reduction/loss: 9.9476e-01).
+StopOnPlateau on step 1 Loss 1.032322e-05 --> Loss 8.401525e-06 (reduction/loss: 1.8615e-01).
+StopOnPlateau on step 2 Loss 8.401525e-06 --> Loss 7.737682e-06 (reduction/loss: 7.9015e-02).
+StopOnPlateau on step 3 Loss 7.737682e-06 --> Loss 7.030769e-06 (reduction/loss: 9.1360e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #30 - loss:1.014891 - lr:0.000010 - [avgtime] vo:11.83, cvt:0.02, pgo:272.75, opt:3.68
+	adj.	loop	tot.
+R	0.1797	0.5941	0.3848
+t	0.0047	0.0102	0.0074
+[time] step: 288.2794629109558, print: 0.018413187004625797, snapshot: 0.006474766880273819
+Start train-all step 31 ...
+StopOnPlateau on step 0 Loss 1.958882e-03 --> Loss 1.030456e-05 (reduction/loss: 9.9474e-01).
+StopOnPlateau on step 1 Loss 1.030456e-05 --> Loss 8.391368e-06 (reduction/loss: 1.8566e-01).
+StopOnPlateau on step 2 Loss 8.391368e-06 --> Loss 7.727392e-06 (reduction/loss: 7.9126e-02).
+StopOnPlateau on step 3 Loss 7.727392e-06 --> Loss 7.017752e-06 (reduction/loss: 9.1834e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #31 - loss:1.014828 - lr:0.000010 - [avgtime] vo:12.40, cvt:0.02, pgo:272.11, opt:3.67
+	adj.	loop	tot.
+R	0.1772	0.5895	0.3813
+t	0.0047	0.0102	0.0074
+[time] step: 288.205459816847, print: 0.024028167128562927, snapshot: 0.008346519898623228
+Start train-all step 32 ...
+StopOnPlateau on step 0 Loss 1.951649e-03 --> Loss 1.029155e-05 (reduction/loss: 9.9473e-01).
+StopOnPlateau on step 1 Loss 1.029155e-05 --> Loss 8.382426e-06 (reduction/loss: 1.8550e-01).
+StopOnPlateau on step 2 Loss 8.382426e-06 --> Loss 7.716806e-06 (reduction/loss: 7.9407e-02).
+StopOnPlateau on step 3 Loss 7.716806e-06 --> Loss 7.006719e-06 (reduction/loss: 9.2018e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #32 - loss:1.014757 - lr:0.000010 - [avgtime] vo:13.56, cvt:0.02, pgo:272.74, opt:3.69
+	adj.	loop	tot.
+R	0.1745	0.5845	0.3774
+t	0.0047	0.0102	0.0074
+[time] step: 290.01344399387017, print: 0.01862062094733119, snapshot: 0.007758371066302061
+Start train-all step 33 ...
+StopOnPlateau on step 0 Loss 1.953713e-03 --> Loss 1.027254e-05 (reduction/loss: 9.9474e-01).
+StopOnPlateau on step 1 Loss 1.027254e-05 --> Loss 8.373334e-06 (reduction/loss: 1.8488e-01).
+StopOnPlateau on step 2 Loss 8.373334e-06 --> Loss 7.708877e-06 (reduction/loss: 7.9354e-02).
+StopOnPlateau on step 3 Loss 7.708877e-06 --> Loss 6.997462e-06 (reduction/loss: 9.2285e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #33 - loss:1.014715 - lr:0.000010 - [avgtime] vo:11.99, cvt:0.02, pgo:272.55, opt:3.69
+	adj.	loop	tot.
+R	0.1733	0.5804	0.3748
+t	0.0046	0.0102	0.0074
+[time] step: 288.24935987894423, print: 0.02146308310329914, snapshot: 0.016482981853187084
+Start train-all step 34 ...
+StopOnPlateau on step 0 Loss 1.955391e-03 --> Loss 1.025761e-05 (reduction/loss: 9.9475e-01).
+StopOnPlateau on step 1 Loss 1.025761e-05 --> Loss 8.370207e-06 (reduction/loss: 1.8400e-01).
+StopOnPlateau on step 2 Loss 8.370207e-06 --> Loss 7.707480e-06 (reduction/loss: 7.9177e-02).
+StopOnPlateau on step 3 Loss 7.707480e-06 --> Loss 6.993127e-06 (reduction/loss: 9.2683e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #34 - loss:1.014669 - lr:0.000010 - [avgtime] vo:11.99, cvt:0.02, pgo:272.66, opt:3.68
+	adj.	loop	tot.
+R	0.1717	0.5761	0.3719
+t	0.0046	0.0101	0.0074
+[time] step: 288.3520579710603, print: 0.020541619043797255, snapshot: 0.006138226017355919
+Start train-all step 35 ...
+StopOnPlateau on step 0 Loss 1.943657e-03 --> Loss 1.024866e-05 (reduction/loss: 9.9473e-01).
+StopOnPlateau on step 1 Loss 1.024866e-05 --> Loss 8.365582e-06 (reduction/loss: 1.8374e-01).
+StopOnPlateau on step 2 Loss 8.365582e-06 --> Loss 7.702196e-06 (reduction/loss: 7.9299e-02).
+StopOnPlateau on step 3 Loss 7.702196e-06 --> Loss 6.986765e-06 (reduction/loss: 9.2887e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #35 - loss:1.014615 - lr:0.000010 - [avgtime] vo:13.23, cvt:0.02, pgo:272.80, opt:3.70
+	adj.	loop	tot.
+R	0.1696	0.5722	0.3688
+t	0.0046	0.0101	0.0074
+[time] step: 289.75911594205536, print: 0.0227109189145267, snapshot: 0.008169663837179542
+Start train-all step 36 ...
+StopOnPlateau on step 0 Loss 1.939063e-03 --> Loss 1.023532e-05 (reduction/loss: 9.9472e-01).
+StopOnPlateau on step 1 Loss 1.023532e-05 --> Loss 8.358911e-06 (reduction/loss: 1.8333e-01).
+StopOnPlateau on step 2 Loss 8.358911e-06 --> Loss 7.695053e-06 (reduction/loss: 7.9419e-02).
+StopOnPlateau on step 3 Loss 7.695053e-06 --> Loss 6.977516e-06 (reduction/loss: 9.3247e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #36 - loss:1.014559 - lr:0.000010 - [avgtime] vo:13.01, cvt:0.02, pgo:273.38, opt:3.67
+	adj.	loop	tot.
+R	0.1676	0.5674	0.3655
+t	0.0046	0.0101	0.0073
+[time] step: 290.08319011400454, print: 0.01803356991149485, snapshot: 0.006197761977091432
+Start train-all step 37 ...
+StopOnPlateau on step 0 Loss 1.936099e-03 --> Loss 1.021591e-05 (reduction/loss: 9.9472e-01).
+StopOnPlateau on step 1 Loss 1.021591e-05 --> Loss 8.346859e-06 (reduction/loss: 1.8295e-01).
+StopOnPlateau on step 2 Loss 8.346859e-06 --> Loss 7.683632e-06 (reduction/loss: 7.9458e-02).
+StopOnPlateau on step 3 Loss 7.683632e-06 --> Loss 6.965928e-06 (reduction/loss: 9.3407e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #37 - loss:1.014512 - lr:0.000010 - [avgtime] vo:13.12, cvt:0.02, pgo:273.07, opt:3.67
+	adj.	loop	tot.
+R	0.1663	0.5639	0.3631
+t	0.0046	0.0101	0.0073
+[time] step: 289.884816062171, print: 0.025405345018953085, snapshot: 0.006489777006208897
+Start train-all step 38 ...
+StopOnPlateau on step 0 Loss 1.935690e-03 --> Loss 1.020053e-05 (reduction/loss: 9.9473e-01).
+StopOnPlateau on step 1 Loss 1.020053e-05 --> Loss 8.339680e-06 (reduction/loss: 1.8243e-01).
+StopOnPlateau on step 2 Loss 8.339680e-06 --> Loss 7.676733e-06 (reduction/loss: 7.9493e-02).
+StopOnPlateau on step 3 Loss 7.676733e-06 --> Loss 6.957409e-06 (reduction/loss: 9.3702e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #38 - loss:1.014454 - lr:0.000010 - [avgtime] vo:11.88, cvt:0.02, pgo:273.07, opt:3.69
+	adj.	loop	tot.
+R	0.1642	0.5586	0.3595
+t	0.0046	0.0101	0.0073
+[time] step: 288.66237211111, print: 0.022976639913395047, snapshot: 0.00834670290350914
+Start train-all step 39 ...
+StopOnPlateau on step 0 Loss 1.934943e-03 --> Loss 1.018857e-05 (reduction/loss: 9.9473e-01).
+StopOnPlateau on step 1 Loss 1.018857e-05 --> Loss 8.331563e-06 (reduction/loss: 1.8226e-01).
+StopOnPlateau on step 2 Loss 8.331563e-06 --> Loss 7.668486e-06 (reduction/loss: 7.9586e-02).
+StopOnPlateau on step 3 Loss 7.668486e-06 --> Loss 6.948822e-06 (reduction/loss: 9.3847e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #39 - loss:1.014413 - lr:0.000010 - [avgtime] vo:12.74, cvt:0.02, pgo:272.65, opt:3.68
+	adj.	loop	tot.
+R	0.1629	0.5555	0.3572
+t	0.0046	0.0101	0.0073
+[time] step: 289.09580370387994, print: 0.022752632154151797, snapshot: 0.007426641182973981
+Start train-all step 40 ...
+StopOnPlateau on step 0 Loss 1.927073e-03 --> Loss 1.017535e-05 (reduction/loss: 9.9472e-01).
+StopOnPlateau on step 1 Loss 1.017535e-05 --> Loss 8.323434e-06 (reduction/loss: 1.8200e-01).
+StopOnPlateau on step 2 Loss 8.323434e-06 --> Loss 7.658795e-06 (reduction/loss: 7.9852e-02).
+StopOnPlateau on step 3 Loss 7.658795e-06 --> Loss 6.937703e-06 (reduction/loss: 9.4152e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #40 - loss:1.014360 - lr:0.000010 - [avgtime] vo:12.05, cvt:0.02, pgo:272.63, opt:3.69
+	adj.	loop	tot.
+R	0.1605	0.5511	0.3538
+t	0.0046	0.0101	0.0073
+[time] step: 288.3826716549229, print: 0.020617467118427157, snapshot: 0.007539686048403382
+Start train-all step 41 ...
+StopOnPlateau on step 0 Loss 1.922994e-03 --> Loss 1.016063e-05 (reduction/loss: 9.9472e-01).
+StopOnPlateau on step 1 Loss 1.016063e-05 --> Loss 8.319606e-06 (reduction/loss: 1.8119e-01).
+StopOnPlateau on step 2 Loss 8.319606e-06 --> Loss 7.657138e-06 (reduction/loss: 7.9627e-02).
+StopOnPlateau on step 3 Loss 7.657138e-06 --> Loss 6.934149e-06 (reduction/loss: 9.4420e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #41 - loss:1.014322 - lr:0.000010 - [avgtime] vo:14.39, cvt:0.02, pgo:272.66, opt:3.68
+	adj.	loop	tot.
+R	0.1598	0.5480	0.3519
+t	0.0046	0.0100	0.0073
+[time] step: 290.7528104058001, print: 0.020508670015260577, snapshot: 0.01369320205412805
+Start train-all step 42 ...
+StopOnPlateau on step 0 Loss 1.919757e-03 --> Loss 1.015150e-05 (reduction/loss: 9.9471e-01).
+StopOnPlateau on step 1 Loss 1.015150e-05 --> Loss 8.310715e-06 (reduction/loss: 1.8133e-01).
+StopOnPlateau on step 2 Loss 8.310715e-06 --> Loss 7.645487e-06 (reduction/loss: 8.0045e-02).
+StopOnPlateau on step 3 Loss 7.645487e-06 --> Loss 6.921264e-06 (reduction/loss: 9.4726e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #42 - loss:1.014265 - lr:0.000010 - [avgtime] vo:12.77, cvt:0.02, pgo:273.46, opt:3.67
+	adj.	loop	tot.
+R	0.1573	0.5432	0.3483
+t	0.0046	0.0100	0.0073
+[time] step: 289.9253488490358, print: 0.024838143959641457, snapshot: 0.008345029084011912
+Start train-all step 43 ...
+StopOnPlateau on step 0 Loss 1.922442e-03 --> Loss 1.014466e-05 (reduction/loss: 9.9472e-01).
+StopOnPlateau on step 1 Loss 1.014466e-05 --> Loss 8.311427e-06 (reduction/loss: 1.8071e-01).
+StopOnPlateau on step 2 Loss 8.311427e-06 --> Loss 7.646239e-06 (reduction/loss: 8.0033e-02).
+StopOnPlateau on step 3 Loss 7.646239e-06 --> Loss 6.919938e-06 (reduction/loss: 9.4988e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #43 - loss:1.014223 - lr:0.000010 - [avgtime] vo:11.58, cvt:0.02, pgo:272.70, opt:3.69
+	adj.	loop	tot.
+R	0.1561	0.5396	0.3460
+t	0.0046	0.0100	0.0073
+[time] step: 287.988174485974, print: 0.01640204107388854, snapshot: 0.007173217833042145
+Start train-all step 44 ...
+StopOnPlateau on step 0 Loss 1.906974e-03 --> Loss 1.012374e-05 (reduction/loss: 9.9469e-01).
+StopOnPlateau on step 1 Loss 1.012374e-05 --> Loss 8.301064e-06 (reduction/loss: 1.8004e-01).
+StopOnPlateau on step 2 Loss 8.301064e-06 --> Loss 7.637562e-06 (reduction/loss: 7.9930e-02).
+StopOnPlateau on step 3 Loss 7.637562e-06 --> Loss 6.910340e-06 (reduction/loss: 9.5216e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #44 - loss:1.014169 - lr:0.000010 - [avgtime] vo:13.84, cvt:0.02, pgo:273.13, opt:3.67
+	adj.	loop	tot.
+R	0.1549	0.5350	0.3430
+t	0.0046	0.0100	0.0073
+[time] step: 290.6579171670601, print: 0.019600989995524287, snapshot: 0.006083472864702344
+Start train-all step 45 ...
+StopOnPlateau on step 0 Loss 1.908747e-03 --> Loss 1.012622e-05 (reduction/loss: 9.9469e-01).
+StopOnPlateau on step 1 Loss 1.012622e-05 --> Loss 8.304844e-06 (reduction/loss: 1.7987e-01).
+StopOnPlateau on step 2 Loss 8.304844e-06 --> Loss 7.639574e-06 (reduction/loss: 8.0106e-02).
+StopOnPlateau on step 3 Loss 7.639574e-06 --> Loss 6.909305e-06 (reduction/loss: 9.5590e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #45 - loss:1.014120 - lr:0.000010 - [avgtime] vo:11.32, cvt:0.02, pgo:273.45, opt:3.68
+	adj.	loop	tot.
+R	0.1532	0.5308	0.3401
+t	0.0046	0.0100	0.0072
+[time] step: 288.4742759100627, print: 0.021623019129037857, snapshot: 0.0081542048137635
+Start train-all step 46 ...
+StopOnPlateau on step 0 Loss 1.902919e-03 --> Loss 1.011613e-05 (reduction/loss: 9.9468e-01).
+StopOnPlateau on step 1 Loss 1.011613e-05 --> Loss 8.298183e-06 (reduction/loss: 1.7971e-01).
+StopOnPlateau on step 2 Loss 8.298183e-06 --> Loss 7.632173e-06 (reduction/loss: 8.0260e-02).
+StopOnPlateau on step 3 Loss 7.632173e-06 --> Loss 6.900430e-06 (reduction/loss: 9.5876e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #46 - loss:1.014080 - lr:0.000010 - [avgtime] vo:13.49, cvt:0.02, pgo:273.11, opt:3.72
+	adj.	loop	tot.
+R	0.1520	0.5272	0.3377
+t	0.0046	0.0100	0.0072
+[time] step: 290.3324766510632, print: 0.025503749027848244, snapshot: 0.007750827120617032
+Start train-all step 47 ...
+StopOnPlateau on step 0 Loss 1.897497e-03 --> Loss 1.011146e-05 (reduction/loss: 9.9467e-01).
+StopOnPlateau on step 1 Loss 1.011146e-05 --> Loss 8.297955e-06 (reduction/loss: 1.7935e-01).
+StopOnPlateau on step 2 Loss 8.297955e-06 --> Loss 7.629966e-06 (reduction/loss: 8.0500e-02).
+StopOnPlateau on step 3 Loss 7.629966e-06 --> Loss 6.896198e-06 (reduction/loss: 9.6169e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #47 - loss:1.014024 - lr:0.000010 - [avgtime] vo:13.38, cvt:0.02, pgo:272.83, opt:3.68
+	adj.	loop	tot.
+R	0.1503	0.5230	0.3348
+t	0.0046	0.0100	0.0072
+[time] step: 289.90796233993024, print: 0.01858992502093315, snapshot: 0.005792620126157999
+Start train-all step 48 ...
+StopOnPlateau on step 0 Loss 1.899399e-03 --> Loss 1.010378e-05 (reduction/loss: 9.9468e-01).
+StopOnPlateau on step 1 Loss 1.010378e-05 --> Loss 8.294364e-06 (reduction/loss: 1.7908e-01).
+StopOnPlateau on step 2 Loss 8.294364e-06 --> Loss 7.626430e-06 (reduction/loss: 8.0529e-02).
+StopOnPlateau on step 3 Loss 7.626430e-06 --> Loss 6.891282e-06 (reduction/loss: 9.6395e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #48 - loss:1.013992 - lr:0.000010 - [avgtime] vo:12.90, cvt:0.02, pgo:272.94, opt:3.68
+	adj.	loop	tot.
+R	0.1490	0.5197	0.3325
+t	0.0046	0.0099	0.0072
+[time] step: 289.54490559292026, print: 0.020685855066403747, snapshot: 0.007528363959863782
+Start train-all step 49 ...
+StopOnPlateau on step 0 Loss 1.891008e-03 --> Loss 1.009240e-05 (reduction/loss: 9.9466e-01).
+StopOnPlateau on step 1 Loss 1.009240e-05 --> Loss 8.286408e-06 (reduction/loss: 1.7895e-01).
+StopOnPlateau on step 2 Loss 8.286408e-06 --> Loss 7.617997e-06 (reduction/loss: 8.0664e-02).
+StopOnPlateau on step 3 Loss 7.617997e-06 --> Loss 6.881141e-06 (reduction/loss: 9.6726e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #49 - loss:1.013940 - lr:0.000010 - [avgtime] vo:13.84, cvt:0.02, pgo:273.17, opt:3.69
+	adj.	loop	tot.
+R	0.1477	0.5153	0.3297
+t	0.0045	0.0099	0.0072
+[time] step: 290.7236499451101, print: 0.02086970512755215, snapshot: 0.00701902387663722
+Start train-all step 50 ...
+StopOnPlateau on step 0 Loss 1.894294e-03 --> Loss 1.008721e-05 (reduction/loss: 9.9467e-01).
+StopOnPlateau on step 1 Loss 1.008721e-05 --> Loss 8.286002e-06 (reduction/loss: 1.7856e-01).
+StopOnPlateau on step 2 Loss 8.286002e-06 --> Loss 7.617671e-06 (reduction/loss: 8.0658e-02).
+StopOnPlateau on step 3 Loss 7.617671e-06 --> Loss 6.879560e-06 (reduction/loss: 9.6895e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #50 - loss:1.013912 - lr:0.000010 - [avgtime] vo:12.53, cvt:0.02, pgo:273.49, opt:3.68
+	adj.	loop	tot.
+R	0.1470	0.5125	0.3279
+t	0.0045	0.0099	0.0072
+[time] step: 289.71138291200623, print: 0.020629158010706306, snapshot: 0.04051004000939429
+Start train-all step 51 ...
+StopOnPlateau on step 0 Loss 1.886644e-03 --> Loss 1.007650e-05 (reduction/loss: 9.9466e-01).
+StopOnPlateau on step 1 Loss 1.007650e-05 --> Loss 8.280242e-06 (reduction/loss: 1.7826e-01).
+StopOnPlateau on step 2 Loss 8.280242e-06 --> Loss 7.610878e-06 (reduction/loss: 8.0839e-02).
+StopOnPlateau on step 3 Loss 7.610878e-06 --> Loss 6.870139e-06 (reduction/loss: 9.7326e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #51 - loss:1.013861 - lr:0.000010 - [avgtime] vo:12.08, cvt:0.02, pgo:273.12, opt:3.69
+	adj.	loop	tot.
+R	0.1453	0.5081	0.3249
+t	0.0045	0.0099	0.0072
+[time] step: 288.91616101702675, print: 0.020658242981880903, snapshot: 0.007350575877353549
+Start train-all step 52 ...
+StopOnPlateau on step 0 Loss 1.887088e-03 --> Loss 1.007913e-05 (reduction/loss: 9.9466e-01).
+StopOnPlateau on step 1 Loss 1.007913e-05 --> Loss 8.286047e-06 (reduction/loss: 1.7790e-01).
+StopOnPlateau on step 2 Loss 8.286047e-06 --> Loss 7.615299e-06 (reduction/loss: 8.0949e-02).
+StopOnPlateau on step 3 Loss 7.615299e-06 --> Loss 6.872358e-06 (reduction/loss: 9.7559e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #52 - loss:1.013837 - lr:0.000010 - [avgtime] vo:12.86, cvt:0.02, pgo:273.09, opt:3.67
+	adj.	loop	tot.
+R	0.1446	0.5056	0.3233
+t	0.0045	0.0099	0.0072
+[time] step: 289.6359391459264, print: 0.020585525082424283, snapshot: 0.061582742957398295
+Start train-all step 53 ...
+StopOnPlateau on step 0 Loss 1.883254e-03 --> Loss 1.006623e-05 (reduction/loss: 9.9465e-01).
+StopOnPlateau on step 1 Loss 1.006623e-05 --> Loss 8.279065e-06 (reduction/loss: 1.7754e-01).
+StopOnPlateau on step 2 Loss 8.279065e-06 --> Loss 7.608611e-06 (reduction/loss: 8.0982e-02).
+StopOnPlateau on step 3 Loss 7.608611e-06 --> Loss 6.864452e-06 (reduction/loss: 9.7805e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #53 - loss:1.013778 - lr:0.000010 - [avgtime] vo:12.91, cvt:0.02, pgo:273.49, opt:3.67
+	adj.	loop	tot.
+R	0.1428	0.5010	0.3201
+t	0.0045	0.0099	0.0072
+[time] step: 290.09126325300895, print: 0.02083693305030465, snapshot: 0.006955462973564863
+Start train-all step 54 ...
+StopOnPlateau on step 0 Loss 1.876505e-03 --> Loss 1.005978e-05 (reduction/loss: 9.9464e-01).
+StopOnPlateau on step 1 Loss 1.005978e-05 --> Loss 8.277346e-06 (reduction/loss: 1.7718e-01).
+StopOnPlateau on step 2 Loss 8.277346e-06 --> Loss 7.606742e-06 (reduction/loss: 8.1017e-02).
+StopOnPlateau on step 3 Loss 7.606742e-06 --> Loss 6.860685e-06 (reduction/loss: 9.8078e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #54 - loss:1.013742 - lr:0.000010 - [avgtime] vo:13.21, cvt:0.02, pgo:273.62, opt:3.68
+	adj.	loop	tot.
+R	0.1422	0.4977	0.3182
+t	0.0045	0.0099	0.0072
+[time] step: 290.54058465198614, print: 0.022873970912769437, snapshot: 0.007122901966795325
+Start train-all step 55 ...
+StopOnPlateau on step 0 Loss 1.877281e-03 --> Loss 1.004207e-05 (reduction/loss: 9.9465e-01).
+StopOnPlateau on step 1 Loss 1.004207e-05 --> Loss 8.262266e-06 (reduction/loss: 1.7723e-01).
+StopOnPlateau on step 2 Loss 8.262266e-06 --> Loss 7.591279e-06 (reduction/loss: 8.1211e-02).
+StopOnPlateau on step 3 Loss 7.591279e-06 --> Loss 6.844839e-06 (reduction/loss: 9.8329e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #55 - loss:1.013698 - lr:0.000010 - [avgtime] vo:14.03, cvt:0.02, pgo:273.15, opt:3.70
+	adj.	loop	tot.
+R	0.1412	0.4944	0.3160
+t	0.0045	0.0099	0.0072
+[time] step: 290.90042643388733, print: 0.027220426127314568, snapshot: 0.009269278030842543
+Start train-all step 56 ...
+StopOnPlateau on step 0 Loss 1.865347e-03 --> Loss 1.002995e-05 (reduction/loss: 9.9462e-01).
+StopOnPlateau on step 1 Loss 1.002995e-05 --> Loss 8.262083e-06 (reduction/loss: 1.7626e-01).
+StopOnPlateau on step 2 Loss 8.262083e-06 --> Loss 7.593376e-06 (reduction/loss: 8.0937e-02).
+StopOnPlateau on step 3 Loss 7.593376e-06 --> Loss 6.844392e-06 (reduction/loss: 9.8636e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #56 - loss:1.013661 - lr:0.000010 - [avgtime] vo:13.04, cvt:0.02, pgo:274.74, opt:3.68
+	adj.	loop	tot.
+R	0.1404	0.4906	0.3137
+t	0.0045	0.0098	0.0071
+[time] step: 291.4776511769742, print: 0.022753671975806355, snapshot: 0.00791115197353065
+Start train-all step 57 ...
+StopOnPlateau on step 0 Loss 1.865274e-03 --> Loss 1.003174e-05 (reduction/loss: 9.9462e-01).
+StopOnPlateau on step 1 Loss 1.003174e-05 --> Loss 8.264921e-06 (reduction/loss: 1.7612e-01).
+StopOnPlateau on step 2 Loss 8.264921e-06 --> Loss 7.594616e-06 (reduction/loss: 8.1102e-02).
+StopOnPlateau on step 3 Loss 7.594616e-06 --> Loss 6.843484e-06 (reduction/loss: 9.8903e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #57 - loss:1.013632 - lr:0.000010 - [avgtime] vo:11.41, cvt:0.02, pgo:272.35, opt:3.68
+	adj.	loop	tot.
+R	0.1398	0.4874	0.3118
+t	0.0045	0.0098	0.0071
+[time] step: 287.4546537089627, print: 0.0227457070723176, snapshot: 0.018333365209400654
+Start train-all step 58 ...
+StopOnPlateau on step 0 Loss 1.859103e-03 --> Loss 1.001886e-05 (reduction/loss: 9.9461e-01).
+StopOnPlateau on step 1 Loss 1.001886e-05 --> Loss 8.257010e-06 (reduction/loss: 1.7585e-01).
+StopOnPlateau on step 2 Loss 8.257010e-06 --> Loss 7.585912e-06 (reduction/loss: 8.1276e-02).
+StopOnPlateau on step 3 Loss 7.585912e-06 --> Loss 6.833411e-06 (reduction/loss: 9.9197e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #58 - loss:1.013587 - lr:0.000010 - [avgtime] vo:13.32, cvt:0.02, pgo:272.87, opt:3.68
+	adj.	loop	tot.
+R	0.1385	0.4836	0.3093
+t	0.0045	0.0098	0.0071
+[time] step: 289.8938589200843, print: 0.01880876999348402, snapshot: 0.007274058880284429
+Start train-all step 59 ...
+StopOnPlateau on step 0 Loss 1.859660e-03 --> Loss 1.001435e-05 (reduction/loss: 9.9461e-01).
+StopOnPlateau on step 1 Loss 1.001435e-05 --> Loss 8.255933e-06 (reduction/loss: 1.7559e-01).
+StopOnPlateau on step 2 Loss 8.255933e-06 --> Loss 7.583975e-06 (reduction/loss: 8.1391e-02).
+StopOnPlateau on step 3 Loss 7.583975e-06 --> Loss 6.829845e-06 (reduction/loss: 9.9437e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #59 - loss:1.013551 - lr:0.000010 - [avgtime] vo:10.24, cvt:0.02, pgo:273.69, opt:3.69
+	adj.	loop	tot.
+R	0.1377	0.4810	0.3076
+t	0.0045	0.0098	0.0071
+[time] step: 287.6368114578072, print: 0.024845824111253023, snapshot: 0.010377858066931367
+Start train-all step 60 ...
+StopOnPlateau on step 0 Loss 1.855912e-03 --> Loss 1.000341e-05 (reduction/loss: 9.9461e-01).
+StopOnPlateau on step 1 Loss 1.000341e-05 --> Loss 8.249747e-06 (reduction/loss: 1.7531e-01).
+StopOnPlateau on step 2 Loss 8.249747e-06 --> Loss 7.577612e-06 (reduction/loss: 8.1473e-02).
+StopOnPlateau on step 3 Loss 7.577612e-06 --> Loss 6.822577e-06 (reduction/loss: 9.9640e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #60 - loss:1.013508 - lr:0.000010 - [avgtime] vo:17.43, cvt:0.02, pgo:273.06, opt:3.68
+	adj.	loop	tot.
+R	0.1366	0.4770	0.3051
+t	0.0045	0.0098	0.0071
+[time] step: 294.18887638906017, print: 0.025170302018523216, snapshot: 0.008577401051297784
+Start train-all step 61 ...
+StopOnPlateau on step 0 Loss 1.855421e-03 --> Loss 9.991816e-06 (reduction/loss: 9.9461e-01).
+StopOnPlateau on step 1 Loss 9.991816e-06 --> Loss 8.246401e-06 (reduction/loss: 1.7468e-01).
+StopOnPlateau on step 2 Loss 8.246401e-06 --> Loss 7.575100e-06 (reduction/loss: 8.1405e-02).
+StopOnPlateau on step 3 Loss 7.575100e-06 --> Loss 6.818304e-06 (reduction/loss: 9.9906e-02).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #61 - loss:1.013473 - lr:0.000010 - [avgtime] vo:11.05, cvt:0.02, pgo:272.92, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.4743	0.3036
+t	0.0045	0.0098	0.0071
+[time] step: 287.67346490197815, print: 0.022769150091335177, snapshot: 0.008443195139989257
+Start train-all step 62 ...
+StopOnPlateau on step 0 Loss 1.853306e-03 --> Loss 9.986550e-06 (reduction/loss: 9.9461e-01).
+StopOnPlateau on step 1 Loss 9.986550e-06 --> Loss 8.241974e-06 (reduction/loss: 1.7469e-01).
+StopOnPlateau on step 2 Loss 8.241974e-06 --> Loss 7.569745e-06 (reduction/loss: 8.1562e-02).
+StopOnPlateau on step 3 Loss 7.569745e-06 --> Loss 6.811445e-06 (reduction/loss: 1.0018e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #62 - loss:1.013437 - lr:0.000010 - [avgtime] vo:13.57, cvt:0.02, pgo:273.10, opt:3.67
+	adj.	loop	tot.
+R	0.1354	0.4706	0.3013
+t	0.0045	0.0098	0.0071
+[time] step: 290.36743462691084, print: 0.020658041117712855, snapshot: 0.006477051880210638
+Start train-all step 63 ...
+StopOnPlateau on step 0 Loss 1.849587e-03 --> Loss 9.986690e-06 (reduction/loss: 9.9460e-01).
+StopOnPlateau on step 1 Loss 9.986690e-06 --> Loss 8.247054e-06 (reduction/loss: 1.7420e-01).
+StopOnPlateau on step 2 Loss 8.247054e-06 --> Loss 7.575002e-06 (reduction/loss: 8.1490e-02).
+StopOnPlateau on step 3 Loss 7.575002e-06 --> Loss 6.815429e-06 (reduction/loss: 1.0027e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #63 - loss:1.013422 - lr:0.000010 - [avgtime] vo:13.64, cvt:0.02, pgo:272.98, opt:3.67
+	adj.	loop	tot.
+R	0.1350	0.4687	0.3002
+t	0.0045	0.0097	0.0071
+[time] step: 290.31327355396934, print: 0.02267599292099476, snapshot: 0.007279329001903534
+Start train-all step 64 ...
+StopOnPlateau on step 0 Loss 1.843328e-03 --> Loss 9.983853e-06 (reduction/loss: 9.9458e-01).
+StopOnPlateau on step 1 Loss 9.983853e-06 --> Loss 8.245968e-06 (reduction/loss: 1.7407e-01).
+StopOnPlateau on step 2 Loss 8.245968e-06 --> Loss 7.572315e-06 (reduction/loss: 8.1695e-02).
+StopOnPlateau on step 3 Loss 7.572315e-06 --> Loss 6.810506e-06 (reduction/loss: 1.0060e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #64 - loss:1.013384 - lr:0.000010 - [avgtime] vo:13.52, cvt:0.02, pgo:273.01, opt:3.68
+	adj.	loop	tot.
+R	0.1349	0.4655	0.2986
+t	0.0045	0.0097	0.0071
+[time] step: 290.23069592309184, print: 0.021184884011745453, snapshot: 0.007291131187230349
+Start train-all step 65 ...
+StopOnPlateau on step 0 Loss 1.840180e-03 --> Loss 9.974548e-06 (reduction/loss: 9.9458e-01).
+StopOnPlateau on step 1 Loss 9.974548e-06 --> Loss 8.242893e-06 (reduction/loss: 1.7361e-01).
+StopOnPlateau on step 2 Loss 8.242893e-06 --> Loss 7.569181e-06 (reduction/loss: 8.1732e-02).
+StopOnPlateau on step 3 Loss 7.569181e-06 --> Loss 6.805266e-06 (reduction/loss: 1.0092e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #65 - loss:1.013348 - lr:0.000010 - [avgtime] vo:14.34, cvt:0.02, pgo:272.82, opt:3.67
+	adj.	loop	tot.
+R	0.1337	0.4620	0.2962
+t	0.0045	0.0097	0.0071
+[time] step: 290.85228589503095, print: 0.024787744041532278, snapshot: 0.00787301012314856
+Start train-all step 66 ...
+StopOnPlateau on step 0 Loss 1.841716e-03 --> Loss 9.973833e-06 (reduction/loss: 9.9458e-01).
+StopOnPlateau on step 1 Loss 9.973833e-06 --> Loss 8.241527e-06 (reduction/loss: 1.7369e-01).
+StopOnPlateau on step 2 Loss 8.241527e-06 --> Loss 7.566156e-06 (reduction/loss: 8.1947e-02).
+StopOnPlateau on step 3 Loss 7.566156e-06 --> Loss 6.800555e-06 (reduction/loss: 1.0119e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #66 - loss:1.013321 - lr:0.000010 - [avgtime] vo:12.77, cvt:0.02, pgo:272.09, opt:3.68
+	adj.	loop	tot.
+R	0.1329	0.4590	0.2943
+t	0.0045	0.0097	0.0071
+[time] step: 288.5676962120924, print: 0.018507858039811254, snapshot: 0.006347073940560222
+Start train-all step 67 ...
+StopOnPlateau on step 0 Loss 1.842514e-03 --> Loss 9.978125e-06 (reduction/loss: 9.9458e-01).
+StopOnPlateau on step 1 Loss 9.978125e-06 --> Loss 8.249649e-06 (reduction/loss: 1.7323e-01).
+StopOnPlateau on step 2 Loss 8.249649e-06 --> Loss 7.573374e-06 (reduction/loss: 8.1976e-02).
+StopOnPlateau on step 3 Loss 7.573374e-06 --> Loss 6.805222e-06 (reduction/loss: 1.0143e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #67 - loss:1.013300 - lr:0.000010 - [avgtime] vo:13.53, cvt:0.02, pgo:272.59, opt:3.69
+	adj.	loop	tot.
+R	0.1324	0.4566	0.2929
+t	0.0045	0.0097	0.0071
+[time] step: 289.82671465701424, print: 0.02276131510734558, snapshot: 0.009871745016425848
+Start train-all step 68 ...
+StopOnPlateau on step 0 Loss 1.833726e-03 --> Loss 9.974986e-06 (reduction/loss: 9.9456e-01).
+StopOnPlateau on step 1 Loss 9.974986e-06 --> Loss 8.250251e-06 (reduction/loss: 1.7291e-01).
+StopOnPlateau on step 2 Loss 8.250251e-06 --> Loss 7.573350e-06 (reduction/loss: 8.2046e-02).
+StopOnPlateau on step 3 Loss 7.573350e-06 --> Loss 6.803874e-06 (reduction/loss: 1.0160e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #68 - loss:1.013268 - lr:0.000010 - [avgtime] vo:12.55, cvt:0.02, pgo:272.11, opt:3.67
+	adj.	loop	tot.
+R	0.1319	0.4541	0.2914
+t	0.0045	0.0097	0.0070
+[time] step: 288.3503494900651, print: 0.022782806074246764, snapshot: 0.008329598931595683
+Start train-all step 69 ...
+StopOnPlateau on step 0 Loss 1.839140e-03 --> Loss 9.977733e-06 (reduction/loss: 9.9457e-01).
+StopOnPlateau on step 1 Loss 9.977733e-06 --> Loss 8.252443e-06 (reduction/loss: 1.7291e-01).
+StopOnPlateau on step 2 Loss 8.252443e-06 --> Loss 7.573883e-06 (reduction/loss: 8.2225e-02).
+StopOnPlateau on step 3 Loss 7.573883e-06 --> Loss 6.802652e-06 (reduction/loss: 1.0183e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #69 - loss:1.013248 - lr:0.000010 - [avgtime] vo:13.02, cvt:0.02, pgo:272.76, opt:3.68
+	adj.	loop	tot.
+R	0.1320	0.4513	0.2901
+t	0.0045	0.0097	0.0070
+[time] step: 289.47976572811604, print: 0.01857028598897159, snapshot: 0.007012622198089957
+Start train-all step 70 ...
+StopOnPlateau on step 0 Loss 1.830357e-03 --> Loss 9.992687e-06 (reduction/loss: 9.9454e-01).
+StopOnPlateau on step 1 Loss 9.992687e-06 --> Loss 8.271131e-06 (reduction/loss: 1.7228e-01).
+StopOnPlateau on step 2 Loss 8.271131e-06 --> Loss 7.592127e-06 (reduction/loss: 8.2093e-02).
+StopOnPlateau on step 3 Loss 7.592127e-06 --> Loss 6.817541e-06 (reduction/loss: 1.0202e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #70 - loss:1.013214 - lr:0.000010 - [avgtime] vo:12.93, cvt:0.02, pgo:272.83, opt:3.68
+	adj.	loop	tot.
+R	0.1316	0.4483	0.2884
+t	0.0045	0.0097	0.0070
+[time] step: 289.4638760399539, print: 0.021594323916360736, snapshot: 0.006698101991787553
+Start train-all step 71 ...
+StopOnPlateau on step 0 Loss 1.832033e-03 --> Loss 9.994670e-06 (reduction/loss: 9.9454e-01).
+StopOnPlateau on step 1 Loss 9.994670e-06 --> Loss 8.274470e-06 (reduction/loss: 1.7211e-01).
+StopOnPlateau on step 2 Loss 8.274470e-06 --> Loss 7.594892e-06 (reduction/loss: 8.2129e-02).
+StopOnPlateau on step 3 Loss 7.594892e-06 --> Loss 6.819751e-06 (reduction/loss: 1.0206e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #71 - loss:1.013194 - lr:0.000010 - [avgtime] vo:13.22, cvt:0.02, pgo:272.70, opt:3.68
+	adj.	loop	tot.
+R	0.1314	0.4467	0.2875
+t	0.0045	0.0097	0.0070
+[time] step: 289.6198097281158, print: 0.016305794939398766, snapshot: 0.0077486231457442045
+Start train-all step 72 ...
+StopOnPlateau on step 0 Loss 1.823103e-03 --> Loss 9.977661e-06 (reduction/loss: 9.9453e-01).
+StopOnPlateau on step 1 Loss 9.977661e-06 --> Loss 8.262080e-06 (reduction/loss: 1.7194e-01).
+StopOnPlateau on step 2 Loss 8.262080e-06 --> Loss 7.582783e-06 (reduction/loss: 8.2219e-02).
+StopOnPlateau on step 3 Loss 7.582783e-06 --> Loss 6.806717e-06 (reduction/loss: 1.0235e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #72 - loss:1.013167 - lr:0.000010 - [avgtime] vo:13.50, cvt:0.02, pgo:272.63, opt:3.67
+	adj.	loop	tot.
+R	0.1310	0.4438	0.2858
+t	0.0045	0.0096	0.0070
+[time] step: 289.8237455878407, print: 0.0227364890743047, snapshot: 0.007195700192824006
+Start train-all step 73 ...
+StopOnPlateau on step 0 Loss 1.817408e-03 --> Loss 9.977935e-06 (reduction/loss: 9.9451e-01).
+StopOnPlateau on step 1 Loss 9.977935e-06 --> Loss 8.264306e-06 (reduction/loss: 1.7174e-01).
+StopOnPlateau on step 2 Loss 8.264306e-06 --> Loss 7.583610e-06 (reduction/loss: 8.2366e-02).
+StopOnPlateau on step 3 Loss 7.583610e-06 --> Loss 6.805871e-06 (reduction/loss: 1.0256e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #73 - loss:1.013140 - lr:0.000010 - [avgtime] vo:12.21, cvt:0.02, pgo:272.74, opt:3.68
+	adj.	loop	tot.
+R	0.1307	0.4403	0.2839
+t	0.0044	0.0096	0.0070
+[time] step: 288.6470329721924, print: 0.018583762925118208, snapshot: 0.006623009918257594
+Start train-all step 74 ...
+StopOnPlateau on step 0 Loss 1.814878e-03 --> Loss 9.969770e-06 (reduction/loss: 9.9451e-01).
+StopOnPlateau on step 1 Loss 9.969770e-06 --> Loss 8.260499e-06 (reduction/loss: 1.7145e-01).
+StopOnPlateau on step 2 Loss 8.260499e-06 --> Loss 7.579589e-06 (reduction/loss: 8.2430e-02).
+StopOnPlateau on step 3 Loss 7.579589e-06 --> Loss 6.800455e-06 (reduction/loss: 1.0279e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #74 - loss:1.013111 - lr:0.000010 - [avgtime] vo:12.69, cvt:0.02, pgo:273.22, opt:3.72
+	adj.	loop	tot.
+R	0.1300	0.4382	0.2825
+t	0.0044	0.0096	0.0070
+[time] step: 289.64596844115295, print: 0.021274074912071228, snapshot: 0.006520284106954932
+Start train-all step 75 ...
+StopOnPlateau on step 0 Loss 1.816254e-03 --> Loss 9.979505e-06 (reduction/loss: 9.9451e-01).
+StopOnPlateau on step 1 Loss 9.979505e-06 --> Loss 8.269357e-06 (reduction/loss: 1.7137e-01).
+StopOnPlateau on step 2 Loss 8.269357e-06 --> Loss 7.586244e-06 (reduction/loss: 8.2608e-02).
+StopOnPlateau on step 3 Loss 7.586244e-06 --> Loss 6.803782e-06 (reduction/loss: 1.0314e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #75 - loss:1.013087 - lr:0.000010 - [avgtime] vo:12.02, cvt:0.02, pgo:273.22, opt:3.70
+	adj.	loop	tot.
+R	0.1297	0.4353	0.2809
+t	0.0044	0.0096	0.0070
+[time] step: 288.96929172985256, print: 0.043466297909617424, snapshot: 0.00929164094850421
+Start train-all step 76 ...
+StopOnPlateau on step 0 Loss 1.812482e-03 --> Loss 9.983300e-06 (reduction/loss: 9.9449e-01).
+StopOnPlateau on step 1 Loss 9.983300e-06 --> Loss 8.275175e-06 (reduction/loss: 1.7110e-01).
+StopOnPlateau on step 2 Loss 8.275175e-06 --> Loss 7.591619e-06 (reduction/loss: 8.2603e-02).
+StopOnPlateau on step 3 Loss 7.591619e-06 --> Loss 6.807978e-06 (reduction/loss: 1.0322e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #76 - loss:1.013070 - lr:0.000010 - [avgtime] vo:14.14, cvt:0.02, pgo:272.89, opt:3.67
+	adj.	loop	tot.
+R	0.1295	0.4335	0.2800
+t	0.0044	0.0096	0.0070
+[time] step: 290.73010119306855, print: 0.020729218143969774, snapshot: 0.00770234502851963
+Start train-all step 77 ...
+StopOnPlateau on step 0 Loss 1.810167e-03 --> Loss 9.972635e-06 (reduction/loss: 9.9449e-01).
+StopOnPlateau on step 1 Loss 9.972635e-06 --> Loss 8.269274e-06 (reduction/loss: 1.7080e-01).
+StopOnPlateau on step 2 Loss 8.269274e-06 --> Loss 7.586050e-06 (reduction/loss: 8.2622e-02).
+StopOnPlateau on step 3 Loss 7.586050e-06 --> Loss 6.800790e-06 (reduction/loss: 1.0351e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #77 - loss:1.013047 - lr:0.000010 - [avgtime] vo:11.86, cvt:0.02, pgo:274.39, opt:3.68
+	adj.	loop	tot.
+R	0.1296	0.4312	0.2789
+t	0.0044	0.0096	0.0070
+[time] step: 289.9515338470228, print: 0.022768339840695262, snapshot: 0.007554704090580344
+Start train-all step 78 ...
+StopOnPlateau on step 0 Loss 1.807240e-03 --> Loss 9.973500e-06 (reduction/loss: 9.9448e-01).
+StopOnPlateau on step 1 Loss 9.973500e-06 --> Loss 8.275140e-06 (reduction/loss: 1.7029e-01).
+StopOnPlateau on step 2 Loss 8.275140e-06 --> Loss 7.592052e-06 (reduction/loss: 8.2547e-02).
+StopOnPlateau on step 3 Loss 7.592052e-06 --> Loss 6.804728e-06 (reduction/loss: 1.0370e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #78 - loss:1.013029 - lr:0.000010 - [avgtime] vo:12.52, cvt:0.02, pgo:273.73, opt:3.73
+	adj.	loop	tot.
+R	0.1294	0.4282	0.2773
+t	0.0044	0.0096	0.0070
+[time] step: 289.9942457568832, print: 0.02070259815081954, snapshot: 0.007691113976761699
+Start train-all step 79 ...
+StopOnPlateau on step 0 Loss 1.796838e-03 --> Loss 9.966133e-06 (reduction/loss: 9.9445e-01).
+StopOnPlateau on step 1 Loss 9.966133e-06 --> Loss 8.268428e-06 (reduction/loss: 1.7035e-01).
+StopOnPlateau on step 2 Loss 8.268428e-06 --> Loss 7.583945e-06 (reduction/loss: 8.2783e-02).
+StopOnPlateau on step 3 Loss 7.583945e-06 --> Loss 6.796187e-06 (reduction/loss: 1.0387e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #79 - loss:1.013002 - lr:0.000010 - [avgtime] vo:11.85, cvt:0.02, pgo:273.82, opt:3.69
+	adj.	loop	tot.
+R	0.1292	0.4263	0.2762
+t	0.0044	0.0096	0.0070
+[time] step: 289.37712067505345, print: 0.022805541986599565, snapshot: 0.006133659044280648
+Start train-all step 80 ...
+StopOnPlateau on step 0 Loss 1.792238e-03 --> Loss 9.964140e-06 (reduction/loss: 9.9444e-01).
+StopOnPlateau on step 1 Loss 9.964140e-06 --> Loss 8.268896e-06 (reduction/loss: 1.7013e-01).
+StopOnPlateau on step 2 Loss 8.268896e-06 --> Loss 7.583646e-06 (reduction/loss: 8.2871e-02).
+StopOnPlateau on step 3 Loss 7.583646e-06 --> Loss 6.793888e-06 (reduction/loss: 1.0414e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #80 - loss:1.012979 - lr:0.000010 - [avgtime] vo:13.60, cvt:0.02, pgo:273.69, opt:3.70
+	adj.	loop	tot.
+R	0.1289	0.4236	0.2748
+t	0.0044	0.0095	0.0070
+[time] step: 291.0212920459453, print: 0.027954593999311328, snapshot: 0.008499774150550365
+Start train-all step 81 ...
+StopOnPlateau on step 0 Loss 1.798057e-03 --> Loss 9.968877e-06 (reduction/loss: 9.9446e-01).
+StopOnPlateau on step 1 Loss 9.968877e-06 --> Loss 8.276251e-06 (reduction/loss: 1.6979e-01).
+StopOnPlateau on step 2 Loss 8.276251e-06 --> Loss 7.590561e-06 (reduction/loss: 8.2850e-02).
+StopOnPlateau on step 3 Loss 7.590561e-06 --> Loss 6.799801e-06 (reduction/loss: 1.0418e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #81 - loss:1.012963 - lr:0.000010 - [avgtime] vo:12.05, cvt:0.02, pgo:274.29, opt:3.69
+	adj.	loop	tot.
+R	0.1283	0.4226	0.2740
+t	0.0044	0.0096	0.0070
+[time] step: 290.04967541992664, print: 0.025449734879657626, snapshot: 0.007348911836743355
+Start train-all step 82 ...
+StopOnPlateau on step 0 Loss 1.799355e-03 --> Loss 9.973861e-06 (reduction/loss: 9.9446e-01).
+StopOnPlateau on step 1 Loss 9.973861e-06 --> Loss 8.283891e-06 (reduction/loss: 1.6944e-01).
+StopOnPlateau on step 2 Loss 8.283891e-06 --> Loss 7.596250e-06 (reduction/loss: 8.3009e-02).
+StopOnPlateau on step 3 Loss 7.596250e-06 --> Loss 6.803058e-06 (reduction/loss: 1.0442e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #82 - loss:1.012941 - lr:0.000010 - [avgtime] vo:12.89, cvt:0.02, pgo:274.25, opt:3.68
+	adj.	loop	tot.
+R	0.1276	0.4198	0.2723
+t	0.0044	0.0096	0.0070
+[time] step: 290.84409452113323, print: 0.020932764979079366, snapshot: 0.008259816095232964
+Start train-all step 83 ...
+StopOnPlateau on step 0 Loss 1.801702e-03 --> Loss 9.973041e-06 (reduction/loss: 9.9446e-01).
+StopOnPlateau on step 1 Loss 9.973041e-06 --> Loss 8.285822e-06 (reduction/loss: 1.6918e-01).
+StopOnPlateau on step 2 Loss 8.285822e-06 --> Loss 7.598010e-06 (reduction/loss: 8.3011e-02).
+StopOnPlateau on step 3 Loss 7.598010e-06 --> Loss 6.802868e-06 (reduction/loss: 1.0465e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #83 - loss:1.012929 - lr:0.000010 - [avgtime] vo:12.47, cvt:0.02, pgo:274.36, opt:3.69
+	adj.	loop	tot.
+R	0.1280	0.4182	0.2716
+t	0.0044	0.0095	0.0070
+[time] step: 290.54437185497954, print: 0.020655666943639517, snapshot: 0.007446608040481806
+Start train-all step 84 ...
+StopOnPlateau on step 0 Loss 1.795345e-03 --> Loss 9.962509e-06 (reduction/loss: 9.9445e-01).
+StopOnPlateau on step 1 Loss 9.962509e-06 --> Loss 8.281606e-06 (reduction/loss: 1.6872e-01).
+StopOnPlateau on step 2 Loss 8.281606e-06 --> Loss 7.594193e-06 (reduction/loss: 8.3005e-02).
+StopOnPlateau on step 3 Loss 7.594193e-06 --> Loss 6.797990e-06 (reduction/loss: 1.0484e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #84 - loss:1.012900 - lr:0.000010 - [avgtime] vo:13.41, cvt:0.02, pgo:274.36, opt:3.68
+	adj.	loop	tot.
+R	0.1281	0.4158	0.2705
+t	0.0044	0.0095	0.0069
+[time] step: 291.4671463898849, print: 0.022677617147564888, snapshot: 0.0076461979188025
+Start train-all step 85 ...
+StopOnPlateau on step 0 Loss 1.797843e-03 --> Loss 9.956185e-06 (reduction/loss: 9.9446e-01).
+StopOnPlateau on step 1 Loss 9.956185e-06 --> Loss 8.276633e-06 (reduction/loss: 1.6869e-01).
+StopOnPlateau on step 2 Loss 8.276633e-06 --> Loss 7.588465e-06 (reduction/loss: 8.3146e-02).
+StopOnPlateau on step 3 Loss 7.588465e-06 --> Loss 6.790150e-06 (reduction/loss: 1.0520e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #85 - loss:1.012872 - lr:0.000010 - [avgtime] vo:12.43, cvt:0.02, pgo:274.15, opt:3.69
+	adj.	loop	tot.
+R	0.1279	0.4124	0.2687
+t	0.0044	0.0095	0.0069
+[time] step: 290.28667991096154, print: 0.02059064293280244, snapshot: 0.008266358869150281
+Start train-all step 86 ...
+StopOnPlateau on step 0 Loss 1.797422e-03 --> Loss 9.955675e-06 (reduction/loss: 9.9446e-01).
+StopOnPlateau on step 1 Loss 9.955675e-06 --> Loss 8.279409e-06 (reduction/loss: 1.6837e-01).
+StopOnPlateau on step 2 Loss 8.279409e-06 --> Loss 7.591569e-06 (reduction/loss: 8.3078e-02).
+StopOnPlateau on step 3 Loss 7.591569e-06 --> Loss 6.792725e-06 (reduction/loss: 1.0523e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #86 - loss:1.012859 - lr:0.000010 - [avgtime] vo:14.33, cvt:0.02, pgo:274.56, opt:3.70
+	adj.	loop	tot.
+R	0.1277	0.4114	0.2681
+t	0.0044	0.0095	0.0069
+[time] step: 292.6055457829498, print: 0.024505697889253497, snapshot: 0.00791445909999311
+Start train-all step 87 ...
+StopOnPlateau on step 0 Loss 1.793377e-03 --> Loss 9.958448e-06 (reduction/loss: 9.9445e-01).
+StopOnPlateau on step 1 Loss 9.958448e-06 --> Loss 8.285754e-06 (reduction/loss: 1.6797e-01).
+StopOnPlateau on step 2 Loss 8.285754e-06 --> Loss 7.597286e-06 (reduction/loss: 8.3091e-02).
+StopOnPlateau on step 3 Loss 7.597286e-06 --> Loss 6.797216e-06 (reduction/loss: 1.0531e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #87 - loss:1.012850 - lr:0.000010 - [avgtime] vo:13.84, cvt:0.02, pgo:276.56, opt:3.68
+	adj.	loop	tot.
+R	0.1276	0.4100	0.2674
+t	0.0044	0.0095	0.0069
+[time] step: 294.094854578143, print: 0.022000828990712762, snapshot: 0.008412566967308521
+Start train-all step 88 ...
+StopOnPlateau on step 0 Loss 1.786764e-03 --> Loss 9.965602e-06 (reduction/loss: 9.9442e-01).
+StopOnPlateau on step 1 Loss 9.965602e-06 --> Loss 8.295264e-06 (reduction/loss: 1.6761e-01).
+StopOnPlateau on step 2 Loss 8.295264e-06 --> Loss 7.605598e-06 (reduction/loss: 8.3140e-02).
+StopOnPlateau on step 3 Loss 7.605598e-06 --> Loss 6.802176e-06 (reduction/loss: 1.0564e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #88 - loss:1.012830 - lr:0.000010 - [avgtime] vo:12.55, cvt:0.02, pgo:276.23, opt:3.69
+	adj.	loop	tot.
+R	0.1278	0.4075	0.2662
+t	0.0044	0.0095	0.0069
+[time] step: 292.48615523800254, print: 0.02476945985108614, snapshot: 0.008593300823122263
+Start train-all step 89 ...
+StopOnPlateau on step 0 Loss 1.786167e-03 --> Loss 9.959297e-06 (reduction/loss: 9.9442e-01).
+StopOnPlateau on step 1 Loss 9.959297e-06 --> Loss 8.292685e-06 (reduction/loss: 1.6734e-01).
+StopOnPlateau on step 2 Loss 8.292685e-06 --> Loss 7.602956e-06 (reduction/loss: 8.3173e-02).
+StopOnPlateau on step 3 Loss 7.602956e-06 --> Loss 6.797668e-06 (reduction/loss: 1.0592e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #89 - loss:1.012803 - lr:0.000010 - [avgtime] vo:13.07, cvt:0.02, pgo:276.10, opt:3.68
+	adj.	loop	tot.
+R	0.1276	0.4049	0.2648
+t	0.0044	0.0095	0.0069
+[time] step: 292.86092149303295, print: 0.01626320485956967, snapshot: 0.0070380899123847485
+Start train-all step 90 ...
+StopOnPlateau on step 0 Loss 1.786260e-03 --> Loss 9.947306e-06 (reduction/loss: 9.9443e-01).
+StopOnPlateau on step 1 Loss 9.947306e-06 --> Loss 8.284097e-06 (reduction/loss: 1.6720e-01).
+StopOnPlateau on step 2 Loss 8.284097e-06 --> Loss 7.594011e-06 (reduction/loss: 8.3303e-02).
+StopOnPlateau on step 3 Loss 7.594011e-06 --> Loss 6.788336e-06 (reduction/loss: 1.0609e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #90 - loss:1.012785 - lr:0.000010 - [avgtime] vo:12.74, cvt:0.02, pgo:276.19, opt:3.68
+	adj.	loop	tot.
+R	0.1273	0.4031	0.2638
+t	0.0044	0.0095	0.0069
+[time] step: 292.62500931113027, print: 0.020572148961946368, snapshot: 0.01782288495451212
+Start train-all step 91 ...
+StopOnPlateau on step 0 Loss 1.783432e-03 --> Loss 9.949270e-06 (reduction/loss: 9.9442e-01).
+StopOnPlateau on step 1 Loss 9.949270e-06 --> Loss 8.289162e-06 (reduction/loss: 1.6686e-01).
+StopOnPlateau on step 2 Loss 8.289162e-06 --> Loss 7.599070e-06 (reduction/loss: 8.3252e-02).
+StopOnPlateau on step 3 Loss 7.599070e-06 --> Loss 6.791834e-06 (reduction/loss: 1.0623e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #91 - loss:1.012765 - lr:0.000010 - [avgtime] vo:13.30, cvt:0.02, pgo:276.22, opt:3.67
+	adj.	loop	tot.
+R	0.1275	0.4014	0.2631
+t	0.0044	0.0095	0.0069
+[time] step: 293.2115287950728, print: 0.020622996147722006, snapshot: 0.012521139811724424
+Start train-all step 92 ...
+StopOnPlateau on step 0 Loss 1.777883e-03 --> Loss 9.955887e-06 (reduction/loss: 9.9440e-01).
+StopOnPlateau on step 1 Loss 9.955887e-06 --> Loss 8.297169e-06 (reduction/loss: 1.6661e-01).
+StopOnPlateau on step 2 Loss 8.297169e-06 --> Loss 7.605332e-06 (reduction/loss: 8.3382e-02).
+StopOnPlateau on step 3 Loss 7.605332e-06 --> Loss 6.795222e-06 (reduction/loss: 1.0652e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #92 - loss:1.012746 - lr:0.000010 - [avgtime] vo:17.00, cvt:0.02, pgo:277.91, opt:3.68
+	adj.	loop	tot.
+R	0.1273	0.3988	0.2617
+t	0.0044	0.0094	0.0069
+[time] step: 298.6134340718854, print: 0.020620621973648667, snapshot: 0.00884870789013803
+Start train-all step 93 ...
+StopOnPlateau on step 0 Loss 1.779997e-03 --> Loss 9.954141e-06 (reduction/loss: 9.9441e-01).
+StopOnPlateau on step 1 Loss 9.954141e-06 --> Loss 8.297256e-06 (reduction/loss: 1.6645e-01).
+StopOnPlateau on step 2 Loss 8.297256e-06 --> Loss 7.605457e-06 (reduction/loss: 8.3377e-02).
+StopOnPlateau on step 3 Loss 7.605457e-06 --> Loss 6.794664e-06 (reduction/loss: 1.0661e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #93 - loss:1.012730 - lr:0.000010 - [avgtime] vo:13.16, cvt:0.02, pgo:276.30, opt:3.68
+	adj.	loop	tot.
+R	0.1274	0.3972	0.2609
+t	0.0044	0.0094	0.0069
+[time] step: 293.1640920180362, print: 0.021494224900379777, snapshot: 0.007855786941945553
+Start train-all step 94 ...
+StopOnPlateau on step 0 Loss 1.776721e-03 --> Loss 9.954259e-06 (reduction/loss: 9.9440e-01).
+StopOnPlateau on step 1 Loss 9.954259e-06 --> Loss 8.302660e-06 (reduction/loss: 1.6592e-01).
+StopOnPlateau on step 2 Loss 8.302660e-06 --> Loss 7.611375e-06 (reduction/loss: 8.3261e-02).
+StopOnPlateau on step 3 Loss 7.611375e-06 --> Loss 6.799429e-06 (reduction/loss: 1.0668e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #94 - loss:1.012712 - lr:0.000010 - [avgtime] vo:13.78, cvt:0.02, pgo:276.19, opt:3.67
+	adj.	loop	tot.
+R	0.1273	0.3958	0.2602
+t	0.0044	0.0094	0.0069
+[time] step: 293.6612158350181, print: 0.02271429798565805, snapshot: 0.008004199946299195
+Start train-all step 95 ...
+StopOnPlateau on step 0 Loss 1.773888e-03 --> Loss 9.956053e-06 (reduction/loss: 9.9439e-01).
+StopOnPlateau on step 1 Loss 9.956053e-06 --> Loss 8.307822e-06 (reduction/loss: 1.6555e-01).
+StopOnPlateau on step 2 Loss 8.307822e-06 --> Loss 7.615582e-06 (reduction/loss: 8.3324e-02).
+StopOnPlateau on step 3 Loss 7.615582e-06 --> Loss 6.801880e-06 (reduction/loss: 1.0685e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #95 - loss:1.012697 - lr:0.000010 - [avgtime] vo:14.02, cvt:0.02, pgo:276.27, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3935	0.2591
+t	0.0044	0.0094	0.0069
+[time] step: 293.9902590641286, print: 0.022247208980843425, snapshot: 0.007818026002496481
+Start train-all step 96 ...
+StopOnPlateau on step 0 Loss 1.776463e-03 --> Loss 9.953481e-06 (reduction/loss: 9.9440e-01).
+StopOnPlateau on step 1 Loss 9.953481e-06 --> Loss 8.309142e-06 (reduction/loss: 1.6520e-01).
+StopOnPlateau on step 2 Loss 8.309142e-06 --> Loss 7.616861e-06 (reduction/loss: 8.3316e-02).
+StopOnPlateau on step 3 Loss 7.616861e-06 --> Loss 6.801493e-06 (reduction/loss: 1.0705e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #96 - loss:1.012683 - lr:0.000010 - [avgtime] vo:16.01, cvt:0.02, pgo:276.35, opt:3.68
+	adj.	loop	tot.
+R	0.1276	0.3918	0.2583
+t	0.0044	0.0094	0.0069
+[time] step: 296.05555514991283, print: 0.01749699399806559, snapshot: 0.0076485429890453815
+Start train-all step 97 ...
+StopOnPlateau on step 0 Loss 1.769612e-03 --> Loss 9.952615e-06 (reduction/loss: 9.9438e-01).
+StopOnPlateau on step 1 Loss 9.952615e-06 --> Loss 8.308733e-06 (reduction/loss: 1.6517e-01).
+StopOnPlateau on step 2 Loss 8.308733e-06 --> Loss 7.615372e-06 (reduction/loss: 8.3450e-02).
+StopOnPlateau on step 3 Loss 7.615372e-06 --> Loss 6.798533e-06 (reduction/loss: 1.0726e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #97 - loss:1.012666 - lr:0.000010 - [avgtime] vo:13.30, cvt:0.02, pgo:276.55, opt:3.67
+	adj.	loop	tot.
+R	0.1273	0.3899	0.2572
+t	0.0044	0.0094	0.0069
+[time] step: 293.55128137092106, print: 0.020474534016102552, snapshot: 0.008006613934412599
+Start train-all step 98 ...
+StopOnPlateau on step 0 Loss 1.766926e-03 --> Loss 9.949401e-06 (reduction/loss: 9.9437e-01).
+StopOnPlateau on step 1 Loss 9.949401e-06 --> Loss 8.309146e-06 (reduction/loss: 1.6486e-01).
+StopOnPlateau on step 2 Loss 8.309146e-06 --> Loss 7.615153e-06 (reduction/loss: 8.3522e-02).
+StopOnPlateau on step 3 Loss 7.615153e-06 --> Loss 6.796615e-06 (reduction/loss: 1.0749e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #98 - loss:1.012640 - lr:0.000010 - [avgtime] vo:13.08, cvt:0.02, pgo:276.69, opt:3.67
+	adj.	loop	tot.
+R	0.1271	0.3881	0.2563
+t	0.0044	0.0094	0.0069
+[time] step: 293.46384545089677, print: 0.02062926790677011, snapshot: 0.008114259922876954
+Start train-all step 99 ...
+StopOnPlateau on step 0 Loss 1.769452e-03 --> Loss 9.957053e-06 (reduction/loss: 9.9437e-01).
+StopOnPlateau on step 1 Loss 9.957053e-06 --> Loss 8.316643e-06 (reduction/loss: 1.6475e-01).
+StopOnPlateau on step 2 Loss 8.316643e-06 --> Loss 7.621124e-06 (reduction/loss: 8.3630e-02).
+StopOnPlateau on step 3 Loss 7.621124e-06 --> Loss 6.800009e-06 (reduction/loss: 1.0774e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #99 - loss:1.012624 - lr:0.000010 - [avgtime] vo:13.56, cvt:0.02, pgo:276.25, opt:3.67
+	adj.	loop	tot.
+R	0.1270	0.3856	0.2550
+t	0.0044	0.0094	0.0069
+[time] step: 293.4981196890585, print: 0.018557914067059755, snapshot: 0.00706897908821702
+Start train-all step 100 ...
+StopOnPlateau on step 0 Loss 1.769028e-03 --> Loss 9.954011e-06 (reduction/loss: 9.9437e-01).
+StopOnPlateau on step 1 Loss 9.954011e-06 --> Loss 8.319614e-06 (reduction/loss: 1.6419e-01).
+StopOnPlateau on step 2 Loss 8.319614e-06 --> Loss 7.624541e-06 (reduction/loss: 8.3546e-02).
+StopOnPlateau on step 3 Loss 7.624541e-06 --> Loss 6.801643e-06 (reduction/loss: 1.0793e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #100 - loss:1.012609 - lr:0.000010 - [avgtime] vo:11.20, cvt:0.02, pgo:276.43, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3841	0.2545
+t	0.0044	0.0094	0.0069
+[time] step: 291.33021071902476, print: 0.021824002964422107, snapshot: 0.024857679149135947
+Start train-all step 101 ...
+StopOnPlateau on step 0 Loss 1.767818e-03 --> Loss 9.955127e-06 (reduction/loss: 9.9437e-01).
+StopOnPlateau on step 1 Loss 9.955127e-06 --> Loss 8.324658e-06 (reduction/loss: 1.6378e-01).
+StopOnPlateau on step 2 Loss 8.324658e-06 --> Loss 7.629857e-06 (reduction/loss: 8.3463e-02).
+StopOnPlateau on step 3 Loss 7.629857e-06 --> Loss 6.806287e-06 (reduction/loss: 1.0794e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #101 - loss:1.012599 - lr:0.000010 - [avgtime] vo:12.68, cvt:0.02, pgo:276.11, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3832	0.2541
+t	0.0044	0.0094	0.0069
+[time] step: 292.4830183570739, print: 0.024088643956929445, snapshot: 0.048792748944833875
+Start train-all step 102 ...
+StopOnPlateau on step 0 Loss 1.765391e-03 --> Loss 9.956176e-06 (reduction/loss: 9.9436e-01).
+StopOnPlateau on step 1 Loss 9.956176e-06 --> Loss 8.328865e-06 (reduction/loss: 1.6345e-01).
+StopOnPlateau on step 2 Loss 8.328865e-06 --> Loss 7.633531e-06 (reduction/loss: 8.3485e-02).
+StopOnPlateau on step 3 Loss 7.633531e-06 --> Loss 6.807897e-06 (reduction/loss: 1.0816e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #102 - loss:1.012583 - lr:0.000010 - [avgtime] vo:13.75, cvt:0.02, pgo:276.00, opt:3.68
+	adj.	loop	tot.
+R	0.1274	0.3817	0.2533
+t	0.0044	0.0094	0.0069
+[time] step: 293.45179188111797, print: 0.02668766211718321, snapshot: 0.009938381845131516
+Start train-all step 103 ...
+StopOnPlateau on step 0 Loss 1.763344e-03 --> Loss 9.958927e-06 (reduction/loss: 9.9435e-01).
+StopOnPlateau on step 1 Loss 9.958927e-06 --> Loss 8.330791e-06 (reduction/loss: 1.6349e-01).
+StopOnPlateau on step 2 Loss 8.330791e-06 --> Loss 7.633271e-06 (reduction/loss: 8.3728e-02).
+StopOnPlateau on step 3 Loss 7.633271e-06 --> Loss 6.805783e-06 (reduction/loss: 1.0841e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #103 - loss:1.012560 - lr:0.000010 - [avgtime] vo:14.58, cvt:0.02, pgo:276.44, opt:3.69
+	adj.	loop	tot.
+R	0.1273	0.3789	0.2518
+t	0.0044	0.0094	0.0068
+[time] step: 294.7329627308063, print: 0.024883616948500276, snapshot: 0.010123485000804067
+Start train-all step 104 ...
+StopOnPlateau on step 0 Loss 1.760621e-03 --> Loss 9.968766e-06 (reduction/loss: 9.9434e-01).
+StopOnPlateau on step 1 Loss 9.968766e-06 --> Loss 8.341256e-06 (reduction/loss: 1.6326e-01).
+StopOnPlateau on step 2 Loss 8.341256e-06 --> Loss 7.643148e-06 (reduction/loss: 8.3693e-02).
+StopOnPlateau on step 3 Loss 7.643148e-06 --> Loss 6.813868e-06 (reduction/loss: 1.0850e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #104 - loss:1.012554 - lr:0.000010 - [avgtime] vo:14.10, cvt:0.02, pgo:276.40, opt:3.68
+	adj.	loop	tot.
+R	0.1272	0.3784	0.2515
+t	0.0044	0.0094	0.0068
+[time] step: 294.200084035052, print: 0.018520793179050088, snapshot: 0.009055350208655
+Start train-all step 105 ...
+StopOnPlateau on step 0 Loss 1.760950e-03 --> Loss 9.967875e-06 (reduction/loss: 9.9434e-01).
+StopOnPlateau on step 1 Loss 9.967875e-06 --> Loss 8.344159e-06 (reduction/loss: 1.6289e-01).
+StopOnPlateau on step 2 Loss 8.344159e-06 --> Loss 7.645693e-06 (reduction/loss: 8.3707e-02).
+StopOnPlateau on step 3 Loss 7.645693e-06 --> Loss 6.815149e-06 (reduction/loss: 1.0863e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #105 - loss:1.012538 - lr:0.000010 - [avgtime] vo:13.55, cvt:0.02, pgo:276.42, opt:3.68
+	adj.	loop	tot.
+R	0.1274	0.3764	0.2507
+t	0.0044	0.0094	0.0068
+[time] step: 293.6790506129619, print: 0.02059222594834864, snapshot: 0.008480365853756666
+Start train-all step 106 ...
+StopOnPlateau on step 0 Loss 1.760200e-03 --> Loss 9.967895e-06 (reduction/loss: 9.9434e-01).
+StopOnPlateau on step 1 Loss 9.967895e-06 --> Loss 8.346228e-06 (reduction/loss: 1.6269e-01).
+StopOnPlateau on step 2 Loss 8.346228e-06 --> Loss 7.646473e-06 (reduction/loss: 8.3841e-02).
+StopOnPlateau on step 3 Loss 7.646473e-06 --> Loss 6.813568e-06 (reduction/loss: 1.0893e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #106 - loss:1.012512 - lr:0.000010 - [avgtime] vo:13.41, cvt:0.02, pgo:276.33, opt:3.71
+	adj.	loop	tot.
+R	0.1279	0.3739	0.2497
+t	0.0044	0.0093	0.0068
+[time] step: 293.47027648380026, print: 0.022712273057550192, snapshot: 0.10971946804784238
+Start train-all step 107 ...
+StopOnPlateau on step 0 Loss 1.756132e-03 --> Loss 9.968991e-06 (reduction/loss: 9.9432e-01).
+StopOnPlateau on step 1 Loss 9.968991e-06 --> Loss 8.351387e-06 (reduction/loss: 1.6226e-01).
+StopOnPlateau on step 2 Loss 8.351387e-06 --> Loss 7.651386e-06 (reduction/loss: 8.3819e-02).
+StopOnPlateau on step 3 Loss 7.651386e-06 --> Loss 6.816546e-06 (reduction/loss: 1.0911e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #107 - loss:1.012501 - lr:0.000010 - [avgtime] vo:12.95, cvt:0.02, pgo:276.38, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3727	0.2489
+t	0.0044	0.0093	0.0068
+[time] step: 293.02731887996197, print: 0.020635878900066018, snapshot: 0.007977779023349285
+Start train-all step 108 ...
+StopOnPlateau on step 0 Loss 1.754828e-03 --> Loss 9.977770e-06 (reduction/loss: 9.9431e-01).
+StopOnPlateau on step 1 Loss 9.977770e-06 --> Loss 8.361596e-06 (reduction/loss: 1.6198e-01).
+StopOnPlateau on step 2 Loss 8.361596e-06 --> Loss 7.660823e-06 (reduction/loss: 8.3809e-02).
+StopOnPlateau on step 3 Loss 7.660823e-06 --> Loss 6.824062e-06 (reduction/loss: 1.0923e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #108 - loss:1.012490 - lr:0.000010 - [avgtime] vo:13.80, cvt:0.02, pgo:276.30, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3719	0.2485
+t	0.0044	0.0093	0.0068
+[time] step: 293.8064649719745, print: 0.016493442002683878, snapshot: 0.0076670770067721605
+Start train-all step 109 ...
+StopOnPlateau on step 0 Loss 1.748923e-03 --> Loss 9.977844e-06 (reduction/loss: 9.9429e-01).
+StopOnPlateau on step 1 Loss 9.977844e-06 --> Loss 8.364041e-06 (reduction/loss: 1.6174e-01).
+StopOnPlateau on step 2 Loss 8.364041e-06 --> Loss 7.662398e-06 (reduction/loss: 8.3888e-02).
+StopOnPlateau on step 3 Loss 7.662398e-06 --> Loss 6.824888e-06 (reduction/loss: 1.0930e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #109 - loss:1.012476 - lr:0.000010 - [avgtime] vo:14.26, cvt:0.02, pgo:276.42, opt:3.68
+	adj.	loop	tot.
+R	0.1276	0.3705	0.2478
+t	0.0044	0.0093	0.0068
+[time] step: 294.38992512389086, print: 0.022633343003690243, snapshot: 0.028624650090932846
+Start train-all step 110 ...
+StopOnPlateau on step 0 Loss 1.749078e-03 --> Loss 9.978911e-06 (reduction/loss: 9.9429e-01).
+StopOnPlateau on step 1 Loss 9.978911e-06 --> Loss 8.369009e-06 (reduction/loss: 1.6133e-01).
+StopOnPlateau on step 2 Loss 8.369009e-06 --> Loss 7.667370e-06 (reduction/loss: 8.3838e-02).
+StopOnPlateau on step 3 Loss 7.667370e-06 --> Loss 6.828353e-06 (reduction/loss: 1.0943e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #110 - loss:1.012463 - lr:0.000010 - [avgtime] vo:14.19, cvt:0.02, pgo:276.38, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3696	0.2473
+t	0.0044	0.0093	0.0068
+[time] step: 294.2832811619155, print: 0.02049912908114493, snapshot: 0.0069455839693546295
+Start train-all step 111 ...
+StopOnPlateau on step 0 Loss 1.747444e-03 --> Loss 9.978130e-06 (reduction/loss: 9.9429e-01).
+StopOnPlateau on step 1 Loss 9.978130e-06 --> Loss 8.370199e-06 (reduction/loss: 1.6115e-01).
+StopOnPlateau on step 2 Loss 8.370199e-06 --> Loss 7.668030e-06 (reduction/loss: 8.3889e-02).
+StopOnPlateau on step 3 Loss 7.668030e-06 --> Loss 6.827246e-06 (reduction/loss: 1.0965e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #111 - loss:1.012447 - lr:0.000010 - [avgtime] vo:12.65, cvt:0.02, pgo:276.68, opt:3.69
+	adj.	loop	tot.
+R	0.1274	0.3677	0.2464
+t	0.0044	0.0093	0.0068
+[time] step: 293.0420965340454, print: 0.02059129485860467, snapshot: 0.0072856920305639505
+Start train-all step 112 ...
+StopOnPlateau on step 0 Loss 1.750465e-03 --> Loss 9.976902e-06 (reduction/loss: 9.9430e-01).
+StopOnPlateau on step 1 Loss 9.976902e-06 --> Loss 8.372042e-06 (reduction/loss: 1.6086e-01).
+StopOnPlateau on step 2 Loss 8.372042e-06 --> Loss 7.668732e-06 (reduction/loss: 8.4007e-02).
+StopOnPlateau on step 3 Loss 7.668732e-06 --> Loss 6.825981e-06 (reduction/loss: 1.0989e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #112 - loss:1.012423 - lr:0.000010 - [avgtime] vo:13.33, cvt:0.02, pgo:276.46, opt:3.68
+	adj.	loop	tot.
+R	0.1275	0.3649	0.2450
+t	0.0044	0.0093	0.0068
+[time] step: 293.4976477250457, print: 0.02052786690182984, snapshot: 0.00788808986544609
+Start train-all step 113 ...
+StopOnPlateau on step 0 Loss 1.747999e-03 --> Loss 9.980688e-06 (reduction/loss: 9.9429e-01).
+StopOnPlateau on step 1 Loss 9.980688e-06 --> Loss 8.376645e-06 (reduction/loss: 1.6071e-01).
+StopOnPlateau on step 2 Loss 8.376645e-06 --> Loss 7.672595e-06 (reduction/loss: 8.4049e-02).
+StopOnPlateau on step 3 Loss 7.672595e-06 --> Loss 6.827099e-06 (reduction/loss: 1.1020e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #113 - loss:1.012411 - lr:0.000010 - [avgtime] vo:12.83, cvt:0.02, pgo:276.35, opt:3.68
+	adj.	loop	tot.
+R	0.1278	0.3635	0.2445
+t	0.0044	0.0093	0.0068
+[time] step: 292.87088679219596, print: 0.024823365034535527, snapshot: 0.01658188202418387
+Start train-all step 114 ...
+StopOnPlateau on step 0 Loss 1.751605e-03 --> Loss 9.980032e-06 (reduction/loss: 9.9430e-01).
+StopOnPlateau on step 1 Loss 9.980032e-06 --> Loss 8.379618e-06 (reduction/loss: 1.6036e-01).
+StopOnPlateau on step 2 Loss 8.379618e-06 --> Loss 7.674593e-06 (reduction/loss: 8.4136e-02).
+StopOnPlateau on step 3 Loss 7.674593e-06 --> Loss 6.828329e-06 (reduction/loss: 1.1027e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #114 - loss:1.012396 - lr:0.000010 - [avgtime] vo:14.05, cvt:0.02, pgo:276.53, opt:3.71
+	adj.	loop	tot.
+R	0.1277	0.3621	0.2437
+t	0.0044	0.0093	0.0068
+[time] step: 294.31054114806466, print: 0.022449532989412546, snapshot: 0.007728824857622385
+Start train-all step 115 ...
+StopOnPlateau on step 0 Loss 1.745666e-03 --> Loss 9.984180e-06 (reduction/loss: 9.9428e-01).
+StopOnPlateau on step 1 Loss 9.984180e-06 --> Loss 8.385299e-06 (reduction/loss: 1.6014e-01).
+StopOnPlateau on step 2 Loss 8.385299e-06 --> Loss 7.680257e-06 (reduction/loss: 8.4081e-02).
+StopOnPlateau on step 3 Loss 7.680257e-06 --> Loss 6.832910e-06 (reduction/loss: 1.1033e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #115 - loss:1.012386 - lr:0.000010 - [avgtime] vo:13.56, cvt:0.02, pgo:276.93, opt:3.69
+	adj.	loop	tot.
+R	0.1279	0.3611	0.2434
+t	0.0044	0.0093	0.0068
+[time] step: 294.198609263869, print: 0.018214020179584622, snapshot: 0.019098263001069427
+Start train-all step 116 ...
+StopOnPlateau on step 0 Loss 1.740586e-03 --> Loss 9.981525e-06 (reduction/loss: 9.9427e-01).
+StopOnPlateau on step 1 Loss 9.981525e-06 --> Loss 8.387664e-06 (reduction/loss: 1.5968e-01).
+StopOnPlateau on step 2 Loss 8.387664e-06 --> Loss 7.682474e-06 (reduction/loss: 8.4075e-02).
+StopOnPlateau on step 3 Loss 7.682474e-06 --> Loss 6.831976e-06 (reduction/loss: 1.1071e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #116 - loss:1.012363 - lr:0.000010 - [avgtime] vo:17.75, cvt:0.02, pgo:276.19, opt:3.68
+	adj.	loop	tot.
+R	0.1280	0.3591	0.2424
+t	0.0044	0.0093	0.0068
+[time] step: 297.6358960859943, print: 0.0205697538331151, snapshot: 0.007556457072496414
+Start train-all step 117 ...
+StopOnPlateau on step 0 Loss 1.746625e-03 --> Loss 9.989104e-06 (reduction/loss: 9.9428e-01).
+StopOnPlateau on step 1 Loss 9.989104e-06 --> Loss 8.395879e-06 (reduction/loss: 1.5950e-01).
+StopOnPlateau on step 2 Loss 8.395879e-06 --> Loss 7.689501e-06 (reduction/loss: 8.4134e-02).
+StopOnPlateau on step 3 Loss 7.689501e-06 --> Loss 6.837523e-06 (reduction/loss: 1.1080e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #117 - loss:1.012353 - lr:0.000010 - [avgtime] vo:15.04, cvt:0.02, pgo:276.10, opt:3.69
+	adj.	loop	tot.
+R	0.1281	0.3578	0.2418
+t	0.0044	0.0093	0.0068
+[time] step: 294.85268494696356, print: 0.0216872519813478, snapshot: 0.00762135093100369
+Start train-all step 118 ...
+StopOnPlateau on step 0 Loss 1.739749e-03 --> Loss 9.988467e-06 (reduction/loss: 9.9426e-01).
+StopOnPlateau on step 1 Loss 9.988467e-06 --> Loss 8.398917e-06 (reduction/loss: 1.5914e-01).
+StopOnPlateau on step 2 Loss 8.398917e-06 --> Loss 7.692613e-06 (reduction/loss: 8.4095e-02).
+StopOnPlateau on step 3 Loss 7.692613e-06 --> Loss 6.840210e-06 (reduction/loss: 1.1081e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #118 - loss:1.012334 - lr:0.000010 - [avgtime] vo:12.22, cvt:0.02, pgo:276.19, opt:3.68
+	adj.	loop	tot.
+R	0.1282	0.3564	0.2411
+t	0.0044	0.0093	0.0068
+[time] step: 292.114607054973, print: 0.024333201115950942, snapshot: 0.03128599002957344
+Start train-all step 119 ...
+StopOnPlateau on step 0 Loss 1.739225e-03 --> Loss 9.986737e-06 (reduction/loss: 9.9426e-01).
+StopOnPlateau on step 1 Loss 9.986737e-06 --> Loss 8.399256e-06 (reduction/loss: 1.5896e-01).
+StopOnPlateau on step 2 Loss 8.399256e-06 --> Loss 7.692393e-06 (reduction/loss: 8.4158e-02).
+StopOnPlateau on step 3 Loss 7.692393e-06 --> Loss 6.838083e-06 (reduction/loss: 1.1106e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #119 - loss:1.012315 - lr:0.000010 - [avgtime] vo:14.29, cvt:0.02, pgo:276.63, opt:3.68
+	adj.	loop	tot.
+R	0.1281	0.3551	0.2405
+t	0.0044	0.0093	0.0068
+[time] step: 294.6336368860211, print: 0.022664782125502825, snapshot: 0.020338429138064384
+Start train-all step 120 ...
+StopOnPlateau on step 0 Loss 1.739361e-03 --> Loss 9.981644e-06 (reduction/loss: 9.9426e-01).
+StopOnPlateau on step 1 Loss 9.981644e-06 --> Loss 8.397848e-06 (reduction/loss: 1.5867e-01).
+StopOnPlateau on step 2 Loss 8.397848e-06 --> Loss 7.691180e-06 (reduction/loss: 8.4149e-02).
+StopOnPlateau on step 3 Loss 7.691180e-06 --> Loss 6.836629e-06 (reduction/loss: 1.1111e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #120 - loss:1.012307 - lr:0.000010 - [avgtime] vo:18.48, cvt:0.02, pgo:276.29, opt:3.68
+	adj.	loop	tot.
+R	0.1281	0.3540	0.2399
+t	0.0044	0.0092	0.0068
+[time] step: 298.470787191065, print: 0.022945943055674434, snapshot: 0.007892218884080648
+Start train-all step 121 ...
+StopOnPlateau on step 0 Loss 1.739995e-03 --> Loss 9.987136e-06 (reduction/loss: 9.9426e-01).
+StopOnPlateau on step 1 Loss 9.987136e-06 --> Loss 8.407183e-06 (reduction/loss: 1.5820e-01).
+StopOnPlateau on step 2 Loss 8.407183e-06 --> Loss 7.699688e-06 (reduction/loss: 8.4154e-02).
+StopOnPlateau on step 3 Loss 7.699688e-06 --> Loss 6.842519e-06 (reduction/loss: 1.1133e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #121 - loss:1.012297 - lr:0.000010 - [avgtime] vo:13.98, cvt:0.02, pgo:276.17, opt:3.67
+	adj.	loop	tot.
+R	0.1285	0.3519	0.2390
+t	0.0044	0.0092	0.0068
+[time] step: 293.84781173686497, print: 0.022907174890860915, snapshot: 0.008883154019713402
+Start train-all step 122 ...
+StopOnPlateau on step 0 Loss 1.739920e-03 --> Loss 9.985442e-06 (reduction/loss: 9.9426e-01).
+StopOnPlateau on step 1 Loss 9.985442e-06 --> Loss 8.408941e-06 (reduction/loss: 1.5788e-01).
+StopOnPlateau on step 2 Loss 8.408941e-06 --> Loss 7.700947e-06 (reduction/loss: 8.4195e-02).
+StopOnPlateau on step 3 Loss 7.700947e-06 --> Loss 6.842095e-06 (reduction/loss: 1.1153e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #122 - loss:1.012284 - lr:0.000010 - [avgtime] vo:14.72, cvt:0.02, pgo:276.10, opt:3.69
+	adj.	loop	tot.
+R	0.1288	0.3506	0.2386
+t	0.0044	0.0092	0.0068
+[time] step: 294.5363676119596, print: 0.022844945080578327, snapshot: 0.007731259102001786
+Start train-all step 123 ...
+StopOnPlateau on step 0 Loss 1.733406e-03 --> Loss 9.985209e-06 (reduction/loss: 9.9424e-01).
+StopOnPlateau on step 1 Loss 9.985209e-06 --> Loss 8.409180e-06 (reduction/loss: 1.5784e-01).
+StopOnPlateau on step 2 Loss 8.409180e-06 --> Loss 7.700961e-06 (reduction/loss: 8.4220e-02).
+StopOnPlateau on step 3 Loss 7.700961e-06 --> Loss 6.841667e-06 (reduction/loss: 1.1158e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #123 - loss:1.012272 - lr:0.000010 - [avgtime] vo:13.81, cvt:0.02, pgo:275.95, opt:3.68
+	adj.	loop	tot.
+R	0.1286	0.3496	0.2380
+t	0.0044	0.0092	0.0068
+[time] step: 293.459619930014, print: 0.02235652389936149, snapshot: 0.05493682296946645
+Start train-all step 124 ...
+StopOnPlateau on step 0 Loss 1.731621e-03 --> Loss 9.993856e-06 (reduction/loss: 9.9423e-01).
+StopOnPlateau on step 1 Loss 9.993856e-06 --> Loss 8.419948e-06 (reduction/loss: 1.5749e-01).
+StopOnPlateau on step 2 Loss 8.419948e-06 --> Loss 7.711358e-06 (reduction/loss: 8.4156e-02).
+StopOnPlateau on step 3 Loss 7.711358e-06 --> Loss 6.851018e-06 (reduction/loss: 1.1157e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #124 - loss:1.012262 - lr:0.000010 - [avgtime] vo:19.01, cvt:0.02, pgo:278.07, opt:3.69
+	adj.	loop	tot.
+R	0.1287	0.3484	0.2374
+t	0.0044	0.0092	0.0068
+[time] step: 300.7853645409923, print: 0.019222186179831624, snapshot: 0.007292642956599593
+Start train-all step 125 ...
+StopOnPlateau on step 0 Loss 1.726701e-03 --> Loss 9.995800e-06 (reduction/loss: 9.9421e-01).
+StopOnPlateau on step 1 Loss 9.995800e-06 --> Loss 8.423703e-06 (reduction/loss: 1.5728e-01).
+StopOnPlateau on step 2 Loss 8.423703e-06 --> Loss 7.714860e-06 (reduction/loss: 8.4149e-02).
+StopOnPlateau on step 3 Loss 7.714860e-06 --> Loss 6.853887e-06 (reduction/loss: 1.1160e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #125 - loss:1.012251 - lr:0.000010 - [avgtime] vo:12.52, cvt:0.02, pgo:276.27, opt:3.68
+	adj.	loop	tot.
+R	0.1284	0.3483	0.2372
+t	0.0044	0.0092	0.0068
+[time] step: 292.4894491119776, print: 0.02063365397043526, snapshot: 0.008402145933359861
+Start train-all step 126 ...
+StopOnPlateau on step 0 Loss 1.730212e-03 --> Loss 9.997457e-06 (reduction/loss: 9.9422e-01).
+StopOnPlateau on step 1 Loss 9.997457e-06 --> Loss 8.426999e-06 (reduction/loss: 1.5709e-01).
+StopOnPlateau on step 2 Loss 8.426999e-06 --> Loss 7.716044e-06 (reduction/loss: 8.4366e-02).
+StopOnPlateau on step 3 Loss 7.716044e-06 --> Loss 6.851747e-06 (reduction/loss: 1.1201e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #126 - loss:1.012220 - lr:0.000010 - [avgtime] vo:14.41, cvt:0.02, pgo:276.31, opt:3.68
+	adj.	loop	tot.
+R	0.1291	0.3452	0.2360
+t	0.0044	0.0092	0.0068
+[time] step: 294.419789937092, print: 0.01590355788357556, snapshot: 0.019974858965724707
+Start train-all step 127 ...
+StopOnPlateau on step 0 Loss 1.730050e-03 --> Loss 9.992079e-06 (reduction/loss: 9.9422e-01).
+StopOnPlateau on step 1 Loss 9.992079e-06 --> Loss 8.426238e-06 (reduction/loss: 1.5671e-01).
+StopOnPlateau on step 2 Loss 8.426238e-06 --> Loss 7.716429e-06 (reduction/loss: 8.4238e-02).
+StopOnPlateau on step 3 Loss 7.716429e-06 --> Loss 6.851442e-06 (reduction/loss: 1.1210e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #127 - loss:1.012208 - lr:0.000010 - [avgtime] vo:13.60, cvt:0.02, pgo:276.56, opt:3.68
+	adj.	loop	tot.
+R	0.1291	0.3441	0.2356
+t	0.0044	0.0092	0.0068
+[time] step: 293.8614638170693, print: 0.021578290965408087, snapshot: 0.008349776035174727
+Start train-all step 128 ...
+StopOnPlateau on step 0 Loss 1.731960e-03 --> Loss 9.997342e-06 (reduction/loss: 9.9423e-01).
+StopOnPlateau on step 1 Loss 9.997342e-06 --> Loss 8.432697e-06 (reduction/loss: 1.5651e-01).
+StopOnPlateau on step 2 Loss 8.432697e-06 --> Loss 7.721939e-06 (reduction/loss: 8.4286e-02).
+StopOnPlateau on step 3 Loss 7.721939e-06 --> Loss 6.855544e-06 (reduction/loss: 1.1220e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #128 - loss:1.012199 - lr:0.000010 - [avgtime] vo:12.82, cvt:0.02, pgo:276.23, opt:3.67
+	adj.	loop	tot.
+R	0.1291	0.3435	0.2352
+t	0.0044	0.0092	0.0068
+[time] step: 292.73519225092605, print: 0.01780061679892242, snapshot: 0.058477887185290456
+Start train-all step 129 ...
+StopOnPlateau on step 0 Loss 1.723839e-03 --> Loss 9.995520e-06 (reduction/loss: 9.9420e-01).
+StopOnPlateau on step 1 Loss 9.995520e-06 --> Loss 8.433512e-06 (reduction/loss: 1.5627e-01).
+StopOnPlateau on step 2 Loss 8.433512e-06 --> Loss 7.722599e-06 (reduction/loss: 8.4296e-02).
+StopOnPlateau on step 3 Loss 7.722599e-06 --> Loss 6.854883e-06 (reduction/loss: 1.1236e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #129 - loss:1.012177 - lr:0.000010 - [avgtime] vo:13.70, cvt:0.02, pgo:276.17, opt:3.68
+	adj.	loop	tot.
+R	0.1289	0.3417	0.2342
+t	0.0044	0.0092	0.0068
+[time] step: 293.5765500389971, print: 0.02260850090533495, snapshot: 0.008926624897867441
+Start train-all step 130 ...
+StopOnPlateau on step 0 Loss 1.728771e-03 --> Loss 9.995806e-06 (reduction/loss: 9.9422e-01).
+StopOnPlateau on step 1 Loss 9.995806e-06 --> Loss 8.436376e-06 (reduction/loss: 1.5601e-01).
+StopOnPlateau on step 2 Loss 8.436376e-06 --> Loss 7.725428e-06 (reduction/loss: 8.4272e-02).
+StopOnPlateau on step 3 Loss 7.725428e-06 --> Loss 6.856214e-06 (reduction/loss: 1.1251e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #130 - loss:1.012172 - lr:0.000010 - [avgtime] vo:12.35, cvt:0.02, pgo:276.36, opt:3.68
+	adj.	loop	tot.
+R	0.1291	0.3407	0.2338
+t	0.0044	0.0092	0.0068
+[time] step: 292.40844734199345, print: 0.023979180958122015, snapshot: 0.030253155156970024
+Start train-all step 131 ...
+StopOnPlateau on step 0 Loss 1.728559e-03 --> Loss 1.001871e-05 (reduction/loss: 9.9420e-01).
+StopOnPlateau on step 1 Loss 1.001871e-05 --> Loss 8.456297e-06 (reduction/loss: 1.5595e-01).
+StopOnPlateau on step 2 Loss 8.456297e-06 --> Loss 7.742719e-06 (reduction/loss: 8.4384e-02).
+StopOnPlateau on step 3 Loss 7.742719e-06 --> Loss 6.870103e-06 (reduction/loss: 1.1270e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #131 - loss:1.012166 - lr:0.000010 - [avgtime] vo:14.47, cvt:0.02, pgo:276.46, opt:3.68
+	adj.	loop	tot.
+R	0.1298	0.3395	0.2336
+t	0.0044	0.0092	0.0068
+[time] step: 294.62782715493813, print: 0.020862489007413387, snapshot: 0.007523022126406431
+Start train-all step 132 ...
+StopOnPlateau on step 0 Loss 1.723294e-03 --> Loss 1.001252e-05 (reduction/loss: 9.9419e-01).
+StopOnPlateau on step 1 Loss 1.001252e-05 --> Loss 8.454498e-06 (reduction/loss: 1.5561e-01).
+StopOnPlateau on step 2 Loss 8.454498e-06 --> Loss 7.740924e-06 (reduction/loss: 8.4402e-02).
+StopOnPlateau on step 3 Loss 7.740924e-06 --> Loss 6.867444e-06 (reduction/loss: 1.1284e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #132 - loss:1.012143 - lr:0.000010 - [avgtime] vo:12.93, cvt:0.02, pgo:276.72, opt:3.71
+	adj.	loop	tot.
+R	0.1297	0.3378	0.2327
+t	0.0044	0.0092	0.0067
+[time] step: 293.3799335358199, print: 0.025161026045680046, snapshot: 0.00875984807498753
+Start train-all step 133 ...
+StopOnPlateau on step 0 Loss 1.716920e-03 --> Loss 1.001848e-05 (reduction/loss: 9.9416e-01).
+StopOnPlateau on step 1 Loss 1.001848e-05 --> Loss 8.461914e-06 (reduction/loss: 1.5537e-01).
+StopOnPlateau on step 2 Loss 8.461914e-06 --> Loss 7.748031e-06 (reduction/loss: 8.4364e-02).
+StopOnPlateau on step 3 Loss 7.748031e-06 --> Loss 6.872835e-06 (reduction/loss: 1.1296e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #133 - loss:1.012130 - lr:0.000010 - [avgtime] vo:15.32, cvt:0.02, pgo:276.16, opt:3.68
+	adj.	loop	tot.
+R	0.1295	0.3371	0.2322
+t	0.0044	0.0092	0.0067
+[time] step: 295.1824905311223, print: 0.020366118988022208, snapshot: 0.014494629111140966
+Start train-all step 134 ...
+StopOnPlateau on step 0 Loss 1.721929e-03 --> Loss 1.001603e-05 (reduction/loss: 9.9418e-01).
+StopOnPlateau on step 1 Loss 1.001603e-05 --> Loss 8.462686e-06 (reduction/loss: 1.5509e-01).
+StopOnPlateau on step 2 Loss 8.462686e-06 --> Loss 7.748571e-06 (reduction/loss: 8.4384e-02).
+StopOnPlateau on step 3 Loss 7.748571e-06 --> Loss 6.872021e-06 (reduction/loss: 1.1312e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #134 - loss:1.012114 - lr:0.000010 - [avgtime] vo:14.34, cvt:0.02, pgo:276.10, opt:3.69
+	adj.	loop	tot.
+R	0.1299	0.3353	0.2316
+t	0.0044	0.0092	0.0067
+[time] step: 294.1472283580806, print: 0.020652294857427478, snapshot: 0.00773094012401998
+Start train-all step 135 ...
+StopOnPlateau on step 0 Loss 1.720815e-03 --> Loss 1.001161e-05 (reduction/loss: 9.9418e-01).
+StopOnPlateau on step 1 Loss 1.001161e-05 --> Loss 8.463113e-06 (reduction/loss: 1.5467e-01).
+StopOnPlateau on step 2 Loss 8.463113e-06 --> Loss 7.749200e-06 (reduction/loss: 8.4356e-02).
+StopOnPlateau on step 3 Loss 7.749200e-06 --> Loss 6.871676e-06 (reduction/loss: 1.1324e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #135 - loss:1.012095 - lr:0.000010 - [avgtime] vo:13.74, cvt:0.02, pgo:276.81, opt:3.68
+	adj.	loop	tot.
+R	0.1298	0.3342	0.2309
+t	0.0044	0.0092	0.0067
+[time] step: 294.25005505699664, print: 0.020601137075573206, snapshot: 0.006877455161884427
+Start train-all step 136 ...
+StopOnPlateau on step 0 Loss 1.720530e-03 --> Loss 1.001524e-05 (reduction/loss: 9.9418e-01).
+StopOnPlateau on step 1 Loss 1.001524e-05 --> Loss 8.468767e-06 (reduction/loss: 1.5441e-01).
+StopOnPlateau on step 2 Loss 8.468767e-06 --> Loss 7.754214e-06 (reduction/loss: 8.4375e-02).
+StopOnPlateau on step 3 Loss 7.754214e-06 --> Loss 6.874970e-06 (reduction/loss: 1.1339e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #136 - loss:1.012088 - lr:0.000010 - [avgtime] vo:13.29, cvt:0.02, pgo:276.37, opt:3.69
+	adj.	loop	tot.
+R	0.1300	0.3329	0.2304
+t	0.0044	0.0092	0.0067
+[time] step: 293.3705081969965, print: 0.022854740964248776, snapshot: 0.00639639119617641
+Start train-all step 137 ...
+StopOnPlateau on step 0 Loss 1.717272e-03 --> Loss 1.002469e-05 (reduction/loss: 9.9416e-01).
+StopOnPlateau on step 1 Loss 1.002469e-05 --> Loss 8.478641e-06 (reduction/loss: 1.5422e-01).
+StopOnPlateau on step 2 Loss 8.478641e-06 --> Loss 7.763083e-06 (reduction/loss: 8.4395e-02).
+StopOnPlateau on step 3 Loss 7.763083e-06 --> Loss 6.882259e-06 (reduction/loss: 1.1346e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #137 - loss:1.012072 - lr:0.000010 - [avgtime] vo:13.46, cvt:0.02, pgo:276.32, opt:3.68
+	adj.	loop	tot.
+R	0.1301	0.3316	0.2299
+t	0.0044	0.0092	0.0067
+[time] step: 293.47678162599914, print: 0.01843677880242467, snapshot: 0.12124699703417718
+Start train-all step 138 ...
+StopOnPlateau on step 0 Loss 1.718284e-03 --> Loss 1.002829e-05 (reduction/loss: 9.9416e-01).
+StopOnPlateau on step 1 Loss 1.002829e-05 --> Loss 8.483052e-06 (reduction/loss: 1.5409e-01).
+StopOnPlateau on step 2 Loss 8.483052e-06 --> Loss 7.766127e-06 (reduction/loss: 8.4513e-02).
+StopOnPlateau on step 3 Loss 7.766127e-06 --> Loss 6.883968e-06 (reduction/loss: 1.1359e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #138 - loss:1.012058 - lr:0.000010 - [avgtime] vo:12.44, cvt:0.02, pgo:276.32, opt:3.68
+	adj.	loop	tot.
+R	0.1303	0.3306	0.2295
+t	0.0044	0.0091	0.0067
+[time] step: 292.460286407033, print: 0.021495683817192912, snapshot: 0.008074556943029165
+Start train-all step 139 ...
+StopOnPlateau on step 0 Loss 1.715971e-03 --> Loss 1.002998e-05 (reduction/loss: 9.9415e-01).
+StopOnPlateau on step 1 Loss 1.002998e-05 --> Loss 8.487276e-06 (reduction/loss: 1.5381e-01).
+StopOnPlateau on step 2 Loss 8.487276e-06 --> Loss 7.770202e-06 (reduction/loss: 8.4488e-02).
+StopOnPlateau on step 3 Loss 7.770202e-06 --> Loss 6.886346e-06 (reduction/loss: 1.1375e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #139 - loss:1.012039 - lr:0.000010 - [avgtime] vo:12.74, cvt:0.02, pgo:276.42, opt:3.68
+	adj.	loop	tot.
+R	0.1304	0.3293	0.2288
+t	0.0044	0.0091	0.0067
+[time] step: 292.85807886789553, print: 0.02054392104037106, snapshot: 0.006834594998508692
+Start train-all step 140 ...
+StopOnPlateau on step 0 Loss 1.723327e-03 --> Loss 1.002453e-05 (reduction/loss: 9.9418e-01).
+StopOnPlateau on step 1 Loss 1.002453e-05 --> Loss 8.484155e-06 (reduction/loss: 1.5366e-01).
+StopOnPlateau on step 2 Loss 8.484155e-06 --> Loss 7.766326e-06 (reduction/loss: 8.4608e-02).
+StopOnPlateau on step 3 Loss 7.766326e-06 --> Loss 6.881263e-06 (reduction/loss: 1.1396e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #140 - loss:1.012018 - lr:0.000010 - [avgtime] vo:13.40, cvt:0.02, pgo:276.32, opt:3.68
+	adj.	loop	tot.
+R	0.1307	0.3276	0.2281
+t	0.0044	0.0091	0.0067
+[time] step: 293.41408395790495, print: 0.020606950856745243, snapshot: 0.008661723928526044
+Start train-all step 141 ...
+StopOnPlateau on step 0 Loss 1.722273e-03 --> Loss 1.002927e-05 (reduction/loss: 9.9418e-01).
+StopOnPlateau on step 1 Loss 1.002927e-05 --> Loss 8.492037e-06 (reduction/loss: 1.5327e-01).
+StopOnPlateau on step 2 Loss 8.492037e-06 --> Loss 7.774441e-06 (reduction/loss: 8.4502e-02).
+StopOnPlateau on step 3 Loss 7.774441e-06 --> Loss 6.888222e-06 (reduction/loss: 1.1399e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #141 - loss:1.012016 - lr:0.000010 - [avgtime] vo:14.42, cvt:0.02, pgo:276.24, opt:3.67
+	adj.	loop	tot.
+R	0.1309	0.3270	0.2280
+t	0.0044	0.0091	0.0067
+[time] step: 294.3530865400098, print: 0.021448584040626884, snapshot: 0.007908620173111558
+Start train-all step 142 ...
+StopOnPlateau on step 0 Loss 1.715719e-03 --> Loss 1.003596e-05 (reduction/loss: 9.9415e-01).
+StopOnPlateau on step 1 Loss 1.003596e-05 --> Loss 8.500152e-06 (reduction/loss: 1.5303e-01).
+StopOnPlateau on step 2 Loss 8.500152e-06 --> Loss 7.782038e-06 (reduction/loss: 8.4483e-02).
+StopOnPlateau on step 3 Loss 7.782038e-06 --> Loss 6.893711e-06 (reduction/loss: 1.1415e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #142 - loss:1.011997 - lr:0.000010 - [avgtime] vo:16.74, cvt:0.02, pgo:275.77, opt:3.67
+	adj.	loop	tot.
+R	0.1311	0.3252	0.2271
+t	0.0044	0.0091	0.0067
+[time] step: 296.20517348498106, print: 0.022731786128133535, snapshot: 0.009412583196535707
+Start train-all step 143 ...
+StopOnPlateau on step 0 Loss 1.713049e-03 --> Loss 1.005140e-05 (reduction/loss: 9.9413e-01).
+StopOnPlateau on step 1 Loss 1.005140e-05 --> Loss 8.514565e-06 (reduction/loss: 1.5290e-01).
+StopOnPlateau on step 2 Loss 8.514565e-06 --> Loss 7.794503e-06 (reduction/loss: 8.4568e-02).
+StopOnPlateau on step 3 Loss 7.794503e-06 --> Loss 6.903295e-06 (reduction/loss: 1.1434e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #143 - loss:1.011988 - lr:0.000010 - [avgtime] vo:12.80, cvt:0.02, pgo:275.83, opt:3.69
+	adj.	loop	tot.
+R	0.1311	0.3247	0.2269
+t	0.0044	0.0091	0.0067
+[time] step: 292.33652792708017, print: 0.016525256913155317, snapshot: 0.006394476164132357
+Start train-all step 144 ...
+StopOnPlateau on step 0 Loss 1.706476e-03 --> Loss 1.004877e-05 (reduction/loss: 9.9411e-01).
+StopOnPlateau on step 1 Loss 1.004877e-05 --> Loss 8.515947e-06 (reduction/loss: 1.5254e-01).
+StopOnPlateau on step 2 Loss 8.515947e-06 --> Loss 7.796416e-06 (reduction/loss: 8.4492e-02).
+StopOnPlateau on step 3 Loss 7.796416e-06 --> Loss 6.904661e-06 (reduction/loss: 1.1438e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #144 - loss:1.011974 - lr:0.000010 - [avgtime] vo:12.39, cvt:0.02, pgo:275.98, opt:3.68
+	adj.	loop	tot.
+R	0.1311	0.3242	0.2267
+t	0.0044	0.0091	0.0067
+[time] step: 292.0711551220156, print: 0.02057232311926782, snapshot: 0.007828817004337907
+Start train-all step 145 ...
+StopOnPlateau on step 0 Loss 1.709732e-03 --> Loss 1.005386e-05 (reduction/loss: 9.9412e-01).
+StopOnPlateau on step 1 Loss 1.005386e-05 --> Loss 8.522398e-06 (reduction/loss: 1.5233e-01).
+StopOnPlateau on step 2 Loss 8.522398e-06 --> Loss 7.801949e-06 (reduction/loss: 8.4536e-02).
+StopOnPlateau on step 3 Loss 7.801949e-06 --> Loss 6.907650e-06 (reduction/loss: 1.1463e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #145 - loss:1.011962 - lr:0.000010 - [avgtime] vo:12.04, cvt:0.02, pgo:275.85, opt:3.68
+	adj.	loop	tot.
+R	0.1315	0.3225	0.2260
+t	0.0044	0.0091	0.0067
+[time] step: 291.58545906911604, print: 0.020915674977004528, snapshot: 0.007741460110992193
+Start train-all step 146 ...
+StopOnPlateau on step 0 Loss 1.714543e-03 --> Loss 1.005407e-05 (reduction/loss: 9.9414e-01).
+StopOnPlateau on step 1 Loss 1.005407e-05 --> Loss 8.524106e-06 (reduction/loss: 1.5217e-01).
+StopOnPlateau on step 2 Loss 8.524106e-06 --> Loss 7.802768e-06 (reduction/loss: 8.4623e-02).
+StopOnPlateau on step 3 Loss 7.802768e-06 --> Loss 6.907096e-06 (reduction/loss: 1.1479e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #146 - loss:1.011943 - lr:0.000010 - [avgtime] vo:12.46, cvt:0.02, pgo:276.73, opt:3.69
+	adj.	loop	tot.
+R	0.1314	0.3212	0.2254
+t	0.0044	0.0091	0.0067
+[time] step: 292.9003478498198, print: 0.01649745088070631, snapshot: 0.006961344974115491
+Start train-all step 147 ...
+StopOnPlateau on step 0 Loss 1.708639e-03 --> Loss 1.005596e-05 (reduction/loss: 9.9411e-01).
+StopOnPlateau on step 1 Loss 1.005596e-05 --> Loss 8.524024e-06 (reduction/loss: 1.5234e-01).
+StopOnPlateau on step 2 Loss 8.524024e-06 --> Loss 7.800896e-06 (reduction/loss: 8.4834e-02).
+StopOnPlateau on step 3 Loss 7.800896e-06 --> Loss 6.904372e-06 (reduction/loss: 1.1493e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #147 - loss:1.011921 - lr:0.000010 - [avgtime] vo:12.78, cvt:0.02, pgo:275.58, opt:3.68
+	adj.	loop	tot.
+R	0.1311	0.3201	0.2247
+t	0.0044	0.0091	0.0067
+[time] step: 292.0561879228335, print: 0.024752198019996285, snapshot: 0.008124789921566844
+Start train-all step 148 ...
+StopOnPlateau on step 0 Loss 1.703660e-03 --> Loss 1.005171e-05 (reduction/loss: 9.9410e-01).
+StopOnPlateau on step 1 Loss 1.005171e-05 --> Loss 8.524141e-06 (reduction/loss: 1.5197e-01).
+StopOnPlateau on step 2 Loss 8.524141e-06 --> Loss 7.801689e-06 (reduction/loss: 8.4754e-02).
+StopOnPlateau on step 3 Loss 7.801689e-06 --> Loss 6.903899e-06 (reduction/loss: 1.1508e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #148 - loss:1.011910 - lr:0.000010 - [avgtime] vo:12.67, cvt:0.02, pgo:275.66, opt:3.68
+	adj.	loop	tot.
+R	0.1313	0.3194	0.2244
+t	0.0044	0.0091	0.0067
+[time] step: 292.02379412180744, print: 0.020539998076856136, snapshot: 0.018529881024733186
+Start train-all step 149 ...
+StopOnPlateau on step 0 Loss 1.703358e-03 --> Loss 1.005221e-05 (reduction/loss: 9.9410e-01).
+StopOnPlateau on step 1 Loss 1.005221e-05 --> Loss 8.527570e-06 (reduction/loss: 1.5167e-01).
+StopOnPlateau on step 2 Loss 8.527570e-06 --> Loss 7.805098e-06 (reduction/loss: 8.4722e-02).
+StopOnPlateau on step 3 Loss 7.805098e-06 --> Loss 6.905754e-06 (reduction/loss: 1.1523e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #149 - loss:1.011900 - lr:0.000010 - [avgtime] vo:11.31, cvt:0.02, pgo:275.65, opt:3.68
+	adj.	loop	tot.
+R	0.1318	0.3177	0.2238
+t	0.0044	0.0091	0.0067
+[time] step: 290.664537968114, print: 0.020845340099185705, snapshot: 0.006946665933355689
+Start train-all step 150 ...
+StopOnPlateau on step 0 Loss 1.703985e-03 --> Loss 1.005128e-05 (reduction/loss: 9.9410e-01).
+StopOnPlateau on step 1 Loss 1.005128e-05 --> Loss 8.531479e-06 (reduction/loss: 1.5120e-01).
+StopOnPlateau on step 2 Loss 8.531479e-06 --> Loss 7.808796e-06 (reduction/loss: 8.4708e-02).
+StopOnPlateau on step 3 Loss 7.808796e-06 --> Loss 6.908193e-06 (reduction/loss: 1.1533e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #150 - loss:1.011881 - lr:0.000010 - [avgtime] vo:12.02, cvt:0.02, pgo:275.63, opt:3.69
+	adj.	loop	tot.
+R	0.1318	0.3171	0.2235
+t	0.0044	0.0091	0.0067
+[time] step: 291.35638890392147, print: 0.018558705924078822, snapshot: 0.006761523894965649
+Start train-all step 151 ...
+StopOnPlateau on step 0 Loss 1.705516e-03 --> Loss 1.006181e-05 (reduction/loss: 9.9410e-01).
+StopOnPlateau on step 1 Loss 1.006181e-05 --> Loss 8.541714e-06 (reduction/loss: 1.5108e-01).
+StopOnPlateau on step 2 Loss 8.541714e-06 --> Loss 7.817946e-06 (reduction/loss: 8.4733e-02).
+StopOnPlateau on step 3 Loss 7.817946e-06 --> Loss 6.915455e-06 (reduction/loss: 1.1544e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #151 - loss:1.011883 - lr:0.000010 - [avgtime] vo:11.96, cvt:0.02, pgo:275.41, opt:3.67
+	adj.	loop	tot.
+R	0.1320	0.3165	0.2233
+t	0.0044	0.0091	0.0067
+[time] step: 291.0639242751058, print: 0.018731083953753114, snapshot: 0.008033616002649069
+Start train-all step 152 ...
+StopOnPlateau on step 0 Loss 1.698870e-03 --> Loss 1.005417e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.005417e-05 --> Loss 8.537847e-06 (reduction/loss: 1.5082e-01).
+StopOnPlateau on step 2 Loss 8.537847e-06 --> Loss 7.814489e-06 (reduction/loss: 8.4724e-02).
+StopOnPlateau on step 3 Loss 7.814489e-06 --> Loss 6.911942e-06 (reduction/loss: 1.1550e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #152 - loss:1.011862 - lr:0.000010 - [avgtime] vo:11.12, cvt:0.02, pgo:275.52, opt:3.68
+	adj.	loop	tot.
+R	0.1320	0.3152	0.2227
+t	0.0044	0.0091	0.0067
+[time] step: 290.34494235296734, print: 0.022404738003388047, snapshot: 0.007386242970824242
+Start train-all step 153 ...
+StopOnPlateau on step 0 Loss 1.706044e-03 --> Loss 1.004953e-05 (reduction/loss: 9.9411e-01).
+StopOnPlateau on step 1 Loss 1.004953e-05 --> Loss 8.535238e-06 (reduction/loss: 1.5068e-01).
+StopOnPlateau on step 2 Loss 8.535238e-06 --> Loss 7.811620e-06 (reduction/loss: 8.4780e-02).
+StopOnPlateau on step 3 Loss 7.811620e-06 --> Loss 6.908773e-06 (reduction/loss: 1.1558e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #153 - loss:1.011848 - lr:0.000010 - [avgtime] vo:12.13, cvt:0.02, pgo:275.52, opt:3.69
+	adj.	loop	tot.
+R	0.1322	0.3141	0.2222
+t	0.0044	0.0090	0.0067
+[time] step: 291.36267107282765, print: 0.019847369054332376, snapshot: 0.007131297141313553
+Start train-all step 154 ...
+StopOnPlateau on step 0 Loss 1.696461e-03 --> Loss 1.005196e-05 (reduction/loss: 9.9407e-01).
+StopOnPlateau on step 1 Loss 1.005196e-05 --> Loss 8.538848e-06 (reduction/loss: 1.5053e-01).
+StopOnPlateau on step 2 Loss 8.538848e-06 --> Loss 7.814957e-06 (reduction/loss: 8.4776e-02).
+StopOnPlateau on step 3 Loss 7.814957e-06 --> Loss 6.910846e-06 (reduction/loss: 1.1569e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #154 - loss:1.011830 - lr:0.000010 - [avgtime] vo:12.39, cvt:0.02, pgo:275.66, opt:3.68
+	adj.	loop	tot.
+R	0.1321	0.3134	0.2218
+t	0.0044	0.0090	0.0067
+[time] step: 291.7506147781387, print: 0.018794463947415352, snapshot: 0.00666627218015492
+Start train-all step 155 ...
+StopOnPlateau on step 0 Loss 1.697244e-03 --> Loss 1.005494e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.005494e-05 --> Loss 8.544959e-06 (reduction/loss: 1.5017e-01).
+StopOnPlateau on step 2 Loss 8.544959e-06 --> Loss 7.821393e-06 (reduction/loss: 8.4678e-02).
+StopOnPlateau on step 3 Loss 7.821393e-06 --> Loss 6.916844e-06 (reduction/loss: 1.1565e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #155 - loss:1.011835 - lr:0.000010 - [avgtime] vo:12.76, cvt:0.02, pgo:275.78, opt:3.72
+	adj.	loop	tot.
+R	0.1324	0.3130	0.2218
+t	0.0044	0.0091	0.0067
+[time] step: 292.2834308820311, print: 0.022880604024976492, snapshot: 0.007148650009185076
+Start train-all step 156 ...
+StopOnPlateau on step 0 Loss 1.690373e-03 --> Loss 1.005767e-05 (reduction/loss: 9.9405e-01).
+StopOnPlateau on step 1 Loss 1.005767e-05 --> Loss 8.553037e-06 (reduction/loss: 1.4960e-01).
+StopOnPlateau on step 2 Loss 8.553037e-06 --> Loss 7.829522e-06 (reduction/loss: 8.4592e-02).
+StopOnPlateau on step 3 Loss 7.829522e-06 --> Loss 6.921483e-06 (reduction/loss: 1.1598e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #156 - loss:1.011821 - lr:0.000010 - [avgtime] vo:12.42, cvt:0.02, pgo:275.52, opt:3.68
+	adj.	loop	tot.
+R	0.1328	0.3117	0.2213
+t	0.0044	0.0090	0.0067
+[time] step: 291.6441765211057, print: 0.016466330969706178, snapshot: 0.007164390059188008
+Start train-all step 157 ...
+StopOnPlateau on step 0 Loss 1.699411e-03 --> Loss 1.005949e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.005949e-05 --> Loss 8.554271e-06 (reduction/loss: 1.4963e-01).
+StopOnPlateau on step 2 Loss 8.554271e-06 --> Loss 7.829561e-06 (reduction/loss: 8.4719e-02).
+StopOnPlateau on step 3 Loss 7.829561e-06 --> Loss 6.919928e-06 (reduction/loss: 1.1618e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #157 - loss:1.011799 - lr:0.000010 - [avgtime] vo:12.57, cvt:0.02, pgo:275.30, opt:3.67
+	adj.	loop	tot.
+R	0.1330	0.3101	0.2207
+t	0.0044	0.0090	0.0067
+[time] step: 291.5732564411592, print: 0.020829388173297048, snapshot: 0.007546388078480959
+Start train-all step 158 ...
+StopOnPlateau on step 0 Loss 1.702117e-03 --> Loss 1.007035e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.007035e-05 --> Loss 8.566775e-06 (reduction/loss: 1.4931e-01).
+StopOnPlateau on step 2 Loss 8.566775e-06 --> Loss 7.840595e-06 (reduction/loss: 8.4767e-02).
+StopOnPlateau on step 3 Loss 7.840595e-06 --> Loss 6.929265e-06 (reduction/loss: 1.1623e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #158 - loss:1.011799 - lr:0.000010 - [avgtime] vo:13.28, cvt:0.02, pgo:275.33, opt:3.69
+	adj.	loop	tot.
+R	0.1332	0.3099	0.2207
+t	0.0044	0.0090	0.0067
+[time] step: 292.3187539339997, print: 0.018348102923482656, snapshot: 0.007153338985517621
+Start train-all step 159 ...
+StopOnPlateau on step 0 Loss 1.700330e-03 --> Loss 1.007332e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.007332e-05 --> Loss 8.569737e-06 (reduction/loss: 1.4926e-01).
+StopOnPlateau on step 2 Loss 8.569737e-06 --> Loss 7.842978e-06 (reduction/loss: 8.4805e-02).
+StopOnPlateau on step 3 Loss 7.842978e-06 --> Loss 6.929909e-06 (reduction/loss: 1.1642e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #159 - loss:1.011783 - lr:0.000010 - [avgtime] vo:12.16, cvt:0.02, pgo:275.23, opt:3.70
+	adj.	loop	tot.
+R	0.1333	0.3088	0.2202
+t	0.0044	0.0090	0.0067
+[time] step: 291.10813225316815, print: 0.020637451903894544, snapshot: 0.006949621019884944
+Start train-all step 160 ...
+StopOnPlateau on step 0 Loss 1.701338e-03 --> Loss 1.007301e-05 (reduction/loss: 9.9408e-01).
+StopOnPlateau on step 1 Loss 1.007301e-05 --> Loss 8.572510e-06 (reduction/loss: 1.4896e-01).
+StopOnPlateau on step 2 Loss 8.572510e-06 --> Loss 7.845291e-06 (reduction/loss: 8.4831e-02).
+StopOnPlateau on step 3 Loss 7.845291e-06 --> Loss 6.931255e-06 (reduction/loss: 1.1651e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #160 - loss:1.011768 - lr:0.000010 - [avgtime] vo:11.72, cvt:0.02, pgo:275.28, opt:3.68
+	adj.	loop	tot.
+R	0.1336	0.3077	0.2198
+t	0.0044	0.0090	0.0067
+[time] step: 290.70627482701093, print: 0.018518115859478712, snapshot: 0.014640804845839739
+Start train-all step 161 ...
+StopOnPlateau on step 0 Loss 1.694997e-03 --> Loss 1.007406e-05 (reduction/loss: 9.9406e-01).
+StopOnPlateau on step 1 Loss 1.007406e-05 --> Loss 8.576571e-06 (reduction/loss: 1.4865e-01).
+StopOnPlateau on step 2 Loss 8.576571e-06 --> Loss 7.849672e-06 (reduction/loss: 8.4754e-02).
+StopOnPlateau on step 3 Loss 7.849672e-06 --> Loss 6.934645e-06 (reduction/loss: 1.1657e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #161 - loss:1.011756 - lr:0.000010 - [avgtime] vo:12.88, cvt:0.02, pgo:275.52, opt:3.68
+	adj.	loop	tot.
+R	0.1336	0.3071	0.2194
+t	0.0044	0.0090	0.0067
+[time] step: 292.10336143313907, print: 0.020599380135536194, snapshot: 0.008981449995189905
+Start train-all step 162 ...
+StopOnPlateau on step 0 Loss 1.696069e-03 --> Loss 1.007199e-05 (reduction/loss: 9.9406e-01).
+StopOnPlateau on step 1 Loss 1.007199e-05 --> Loss 8.578415e-06 (reduction/loss: 1.4829e-01).
+StopOnPlateau on step 2 Loss 8.578415e-06 --> Loss 7.851432e-06 (reduction/loss: 8.4746e-02).
+StopOnPlateau on step 3 Loss 7.851432e-06 --> Loss 6.935509e-06 (reduction/loss: 1.1666e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #162 - loss:1.011742 - lr:0.000010 - [avgtime] vo:10.94, cvt:0.02, pgo:275.37, opt:3.69
+	adj.	loop	tot.
+R	0.1337	0.3066	0.2193
+t	0.0044	0.0090	0.0067
+[time] step: 290.0256763759535, print: 0.02059240685775876, snapshot: 0.00804939609952271
+Start train-all step 163 ...
+StopOnPlateau on step 0 Loss 1.694256e-03 --> Loss 1.007634e-05 (reduction/loss: 9.9405e-01).
+StopOnPlateau on step 1 Loss 1.007634e-05 --> Loss 8.584800e-06 (reduction/loss: 1.4802e-01).
+StopOnPlateau on step 2 Loss 8.584800e-06 --> Loss 7.857740e-06 (reduction/loss: 8.4692e-02).
+StopOnPlateau on step 3 Loss 7.857740e-06 --> Loss 6.940924e-06 (reduction/loss: 1.1668e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #163 - loss:1.011744 - lr:0.000010 - [avgtime] vo:12.43, cvt:0.02, pgo:275.40, opt:3.71
+	adj.	loop	tot.
+R	0.1338	0.3065	0.2193
+t	0.0044	0.0090	0.0067
+[time] step: 291.563835803885, print: 0.024985300144180655, snapshot: 0.00735519384033978
+Start train-all step 164 ...
+StopOnPlateau on step 0 Loss 1.691495e-03 --> Loss 1.008473e-05 (reduction/loss: 9.9404e-01).
+StopOnPlateau on step 1 Loss 1.008473e-05 --> Loss 8.594548e-06 (reduction/loss: 1.4777e-01).
+StopOnPlateau on step 2 Loss 8.594548e-06 --> Loss 7.866674e-06 (reduction/loss: 8.4690e-02).
+StopOnPlateau on step 3 Loss 7.866674e-06 --> Loss 6.947907e-06 (reduction/loss: 1.1679e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #164 - loss:1.011729 - lr:0.000010 - [avgtime] vo:11.34, cvt:0.02, pgo:275.34, opt:3.70
+	adj.	loop	tot.
+R	0.1340	0.3057	0.2190
+t	0.0044	0.0090	0.0067
+[time] step: 290.39150910195895, print: 0.022172524826601148, snapshot: 0.007717984030023217
+Start train-all step 165 ...
+StopOnPlateau on step 0 Loss 1.693583e-03 --> Loss 1.008959e-05 (reduction/loss: 9.9404e-01).
+StopOnPlateau on step 1 Loss 1.008959e-05 --> Loss 8.599763e-06 (reduction/loss: 1.4766e-01).
+StopOnPlateau on step 2 Loss 8.599763e-06 --> Loss 7.870568e-06 (reduction/loss: 8.4792e-02).
+StopOnPlateau on step 3 Loss 7.870568e-06 --> Loss 6.949919e-06 (reduction/loss: 1.1697e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #165 - loss:1.011716 - lr:0.000010 - [avgtime] vo:9.81, cvt:0.02, pgo:275.28, opt:3.68
+	adj.	loop	tot.
+R	0.1344	0.3038	0.2182
+t	0.0044	0.0090	0.0067
+[time] step: 288.78911193599924, print: 0.022985383169725537, snapshot: 0.006570740137249231
+Start train-all step 166 ...
+StopOnPlateau on step 0 Loss 1.691551e-03 --> Loss 1.008540e-05 (reduction/loss: 9.9404e-01).
+StopOnPlateau on step 1 Loss 1.008540e-05 --> Loss 8.599714e-06 (reduction/loss: 1.4731e-01).
+StopOnPlateau on step 2 Loss 8.599714e-06 --> Loss 7.871130e-06 (reduction/loss: 8.4722e-02).
+StopOnPlateau on step 3 Loss 7.871130e-06 --> Loss 6.950979e-06 (reduction/loss: 1.1690e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #166 - loss:1.011708 - lr:0.000010 - [avgtime] vo:11.83, cvt:0.02, pgo:276.09, opt:3.68
+	adj.	loop	tot.
+R	0.1345	0.3035	0.2182
+t	0.0044	0.0090	0.0067
+[time] step: 291.62320930394344, print: 0.020626761950552464, snapshot: 0.007962228963151574
+Start train-all step 167 ...
+StopOnPlateau on step 0 Loss 1.690412e-03 --> Loss 1.009835e-05 (reduction/loss: 9.9403e-01).
+StopOnPlateau on step 1 Loss 1.009835e-05 --> Loss 8.613136e-06 (reduction/loss: 1.4707e-01).
+StopOnPlateau on step 2 Loss 8.613136e-06 --> Loss 7.882974e-06 (reduction/loss: 8.4773e-02).
+StopOnPlateau on step 3 Loss 7.882974e-06 --> Loss 6.959695e-06 (reduction/loss: 1.1712e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #167 - loss:1.011690 - lr:0.000010 - [avgtime] vo:12.22, cvt:0.02, pgo:275.39, opt:3.67
+	adj.	loop	tot.
+R	0.1348	0.3022	0.2177
+t	0.0044	0.0090	0.0067
+[time] step: 291.3098555081524, print: 0.018544757971540093, snapshot: 0.007021397817879915
+Start train-all step 168 ...
+StopOnPlateau on step 0 Loss 1.696790e-03 --> Loss 1.010584e-05 (reduction/loss: 9.9404e-01).
+StopOnPlateau on step 1 Loss 1.010584e-05 --> Loss 8.621042e-06 (reduction/loss: 1.4692e-01).
+StopOnPlateau on step 2 Loss 8.621042e-06 --> Loss 7.890245e-06 (reduction/loss: 8.4769e-02).
+StopOnPlateau on step 3 Loss 7.890245e-06 --> Loss 6.965717e-06 (reduction/loss: 1.1717e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #168 - loss:1.011678 - lr:0.000010 - [avgtime] vo:11.35, cvt:0.02, pgo:276.46, opt:3.68
+	adj.	loop	tot.
+R	0.1347	0.3022	0.2176
+t	0.0044	0.0090	0.0067
+[time] step: 291.50203010695986, print: 0.02065155003219843, snapshot: 0.01699733198620379
+Start train-all step 169 ...
+StopOnPlateau on step 0 Loss 1.694415e-03 --> Loss 1.011749e-05 (reduction/loss: 9.9403e-01).
+StopOnPlateau on step 1 Loss 1.011749e-05 --> Loss 8.632695e-06 (reduction/loss: 1.4675e-01).
+StopOnPlateau on step 2 Loss 8.632695e-06 --> Loss 7.900509e-06 (reduction/loss: 8.4815e-02).
+StopOnPlateau on step 3 Loss 7.900509e-06 --> Loss 6.974570e-06 (reduction/loss: 1.1720e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #169 - loss:1.011677 - lr:0.000010 - [avgtime] vo:15.48, cvt:0.02, pgo:276.00, opt:3.68
+	adj.	loop	tot.
+R	0.1348	0.3023	0.2177
+t	0.0044	0.0090	0.0067
+[time] step: 295.17443647794425, print: 0.018379112938418984, snapshot: 0.007081812946125865
+Start train-all step 170 ...
+StopOnPlateau on step 0 Loss 1.699308e-03 --> Loss 1.011581e-05 (reduction/loss: 9.9405e-01).
+StopOnPlateau on step 1 Loss 1.011581e-05 --> Loss 8.632256e-06 (reduction/loss: 1.4666e-01).
+StopOnPlateau on step 2 Loss 8.632256e-06 --> Loss 7.899508e-06 (reduction/loss: 8.4885e-02).
+StopOnPlateau on step 3 Loss 7.899508e-06 --> Loss 6.972393e-06 (reduction/loss: 1.1736e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #170 - loss:1.011663 - lr:0.000010 - [avgtime] vo:8.88, cvt:0.02, pgo:274.90, opt:3.69
+	adj.	loop	tot.
+R	0.1349	0.3010	0.2171
+t	0.0044	0.0090	0.0067
+[time] step: 287.4880776980426, print: 0.022745586931705475, snapshot: 0.0073884769808501005
+Start train-all step 171 ...
+StopOnPlateau on step 0 Loss 1.692145e-03 --> Loss 1.011861e-05 (reduction/loss: 9.9402e-01).
+StopOnPlateau on step 1 Loss 1.011861e-05 --> Loss 8.636800e-06 (reduction/loss: 1.4644e-01).
+StopOnPlateau on step 2 Loss 8.636800e-06 --> Loss 7.903704e-06 (reduction/loss: 8.4880e-02).
+StopOnPlateau on step 3 Loss 7.903704e-06 --> Loss 6.975215e-06 (reduction/loss: 1.1748e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #171 - loss:1.011650 - lr:0.000010 - [avgtime] vo:9.40, cvt:0.02, pgo:274.03, opt:3.68
+	adj.	loop	tot.
+R	0.1349	0.3003	0.2168
+t	0.0044	0.0090	0.0067
+[time] step: 287.1269667330198, print: 0.02061418816447258, snapshot: 0.007922735065221786
+Start train-all step 172 ...
+StopOnPlateau on step 0 Loss 1.685705e-03 --> Loss 1.011961e-05 (reduction/loss: 9.9400e-01).
+StopOnPlateau on step 1 Loss 1.011961e-05 --> Loss 8.640096e-06 (reduction/loss: 1.4620e-01).
+StopOnPlateau on step 2 Loss 8.640096e-06 --> Loss 7.906816e-06 (reduction/loss: 8.4869e-02).
+StopOnPlateau on step 3 Loss 7.906816e-06 --> Loss 6.977490e-06 (reduction/loss: 1.1753e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #172 - loss:1.011639 - lr:0.000010 - [avgtime] vo:9.81, cvt:0.02, pgo:274.86, opt:3.69
+	adj.	loop	tot.
+R	0.1350	0.2996	0.2165
+t	0.0044	0.0090	0.0067
+[time] step: 288.3907731510699, print: 0.02404905785806477, snapshot: 0.007553331088274717
+Start train-all step 173 ...
+StopOnPlateau on step 0 Loss 1.692350e-03 --> Loss 1.011940e-05 (reduction/loss: 9.9402e-01).
+StopOnPlateau on step 1 Loss 1.011940e-05 --> Loss 8.640976e-06 (reduction/loss: 1.4610e-01).
+StopOnPlateau on step 2 Loss 8.640976e-06 --> Loss 7.907197e-06 (reduction/loss: 8.4919e-02).
+StopOnPlateau on step 3 Loss 7.907197e-06 --> Loss 6.976678e-06 (reduction/loss: 1.1768e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #173 - loss:1.011621 - lr:0.000010 - [avgtime] vo:10.76, cvt:0.02, pgo:274.30, opt:3.68
+	adj.	loop	tot.
+R	0.1352	0.2985	0.2160
+t	0.0044	0.0090	0.0067
+[time] step: 288.76820757915266, print: 0.02062286506406963, snapshot: 0.008717747870832682
+Start train-all step 174 ...
+StopOnPlateau on step 0 Loss 1.692038e-03 --> Loss 1.012710e-05 (reduction/loss: 9.9401e-01).
+StopOnPlateau on step 1 Loss 1.012710e-05 --> Loss 8.649788e-06 (reduction/loss: 1.4588e-01).
+StopOnPlateau on step 2 Loss 8.649788e-06 --> Loss 7.915544e-06 (reduction/loss: 8.4886e-02).
+StopOnPlateau on step 3 Loss 7.915544e-06 --> Loss 6.984071e-06 (reduction/loss: 1.1768e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #174 - loss:1.011620 - lr:0.000010 - [avgtime] vo:10.96, cvt:0.02, pgo:274.56, opt:3.68
+	adj.	loop	tot.
+R	0.1353	0.2987	0.2162
+t	0.0044	0.0090	0.0067
+[time] step: 289.21435031690635, print: 0.024249979993328452, snapshot: 0.008131853071972728
+Start train-all step 175 ...
+StopOnPlateau on step 0 Loss 1.692017e-03 --> Loss 1.013092e-05 (reduction/loss: 9.9401e-01).
+StopOnPlateau on step 1 Loss 1.013092e-05 --> Loss 8.655097e-06 (reduction/loss: 1.4567e-01).
+StopOnPlateau on step 2 Loss 8.655097e-06 --> Loss 7.919688e-06 (reduction/loss: 8.4968e-02).
+StopOnPlateau on step 3 Loss 7.919688e-06 --> Loss 6.986222e-06 (reduction/loss: 1.1787e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #175 - loss:1.011606 - lr:0.000010 - [avgtime] vo:9.97, cvt:0.02, pgo:274.47, opt:3.67
+	adj.	loop	tot.
+R	0.1358	0.2974	0.2158
+t	0.0044	0.0090	0.0067
+[time] step: 288.1350981639698, print: 0.026050568092614412, snapshot: 0.009453349048271775
+Start train-all step 176 ...
+StopOnPlateau on step 0 Loss 1.692590e-03 --> Loss 1.013167e-05 (reduction/loss: 9.9401e-01).
+StopOnPlateau on step 1 Loss 1.013167e-05 --> Loss 8.658833e-06 (reduction/loss: 1.4537e-01).
+StopOnPlateau on step 2 Loss 8.658833e-06 --> Loss 7.923397e-06 (reduction/loss: 8.4935e-02).
+StopOnPlateau on step 3 Loss 7.923397e-06 --> Loss 6.989223e-06 (reduction/loss: 1.1790e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #176 - loss:1.011600 - lr:0.000010 - [avgtime] vo:10.88, cvt:0.02, pgo:274.42, opt:3.68
+	adj.	loop	tot.
+R	0.1357	0.2970	0.2156
+t	0.0044	0.0090	0.0067
+[time] step: 288.99516471708193, print: 0.01841956004500389, snapshot: 0.0071519960183650255
+Start train-all step 177 ...
+StopOnPlateau on step 0 Loss 1.694915e-03 --> Loss 1.013640e-05 (reduction/loss: 9.9402e-01).
+StopOnPlateau on step 1 Loss 1.013640e-05 --> Loss 8.667598e-06 (reduction/loss: 1.4490e-01).
+StopOnPlateau on step 2 Loss 8.667598e-06 --> Loss 7.931880e-06 (reduction/loss: 8.4881e-02).
+StopOnPlateau on step 3 Loss 7.931880e-06 --> Loss 6.996331e-06 (reduction/loss: 1.1795e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #177 - loss:1.011590 - lr:0.000010 - [avgtime] vo:10.90, cvt:0.02, pgo:274.85, opt:3.69
+	adj.	loop	tot.
+R	0.1359	0.2966	0.2154
+t	0.0044	0.0090	0.0067
+[time] step: 289.4546161799226, print: 0.022166113136336207, snapshot: 0.006262123119086027
+Start train-all step 178 ...
+StopOnPlateau on step 0 Loss 1.693541e-03 --> Loss 1.013554e-05 (reduction/loss: 9.9402e-01).
+StopOnPlateau on step 1 Loss 1.013554e-05 --> Loss 8.667535e-06 (reduction/loss: 1.4484e-01).
+StopOnPlateau on step 2 Loss 8.667535e-06 --> Loss 7.931905e-06 (reduction/loss: 8.4872e-02).
+StopOnPlateau on step 3 Loss 7.931905e-06 --> Loss 6.996131e-06 (reduction/loss: 1.1798e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #178 - loss:1.011579 - lr:0.000010 - [avgtime] vo:9.37, cvt:0.02, pgo:274.57, opt:3.69
+	adj.	loop	tot.
+R	0.1360	0.2961	0.2152
+t	0.0044	0.0090	0.0067
+[time] step: 287.6567117650993, print: 0.022501733154058456, snapshot: 0.007301572011783719
+Start train-all step 179 ...
+StopOnPlateau on step 0 Loss 1.692188e-03 --> Loss 1.015072e-05 (reduction/loss: 9.9400e-01).
+StopOnPlateau on step 1 Loss 1.015072e-05 --> Loss 8.681618e-06 (reduction/loss: 1.4473e-01).
+StopOnPlateau on step 2 Loss 8.681618e-06 --> Loss 7.944665e-06 (reduction/loss: 8.4887e-02).
+StopOnPlateau on step 3 Loss 7.944665e-06 --> Loss 7.006969e-06 (reduction/loss: 1.1803e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #179 - loss:1.011570 - lr:0.000010 - [avgtime] vo:10.21, cvt:0.02, pgo:274.16, opt:3.68
+	adj.	loop	tot.
+R	0.1360	0.2962	0.2153
+t	0.0044	0.0090	0.0067
+[time] step: 288.0659330589697, print: 0.022501061903312802, snapshot: 0.008415282005444169
+Start train-all step 180 ...
+StopOnPlateau on step 0 Loss 1.681601e-03 --> Loss 1.014541e-05 (reduction/loss: 9.9397e-01).
+StopOnPlateau on step 1 Loss 1.014541e-05 --> Loss 8.682699e-06 (reduction/loss: 1.4417e-01).
+StopOnPlateau on step 2 Loss 8.682699e-06 --> Loss 7.946061e-06 (reduction/loss: 8.4840e-02).
+StopOnPlateau on step 3 Loss 7.946061e-06 --> Loss 7.007304e-06 (reduction/loss: 1.1814e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #180 - loss:1.011556 - lr:0.000010 - [avgtime] vo:9.64, cvt:0.02, pgo:274.70, opt:3.68
+	adj.	loop	tot.
+R	0.1359	0.2951	0.2147
+t	0.0044	0.0090	0.0067
+[time] step: 288.04186551389284, print: 0.022245354019105434, snapshot: 0.009403313975781202
+Start train-all step 181 ...
+StopOnPlateau on step 0 Loss 1.685153e-03 --> Loss 1.014784e-05 (reduction/loss: 9.9398e-01).
+StopOnPlateau on step 1 Loss 1.014784e-05 --> Loss 8.685226e-06 (reduction/loss: 1.4413e-01).
+StopOnPlateau on step 2 Loss 8.685226e-06 --> Loss 7.948558e-06 (reduction/loss: 8.4819e-02).
+StopOnPlateau on step 3 Loss 7.948558e-06 --> Loss 7.009528e-06 (reduction/loss: 1.1814e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #181 - loss:1.011548 - lr:0.000010 - [avgtime] vo:9.57, cvt:0.02, pgo:274.61, opt:3.69
+	adj.	loop	tot.
+R	0.1360	0.2948	0.2146
+t	0.0044	0.0090	0.0067
+[time] step: 287.8866393889766, print: 0.022318354109302163, snapshot: 0.008308860007673502
+Start train-all step 182 ...
+StopOnPlateau on step 0 Loss 1.686560e-03 --> Loss 1.014434e-05 (reduction/loss: 9.9399e-01).
+StopOnPlateau on step 1 Loss 1.014434e-05 --> Loss 8.684772e-06 (reduction/loss: 1.4388e-01).
+StopOnPlateau on step 2 Loss 8.684772e-06 --> Loss 7.948147e-06 (reduction/loss: 8.4818e-02).
+StopOnPlateau on step 3 Loss 7.948147e-06 --> Loss 7.008688e-06 (reduction/loss: 1.1820e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #182 - loss:1.011531 - lr:0.000010 - [avgtime] vo:9.20, cvt:0.02, pgo:274.67, opt:3.69
+	adj.	loop	tot.
+R	0.1359	0.2942	0.2143
+t	0.0044	0.0090	0.0067
+[time] step: 287.585576210171, print: 0.018615544075146317, snapshot: 0.0074169018771499395
+Start train-all step 183 ...
+StopOnPlateau on step 0 Loss 1.684712e-03 --> Loss 1.014309e-05 (reduction/loss: 9.9398e-01).
+StopOnPlateau on step 1 Loss 1.014309e-05 --> Loss 8.686719e-06 (reduction/loss: 1.4358e-01).
+StopOnPlateau on step 2 Loss 8.686719e-06 --> Loss 7.950302e-06 (reduction/loss: 8.4775e-02).
+StopOnPlateau on step 3 Loss 7.950302e-06 --> Loss 7.010589e-06 (reduction/loss: 1.1820e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #183 - loss:1.011517 - lr:0.000010 - [avgtime] vo:9.54, cvt:0.02, pgo:274.26, opt:3.69
+	adj.	loop	tot.
+R	0.1359	0.2939	0.2141
+t	0.0044	0.0090	0.0067
+[time] step: 287.51859627710655, print: 0.02055757283233106, snapshot: 0.00781824579462409
+Start train-all step 184 ...
+StopOnPlateau on step 0 Loss 1.684983e-03 --> Loss 1.014294e-05 (reduction/loss: 9.9398e-01).
+StopOnPlateau on step 1 Loss 1.014294e-05 --> Loss 8.686951e-06 (reduction/loss: 1.4355e-01).
+StopOnPlateau on step 2 Loss 8.686951e-06 --> Loss 7.950614e-06 (reduction/loss: 8.4764e-02).
+StopOnPlateau on step 3 Loss 7.950614e-06 --> Loss 7.009923e-06 (reduction/loss: 1.1832e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #184 - loss:1.011508 - lr:0.000010 - [avgtime] vo:9.34, cvt:0.02, pgo:274.33, opt:3.67
+	adj.	loop	tot.
+R	0.1358	0.2933	0.2138
+t	0.0044	0.0090	0.0067
+[time] step: 287.36085817194544, print: 0.02068340708501637, snapshot: 0.008686602115631104
+Start train-all step 185 ...
+StopOnPlateau on step 0 Loss 1.684450e-03 --> Loss 1.014445e-05 (reduction/loss: 9.9398e-01).
+StopOnPlateau on step 1 Loss 1.014445e-05 --> Loss 8.690567e-06 (reduction/loss: 1.4332e-01).
+StopOnPlateau on step 2 Loss 8.690567e-06 --> Loss 7.954258e-06 (reduction/loss: 8.4725e-02).
+StopOnPlateau on step 3 Loss 7.954258e-06 --> Loss 7.013572e-06 (reduction/loss: 1.1826e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #185 - loss:1.011505 - lr:0.000010 - [avgtime] vo:9.48, cvt:0.02, pgo:274.50, opt:3.69
+	adj.	loop	tot.
+R	0.1359	0.2931	0.2137
+t	0.0044	0.0090	0.0067
+[time] step: 287.6905137039721, print: 0.022732296958565712, snapshot: 0.007367430021986365
+Start train-all step 186 ...
+StopOnPlateau on step 0 Loss 1.681786e-03 --> Loss 1.015349e-05 (reduction/loss: 9.9396e-01).
+StopOnPlateau on step 1 Loss 1.015349e-05 --> Loss 8.699330e-06 (reduction/loss: 1.4322e-01).
+StopOnPlateau on step 2 Loss 8.699330e-06 --> Loss 7.961455e-06 (reduction/loss: 8.4820e-02).
+StopOnPlateau on step 3 Loss 7.961455e-06 --> Loss 7.018002e-06 (reduction/loss: 1.1850e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #186 - loss:1.011485 - lr:0.000010 - [avgtime] vo:10.27, cvt:0.02, pgo:274.48, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2920	0.2133
+t	0.0044	0.0090	0.0067
+[time] step: 288.4579271969851, print: 0.016383626963943243, snapshot: 0.008208781015127897
+Start train-all step 187 ...
+StopOnPlateau on step 0 Loss 1.687789e-03 --> Loss 1.015780e-05 (reduction/loss: 9.9398e-01).
+StopOnPlateau on step 1 Loss 1.015780e-05 --> Loss 8.705034e-06 (reduction/loss: 1.4302e-01).
+StopOnPlateau on step 2 Loss 8.705034e-06 --> Loss 7.966573e-06 (reduction/loss: 8.4831e-02).
+StopOnPlateau on step 3 Loss 7.966573e-06 --> Loss 7.022539e-06 (reduction/loss: 1.1850e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #187 - loss:1.011480 - lr:0.000010 - [avgtime] vo:10.65, cvt:0.02, pgo:274.39, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2920	0.2133
+t	0.0044	0.0090	0.0067
+[time] step: 288.73764593782835, print: 0.02099981694482267, snapshot: 0.008287410018965602
+Start train-all step 188 ...
+StopOnPlateau on step 0 Loss 1.684388e-03 --> Loss 1.015808e-05 (reduction/loss: 9.9397e-01).
+StopOnPlateau on step 1 Loss 1.015808e-05 --> Loss 8.707974e-06 (reduction/loss: 1.4275e-01).
+StopOnPlateau on step 2 Loss 8.707974e-06 --> Loss 7.969811e-06 (reduction/loss: 8.4769e-02).
+StopOnPlateau on step 3 Loss 7.969811e-06 --> Loss 7.024888e-06 (reduction/loss: 1.1856e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #188 - loss:1.011469 - lr:0.000010 - [avgtime] vo:11.18, cvt:0.02, pgo:274.61, opt:3.67
+	adj.	loop	tot.
+R	0.1360	0.2915	0.2130
+t	0.0044	0.0090	0.0067
+[time] step: 289.47903254791163, print: 0.02313896012492478, snapshot: 0.00874098390340805
+Start train-all step 189 ...
+StopOnPlateau on step 0 Loss 1.683621e-03 --> Loss 1.015835e-05 (reduction/loss: 9.9397e-01).
+StopOnPlateau on step 1 Loss 1.015835e-05 --> Loss 8.708265e-06 (reduction/loss: 1.4275e-01).
+StopOnPlateau on step 2 Loss 8.708265e-06 --> Loss 7.969691e-06 (reduction/loss: 8.4813e-02).
+StopOnPlateau on step 3 Loss 7.969691e-06 --> Loss 7.024362e-06 (reduction/loss: 1.1862e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #189 - loss:1.011455 - lr:0.000010 - [avgtime] vo:9.57, cvt:0.02, pgo:274.78, opt:3.69
+	adj.	loop	tot.
+R	0.1360	0.2911	0.2128
+t	0.0044	0.0090	0.0067
+[time] step: 288.05973228113726, print: 0.021707545034587383, snapshot: 0.00810020393691957
+Start train-all step 190 ...
+StopOnPlateau on step 0 Loss 1.678640e-03 --> Loss 1.016735e-05 (reduction/loss: 9.9394e-01).
+StopOnPlateau on step 1 Loss 1.016735e-05 --> Loss 8.718939e-06 (reduction/loss: 1.4246e-01).
+StopOnPlateau on step 2 Loss 8.718939e-06 --> Loss 7.979184e-06 (reduction/loss: 8.4845e-02).
+StopOnPlateau on step 3 Loss 7.979184e-06 --> Loss 7.031452e-06 (reduction/loss: 1.1878e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #190 - loss:1.011439 - lr:0.000010 - [avgtime] vo:10.88, cvt:0.02, pgo:274.54, opt:3.69
+	adj.	loop	tot.
+R	0.1362	0.2900	0.2124
+t	0.0044	0.0090	0.0067
+[time] step: 289.12786081805825, print: 0.016700329957529902, snapshot: 0.006226256024092436
+Start train-all step 191 ...
+StopOnPlateau on step 0 Loss 1.680806e-03 --> Loss 1.016072e-05 (reduction/loss: 9.9395e-01).
+StopOnPlateau on step 1 Loss 1.016072e-05 --> Loss 8.715579e-06 (reduction/loss: 1.4223e-01).
+StopOnPlateau on step 2 Loss 8.715579e-06 --> Loss 7.975770e-06 (reduction/loss: 8.4884e-02).
+StopOnPlateau on step 3 Loss 7.975770e-06 --> Loss 7.027399e-06 (reduction/loss: 1.1891e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #191 - loss:1.011421 - lr:0.000010 - [avgtime] vo:9.10, cvt:0.02, pgo:274.87, opt:3.70
+	adj.	loop	tot.
+R	0.1364	0.2892	0.2120
+t	0.0044	0.0090	0.0067
+[time] step: 287.6855171690695, print: 0.02063000202178955, snapshot: 0.1313608658965677
+Start train-all step 192 ...
+StopOnPlateau on step 0 Loss 1.676337e-03 --> Loss 1.016557e-05 (reduction/loss: 9.9394e-01).
+StopOnPlateau on step 1 Loss 1.016557e-05 --> Loss 8.721090e-06 (reduction/loss: 1.4210e-01).
+StopOnPlateau on step 2 Loss 8.721090e-06 --> Loss 7.981333e-06 (reduction/loss: 8.4824e-02).
+StopOnPlateau on step 3 Loss 7.981333e-06 --> Loss 7.033248e-06 (reduction/loss: 1.1879e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #192 - loss:1.011436 - lr:0.000010 - [avgtime] vo:10.53, cvt:0.02, pgo:274.69, opt:3.67
+	adj.	loop	tot.
+R	0.1362	0.2898	0.2123
+t	0.0044	0.0090	0.0067
+[time] step: 288.9112837749999, print: 0.02274825400672853, snapshot: 0.007478579878807068
+Start train-all step 193 ...
+StopOnPlateau on step 0 Loss 1.677079e-03 --> Loss 1.015898e-05 (reduction/loss: 9.9394e-01).
+StopOnPlateau on step 1 Loss 1.015898e-05 --> Loss 8.718760e-06 (reduction/loss: 1.4177e-01).
+StopOnPlateau on step 2 Loss 8.718760e-06 --> Loss 7.979803e-06 (reduction/loss: 8.4755e-02).
+StopOnPlateau on step 3 Loss 7.979803e-06 --> Loss 7.031331e-06 (reduction/loss: 1.1886e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #193 - loss:1.011421 - lr:0.000010 - [avgtime] vo:10.53, cvt:0.02, pgo:274.74, opt:3.68
+	adj.	loop	tot.
+R	0.1363	0.2891	0.2119
+t	0.0044	0.0090	0.0067
+[time] step: 288.9726205440238, print: 0.029078257037326694, snapshot: 0.008571921847760677
+Start train-all step 194 ...
+StopOnPlateau on step 0 Loss 1.679809e-03 --> Loss 1.016204e-05 (reduction/loss: 9.9395e-01).
+StopOnPlateau on step 1 Loss 1.016204e-05 --> Loss 8.721232e-06 (reduction/loss: 1.4178e-01).
+StopOnPlateau on step 2 Loss 8.721232e-06 --> Loss 7.981874e-06 (reduction/loss: 8.4777e-02).
+StopOnPlateau on step 3 Loss 7.981874e-06 --> Loss 7.032602e-06 (reduction/loss: 1.1893e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #194 - loss:1.011410 - lr:0.000010 - [avgtime] vo:11.55, cvt:0.02, pgo:274.56, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2886	0.2116
+t	0.0044	0.0090	0.0067
+[time] step: 289.80935665708967, print: 0.024789303075522184, snapshot: 0.007046577986329794
+Start train-all step 195 ...
+StopOnPlateau on step 0 Loss 1.679090e-03 --> Loss 1.015021e-05 (reduction/loss: 9.9395e-01).
+StopOnPlateau on step 1 Loss 1.015021e-05 --> Loss 8.715284e-06 (reduction/loss: 1.4137e-01).
+StopOnPlateau on step 2 Loss 8.715284e-06 --> Loss 7.977282e-06 (reduction/loss: 8.4679e-02).
+StopOnPlateau on step 3 Loss 7.977282e-06 --> Loss 7.028149e-06 (reduction/loss: 1.1898e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #195 - loss:1.011387 - lr:0.000010 - [avgtime] vo:10.63, cvt:0.02, pgo:274.50, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2878	0.2112
+t	0.0044	0.0090	0.0067
+[time] step: 288.8356939149089, print: 0.02273202408105135, snapshot: 0.007742141839116812
+Start train-all step 196 ...
+StopOnPlateau on step 0 Loss 1.679904e-03 --> Loss 1.015461e-05 (reduction/loss: 9.9396e-01).
+StopOnPlateau on step 1 Loss 1.015461e-05 --> Loss 8.721766e-06 (reduction/loss: 1.4110e-01).
+StopOnPlateau on step 2 Loss 8.721766e-06 --> Loss 7.983836e-06 (reduction/loss: 8.4608e-02).
+StopOnPlateau on step 3 Loss 7.983836e-06 --> Loss 7.034301e-06 (reduction/loss: 1.1893e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #196 - loss:1.011387 - lr:0.000010 - [avgtime] vo:11.50, cvt:0.02, pgo:274.33, opt:3.68
+	adj.	loop	tot.
+R	0.1364	0.2877	0.2113
+t	0.0044	0.0090	0.0067
+[time] step: 289.5326200639829, print: 0.02337506809271872, snapshot: 0.007266555912792683
+Start train-all step 197 ...
+StopOnPlateau on step 0 Loss 1.678582e-03 --> Loss 1.015611e-05 (reduction/loss: 9.9395e-01).
+StopOnPlateau on step 1 Loss 1.015611e-05 --> Loss 8.724961e-06 (reduction/loss: 1.4091e-01).
+StopOnPlateau on step 2 Loss 8.724961e-06 --> Loss 7.986725e-06 (reduction/loss: 8.4612e-02).
+StopOnPlateau on step 3 Loss 7.986725e-06 --> Loss 7.037013e-06 (reduction/loss: 1.1891e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #197 - loss:1.011386 - lr:0.000010 - [avgtime] vo:10.52, cvt:0.02, pgo:274.63, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2881	0.2114
+t	0.0044	0.0090	0.0067
+[time] step: 288.8516751250718, print: 0.018656935077160597, snapshot: 0.007962621981278062
+Start train-all step 198 ...
+StopOnPlateau on step 0 Loss 1.677756e-03 --> Loss 1.015056e-05 (reduction/loss: 9.9395e-01).
+StopOnPlateau on step 1 Loss 1.015056e-05 --> Loss 8.723608e-06 (reduction/loss: 1.4058e-01).
+StopOnPlateau on step 2 Loss 8.723608e-06 --> Loss 7.986045e-06 (reduction/loss: 8.4548e-02).
+StopOnPlateau on step 3 Loss 7.986045e-06 --> Loss 7.035666e-06 (reduction/loss: 1.1900e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #198 - loss:1.011366 - lr:0.000010 - [avgtime] vo:9.78, cvt:0.02, pgo:274.78, opt:3.67
+	adj.	loop	tot.
+R	0.1362	0.2873	0.2110
+t	0.0044	0.0090	0.0067
+[time] step: 288.2547893219162, print: 0.020779945887625217, snapshot: 0.008293591905385256
+Start train-all step 199 ...
+StopOnPlateau on step 0 Loss 1.675584e-03 --> Loss 1.015102e-05 (reduction/loss: 9.9394e-01).
+StopOnPlateau on step 1 Loss 1.015102e-05 --> Loss 8.725340e-06 (reduction/loss: 1.4045e-01).
+StopOnPlateau on step 2 Loss 8.725340e-06 --> Loss 7.987726e-06 (reduction/loss: 8.4537e-02).
+StopOnPlateau on step 3 Loss 7.987726e-06 --> Loss 7.037199e-06 (reduction/loss: 1.1900e-01).
+StopOnPlateau: Maximum patience steps reached, Quiting..
+new_imu-vo-pvgo_lw=(0.01,0.1,10,1)_optm=sgd-lr=1e-5_imuscale #199 - loss:1.011361 - lr:0.000010 - [avgtime] vo:10.18, cvt:0.02, pgo:275.66, opt:3.68
+	adj.	loop	tot.
+R	0.1362	0.2871	0.2109
+t	0.0044	0.0090	0.0067
+[time] step: 289.53948822803795, print: 0.03241827595047653, snapshot: 0.029127249959856272
