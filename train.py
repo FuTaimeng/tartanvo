@@ -1,11 +1,11 @@
-from Datasets.utils import ToTensor, Compose, CropCenter, dataset_intrinsics, DownscaleFlow, plot_traj, visflow
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, visflow
 from Datasets.tartanTrajFlowDataset import TrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
 from TartanVO import TartanVO
 
-import pypose
+import pypose as pp
 from pgo import run_pgo
 from pvgo import run_pvgo
 from imu_integrator import run_imu_preintegrator
@@ -44,8 +44,10 @@ def get_args():
                         help='kitti test (default: False)')
     parser.add_argument('--kitti-intrinsics-file',  default='',
                         help='kitti intrinsics file calib.txt (default: "")')
-    parser.add_argument('--test-dir', default='',
-                        help='test trajectory folder where the RGB images are (default: "")')
+    parser.add_argument('--image-dir', default='',
+                        help='the folder where the RGB images are (default: "")')
+    parser.add_argument('--right-image-dir', default='',
+                        help='the folder where the stereo right images are (default: "")')
     parser.add_argument('--pose-file', default='',
                         help='test trajectory gt pose file, used for scale calculation and visualization (default: "")')
     parser.add_argument('--save-flow', action='store_true', default=False,
@@ -112,14 +114,10 @@ if __name__ == '__main__':
         datastr = 'euroc'
     else:
         datastr = 'tartanair'
-    focalx, focaly, centerx, centery = dataset_intrinsics(datastr) 
-    if args.kitti_intrinsics_file.endswith('.txt') and datastr=='kitti':
-        focalx, focaly, centerx, centery = load_kiiti_intrinsics(args.kitti_intrinsics_file)
-
+        
     transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
 
     trainDataset = TrajFolderDataset(args.test_dir, posefile = args.pose_file, transform=transform, 
-                                        focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,
                                         sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
                                         imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10,
                                         use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)

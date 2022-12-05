@@ -11,6 +11,12 @@ from dpvo.dpvo import DPVO
 from dpvo.config import cfg
 from dpvo.stream import image_stream, video_stream
 
+from Datasets.utils import ToTensor, Compose, CropCenter, dataset_intrinsics, DownscaleFlow
+from Datasets.tartanTrajFlowDataset import TrajFolderDataset
+
+from torch.utils.data import DataLoader
+
+
 SKIP = 0
 
 def show_image(image, t=0):
@@ -19,27 +25,59 @@ def show_image(image, t=0):
     cv2.waitKey(t)
 
 @torch.no_grad()
-def run(cfg, network, imagedir, calib, stride=1, skip=0, viz=False, timeit=False):
+def run(cfg, args):
 
-    slam = None
-    queue = Queue(maxsize=8)
+    # slam = None
+    # queue = Queue(maxsize=8)
 
-    if os.path.isdir(imagedir):
-        reader = Process(target=image_stream, args=(queue, imagedir, calib, stride, skip))
-    else:
-        reader = Process(target=video_stream, args=(queue, imagedir, calib, stride, skip))
+    # if os.path.isdir(imagedir):
+    #     reader = Process(target=image_stream, args=(queue, imagedir, calib, stride, skip))
+    # else:
+    #     reader = Process(target=video_stream, args=(queue, imagedir, calib, stride, skip))
 
-    reader.start()
+    # reader.start()
 
-    while 1:
-        (t, image, intrinsics) = queue.get()
-        if t < 0: break
+    # load trajectory data from a folder
+    datastr = 'tartanair'
+    # if args.kitti:
+    #     datastr = 'kitti'
+    # elif args.euroc:
+    #     datastr = 'euroc'
+    # else:
+    #     datastr = 'tartanair'
+
+    focalx, focaly, centerx, centery = dataset_intrinsics(datastr) 
+
+    transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
+
+    trainDataset = TrajFolderDataset(args.test_dir, posefile = args.pose_file, transform=transform, 
+                                        focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,
+                                        sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
+                                        imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10,
+                                        use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, 
+                                        shuffle=False, num_workers=args.worker_num)
+
+    testDataiter = iter(trainDataloader)
+    tot_batch = len(trainDataloader)
+    batch_cnt = 0
+    while True:
+        try:
+            sample = testDataiter.next()
+        except StopIteration:
+            break
+        
+        batch_cnt += 1
+        if args.mode.startswith('test'):
+            print('Batch {}/{} ...'.format(batch_cnt, tot_batch), end='\r')
+
+        # TODO from here
 
         image = torch.from_numpy(image).permute(2,0,1).cuda()
         intrinsics = torch.from_numpy(intrinsics).cuda()
 
         if slam is None:
-            slam = DPVO(cfg, network, ht=image.shape[1], wd=image.shape[2], viz=viz)
+            slam = DPVO(cfg, args.network, ht=image.shape[1], wd=image.shape[2], viz=viz)
 
         image = image.cuda()
         intrinsics = intrinsics.cuda()
@@ -50,8 +88,7 @@ def run(cfg, network, imagedir, calib, stride=1, skip=0, viz=False, timeit=False
     for _ in range(12):
         slam.update()
 
-    reader.join()
-    print()
+    # reader.join()
 
     return slam.terminate()
 
@@ -75,7 +112,7 @@ if __name__ == '__main__':
     print("Running with config...")
     print(cfg)
 
-    poses, tstamps = run(cfg, args.network, args.imagedir, args.calib, args.stride, args.skip, args.viz, args.timeit)
+    poses, tstamps = run(cfg, args)
 
     np.savetxt(args.resultdir+'/pose.txt', poses)
     np.savetxt(args.resultdir+'/tstamp.txt', tstamps)

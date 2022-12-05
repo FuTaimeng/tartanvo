@@ -214,6 +214,7 @@ def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0):
     return bgr
 
 
+
 def dataset_intrinsics(dataset='tartanair'):
     if dataset == 'kitti':
         focalx, focaly, centerx, centery = 707.0912, 707.0912, 601.8873, 183.1104
@@ -224,6 +225,20 @@ def dataset_intrinsics(dataset='tartanair'):
     else:
         return None
     return focalx, focaly, centerx, centery
+
+def dataset_stereo_calibration(dataset='tartanair'):
+    focalx, focaly, centerx, centery = dataset_intrinsics(dataset)
+    K = torch.tensor([[focalx, 0, centerx],
+                    [0, focaly, centery],
+                    [0, 0, 1]])
+    if dataset == 'tartanair':
+        T = torch.tensor(  [[1.0000, 0.0000, 0.0000, 0.0000],
+                            [0.0000, 1.0000, 0.0000, 0.2500],
+                            [0.0000, 0.0000, 1.0000, 0.0000],
+                            [0.0000, 0.0000, 0.0000, 1.0000]]  )
+    P1 = K * torch.eye(4)[:3, :]
+    P2 = K * T[:3, :]
+    return T, P1, P2
 
 
 

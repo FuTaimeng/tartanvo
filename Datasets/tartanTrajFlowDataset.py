@@ -2,8 +2,9 @@ import numpy as np
 import cv2
 from torch.utils.data import Dataset, DataLoader
 from os import listdir, path
+
 from .transformation import pos_quats2SEs, pose2motion, SEs2ses
-from .utils import make_intrinsics_layer
+from .utils import make_intrinsics_layer, dataset_intrinsics, dataset_stereo_calibration
 from .loopDetector import gt_pose_loop_detector, bow_orb_loop_detector, adj_loop_detector
 from .stopDetector import gt_vel_stop_detector
 
@@ -11,27 +12,44 @@ from .stopDetector import gt_vel_stop_detector
 class TrajFolderDataset(Dataset):
     """scene flow synthetic dataset. """
 
-    def __init__(self, imgfolder, posefile = None, transform = None, 
-                    focalx = 320.0, focaly = 320.0, centerx = 320.0, centery = 240.0,
+    def __init__(self, imgfolder, imgfolder_right = None, posefile = None, transform = None, 
                     sample_step = 10, start_frame=0, end_frame=-1,
                     imudir = None, img_fps = 10.0, imu_mul = 10,
                     use_loop_closure = False, use_stop_constraint = False):
         
         ############################## load images ######################################################################
         files = listdir(imgfolder)
-        self.rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
-        self.rgbfiles.sort()
-        total_num_img = len(self.rgbfiles)
+        rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
+        rgbfiles.sort()
+        total_num_img = len(rgbfiles)
         end_frame += total_num_img+1 if end_frame<0 else 1
-        self.rgbfiles = self.rgbfiles[start_frame:end_frame:sample_step]
-        self.num_img = len(self.rgbfiles)
+        rgbfiles = rgbfiles[start_frame:end_frame:sample_step]
+        self.num_img = len(rgbfiles)
         self.images = []
-        for rgbname in self.rgbfiles:
+        for rgbname in rgbfiles:
             img = cv2.imread(rgbname)
             self.images.append(img)
         print('Load {} of {} image files (st:{}, end:{}, step:{}) in {}'.format(
             self.num_img, total_num_img, start_frame, end_frame, sample_step, imgfolder))
-        
+
+        ############################## load stereo right images ######################################################################
+        self.images_right = None
+        if imgfolder_right is not None and imgfolder_right != "":
+            files = listdir(imgfolder_right)
+            rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
+            rgbfiles.sort()
+            rgbfiles = rgbfiles[start_frame:end_frame:sample_step]
+            assert self.num_img == len(rgbfiles)
+            self.images_right = []
+            for rgbname in rgbfiles:
+                img = cv2.imread(rgbname)
+                self.images_right.append(img)
+
+        ############################## load calibrations ######################################################################
+        self.focalx, self.focaly, self.centerx, self.centery = dataset_intrinsics('tartanair')
+        if imgfolder_right is not None and imgfolder_right != "":
+            self.T_lr, self.P1, self.P2 = dataset_stereo_calibration('tartanair')
+
         ############################## load gt poses ######################################################################
         self.poses = None
         if posefile is not None and posefile != "":
@@ -119,10 +137,6 @@ class TrajFolderDataset(Dataset):
         ############################## init other things ######################################################################
         self.num_link = len(self.links)
         self.transform = transform
-        self.focalx = focalx
-        self.focaly = focaly
-        self.centerx = centerx
-        self.centery = centery
 
 
     def load_imu_motion(self, imu_poses):
@@ -135,14 +149,22 @@ class TrajFolderDataset(Dataset):
         return self.num_link
 
     def __getitem__(self, idx):
-        img1 = self.images[self.links[idx][0]].copy()
-        img2 = self.images[self.links[idx][1]].copy()
+        res = {}
 
-        res = {'img1': img1, 'img2': img2}
+        res['img1'] = self.images[self.links[idx][0]].copy()
+        res['img2'] = self.images[self.links[idx][1]].copy()
 
-        h, w, _ = img1.shape
+        if self.images_right is not None:
+            res['img1_r'] = self.images_right[self.links[idx][0]].copy()
+            res['img2_r'] = self.images_right[self.links[idx][1]].copy()
+
+        h, w, _ = res['img1'].shape
         intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)
         res['intrinsic'] = intrinsicLayer
+
+        if self.images_right is not None:
+            res['P1'] = self.P1
+            res['P2'] = self.P2
 
         if self.transform:
             res = self.transform(res)
