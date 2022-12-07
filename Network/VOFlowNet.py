@@ -35,6 +35,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+
 def conv(in_planes, out_planes, kernel_size=3, stride=2, padding=1, dilation=1, bn_layer=False, bias=True):
     if bn_layer:
         return nn.Sequential(
@@ -48,11 +49,13 @@ def conv(in_planes, out_planes, kernel_size=3, stride=2, padding=1, dilation=1, 
             nn.ReLU(inplace=True)
         )
 
+
 def linear(in_planes, out_planes):
     return nn.Sequential(
         nn.Linear(in_planes, out_planes), 
         nn.ReLU(inplace=True)
-        )
+    )
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -75,10 +78,11 @@ class BasicBlock(nn.Module):
 
         return F.relu(out, inplace=True)
 
+
 class VOFlowRes(nn.Module):
-    def __init__(self):
+    def __init__(self, inputnum=4):
         super(VOFlowRes, self).__init__()
-        inputnum = 4
+        
         blocknums = [2,2,3,4,6,7,3]
         outputnums = [32,64,64,128,128,256,256]
 
@@ -103,10 +107,8 @@ class VOFlowRes(nn.Module):
         fc2_rot = linear(128,32)
         fc3_rot = nn.Linear(32,3)
 
-
         self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
         self.voflow_rot = nn.Sequential(fc1_rot, fc2_rot, fc3_rot)
-
 
     def _make_layer(self, block, planes, blocks, stride, pad, dilation):
         downsample = None

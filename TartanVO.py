@@ -36,31 +36,38 @@ import time
 
 np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
-from Network.VONet import VONet
+from Network.VONet import VONet, StereoVONet
 
 class TartanVO(object):
-    def __init__(self, pose_model_name, flow_model_name=None, 
-                device='cuda', use_imu=False, correct_scale=True):
+    def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, 
+                    use_imu=False, use_stereo=False, device='cuda', correct_scale=True):
         
         # import ipdb;ipdb.set_trace()
-        self.vonet = VONet()
+        if not use_stereo:
+            self.vonet = VONet()
+        else:
+            self.vonet = StereoVONet()
 
         # load the whole model
-        if flow_model_name is None or len(flow_model_name) == 0:
+        if vo_model_name is not None and vo_model_name != "":
+            print('load vo network...')
             modelname = 'models/' + pose_model_name
             self.load_model(self.vonet, modelname)
         else:
-            print('load pwc network...')
-            data = torch.load('models/' + flow_model_name)
-            self.vonet.flowNet.load_state_dict(data)
-            print('load pose network...')
-            self.load_model(self.vonet.flowPoseNet, 'models/' + pose_model_name)
+            if flow_model_name is not None and flow_model_name != "":
+                print('load pwc network...')
+                data = torch.load('models/' + flow_model_name)
+                self.vonet.flowNet.load_state_dict(data)
+            if pose_model_name is not None and pose_model_name != "":
+                print('load pose network...')
+                self.load_model(self.vonet.flowPoseNet, 'models/' + pose_model_name)
             
         self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
         self.flow_norm = 20 # scale factor for flow
 
         self.device = device
         self.use_imu = use_imu
+        self.use_stereo = use_stereo
         self.correct_scale = correct_scale
         
         self.vonet.to(self.device)
@@ -82,13 +89,12 @@ class TartanVO(object):
 
         model_dict.update(preTrainDictTemp)
         model.load_state_dict(model_dict)
-        print('Model loaded...')
         return model
 
     def test_batch(self, sample):        
         # import ipdb;ipdb.set_trace()
-        img0   = sample['img1'].to(self.device)
-        img1   = sample['img2'].to(self.device)
+        img0   = sample['img0'].to(self.device)
+        img1   = sample['img1'].to(self.device)
         intrinsic = sample['intrinsic'].to(self.device)
         inputs = [img0, img1, intrinsic]
 
@@ -104,14 +110,16 @@ class TartanVO(object):
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             flow = flow * self.flow_norm
 
+            print(pose.size())
+
             pose = self.handle_scale(sample, pose)
 
         return pose, flow
 
     def train_batch(self, sample):
         # import ipdb;ipdb.set_trace()
-        img0 = sample['img1'].to(self.device)
-        img1 = sample['img2'].to(self.device)
+        img0 = sample['img0'].to(self.device)
+        img1 = sample['img1'].to(self.device)
         intrinsic = sample['intrinsic'].to(self.device)
         inputs = [img0, img1, intrinsic]
 
@@ -131,20 +139,21 @@ class TartanVO(object):
         return pose, flow
 
     def handle_scale(self, sample, pose):
-        motion_tar = None
-        if self.use_imu and 'imu_motion' in sample:
-            motion_tar = sample['imu_motion']
-        elif 'motion' in sample:
-            motion_tar = sample['motion']
+        if self.correct_scale:
+            motion_tar = None
+            if self.use_imu and 'imu_motion' in sample:
+                motion_tar = sample['imu_motion']
+            elif 'motion' in sample:
+                motion_tar = sample['motion']
 
-        # calculate scale
-        if self.correct_scale and motion_tar is not None:
-            scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).to(self.device)
-            trans_est = pose[:,:3]
-            trans_est = trans_est/torch.linalg.norm(trans_est,dim=1).view(-1,1)*scale.view(-1,1)
-            pose = torch.cat((trans_est, pose[:,3:]), dim=1)
-        else:
-            print('    scale is not given, using 1 as the default scale value.')
+            # calculate scale
+            if motion_tar is not None:
+                scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).to(self.device)
+                trans_est = pose[:,:3]
+                trans_est = trans_est/torch.linalg.norm(trans_est,dim=1).view(-1,1)*scale.view(-1,1)
+                pose = torch.cat((trans_est, pose[:,3:]), dim=1)
+            else:
+                print('    scale is not given, using 1 as the default scale value.')
         
         return pose
 

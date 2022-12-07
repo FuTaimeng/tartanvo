@@ -166,6 +166,8 @@ class PWCDCNet(nn.Module):
     def forward(self,x):
         im1 = x[0]
         im2 = x[1]
+
+        print(im1.size(), im1.is_contiguous())
         
         c11 = self.conv1b(self.conv1aa(self.conv1a(im1)))
         c21 = self.conv1b(self.conv1aa(self.conv1a(im2)))

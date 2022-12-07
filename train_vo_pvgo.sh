@@ -17,7 +17,7 @@ python train.py \
     --pose-model-name 1_1_sample_voflow_200000.pkl \
     --batch-size 1 \
     --worker-num 1 \
-    --test-dir ${data_dir}/image_left \
+    --image-dir ${data_dir}/image_left \
     --pose-file ${data_dir}/pose_left.txt \
     --sample-step 1 \
     --start-frame 850 \

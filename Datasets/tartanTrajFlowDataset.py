@@ -151,29 +151,29 @@ class TrajFolderDataset(Dataset):
     def __getitem__(self, idx):
         res = {}
 
-        res['img1'] = self.images[self.links[idx][0]].copy()
-        res['img2'] = self.images[self.links[idx][1]].copy()
+        img0 = self.images[self.links[idx][0]].copy()
+        img1 = self.images[self.links[idx][1]].copy()
+        res['img0'] = [img0]
+        res['img1'] = [img1]
 
         if self.images_right is not None:
-            res['img1_r'] = self.images_right[self.links[idx][0]].copy()
-            res['img2_r'] = self.images_right[self.links[idx][1]].copy()
+            img0_r = self.images_right[self.links[idx][0]].copy()
+            img1_r = self.images_right[self.links[idx][1]].copy()
+            res['img0_r'] = [img0_r]
+            res['img1_r'] = [img1_r]
 
-        h, w, _ = res['img1'].shape
+        h, w, _ = img0.shape
         intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)
-        res['intrinsic'] = intrinsicLayer
-
-        if self.images_right is not None:
-            res['P1'] = self.P1
-            res['P2'] = self.P2
+        res['intrinsic'] = [intrinsicLayer]
 
         if self.transform:
             res = self.transform(res)
 
         if self.motions is not None:
-            res['motion'] = self.motions[idx]
+            res['motion'] = np.array([self.motions[idx]])
 
         if self.imu_motions is not None:
-            res['imu_motion'] = self.imu_motions[idx]
+            res['imu_motion'] = np.array([self.imu_motions[idx]])
         
         return res
 

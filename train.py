@@ -1,4 +1,4 @@
-from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, visflow
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, visflow
 from Datasets.tartanTrajFlowDataset import TrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
@@ -12,7 +12,6 @@ from imu_integrator import run_imu_preintegrator
 
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from pytorch3d.transforms import axis_angle_to_quaternion
 
 import numpy as np
@@ -115,14 +114,12 @@ if __name__ == '__main__':
     else:
         datastr = 'tartanair'
         
-    transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
+    transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), Normalize(), ToTensor()])
 
-    trainDataset = TrajFolderDataset(args.test_dir, posefile = args.pose_file, transform=transform, 
+    trainDataset = TrajFolderDataset(args.image_dir, posefile = args.pose_file, transform=transform, 
                                         sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
                                         imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10,
                                         use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, 
-                                        shuffle=False, num_workers=args.worker_num)
 
     trainroot = args.result_dir
     print('Train root:', trainroot)
@@ -215,12 +212,12 @@ if __name__ == '__main__':
 
         motionlist = []
         flowlist = []
-        testDataiter = iter(trainDataloader)
-        tot_batch = len(trainDataloader)
+        testDataiter = iter(trainDataset)
+        tot_batch = len(trainDataset)
         batch_cnt = 0
         while True:
             try:
-                sample = testDataiter.next()
+                sample = next(testDataiter)
             except StopIteration:
                 break
             
@@ -240,6 +237,7 @@ if __name__ == '__main__':
         timer.tic('cvt')
 
         motions = torch.stack(motionlist)
+        print('motions size:', motions.size())
         motions_np = motions.detach().cpu().numpy()
         poses_np = ses2poses_quat(motions_np[:trainDataset.num_img-1])
 

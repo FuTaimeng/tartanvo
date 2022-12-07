@@ -36,18 +36,55 @@ import torch.nn.functional as F
 from .PWC import PWCDCNet as FlowNet
 from .VOFlowNet import VOFlowRes as FlowPoseNet
 
+
 class VONet(nn.Module):
-    def __init__(self):
+    def __init__(self, fix_flow=False):
         super(VONet, self).__init__()
 
         self.flowNet     = FlowNet()
         self.flowPoseNet = FlowPoseNet()
 
+        if fix_flow:
+            for param in self.flowNet.parameters():
+                param.requires_grad = False
+
     def forward(self, x):
+        # x[0] := left1 (B*3*H*W)
+        # x[1] := left2
+        # x[2] := intrisic (B*2*h*w)
+        # h = H/4, w= W/4
+
         # import ipdb;ipdb.set_trace()
-        flow = self.flowNet(x[0:2])
-        flow_input = torch.cat( ( flow, x[2] ), dim=1 )        
-        pose = self.flowPoseNet( flow_input )
+        flow = self.flowNet(x[(0, 1)]) # B*2*h*w
+        y = torch.cat((flow, x[2]), dim=1)
+        pose = self.flowPoseNet(y)
 
         return flow, pose
 
+
+class StereoVONet(nn.Module):
+    def __init__(self, fix_flow=False):
+        super(StereoVONet, self).__init__()
+
+        self.flowNet     = FlowNet()
+        self.flowPoseNet = FlowPoseNet(inputnum=6)
+
+        if fix_flow:
+            for param in self.flowNet.parameters():
+                param.requires_grad = False
+
+    def forward(self, x):
+        # x[0] := left1 (B*3*H*W)
+        # x[1] := left2
+        # x[2] := right1
+        # x[3] := right2
+        # x[4] := intrisic (B*2*h*w)
+        # h = H/4, w= W/4
+
+        # import ipdb;ipdb.set_trace()
+        flow = self.flowNet(x[(0, 1)]) # B*2*h*w
+        flow_lr = self.flowNet(x[(0, 2)])
+        y = torch.cat((flow, flow_lr, x[4]), dim=1)
+        pose = self.flowPoseNet(y)
+
+        return flow, flow_lr, pose
