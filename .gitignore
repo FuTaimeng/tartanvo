@@ -1,3 +1,10 @@
 *.pyc
 models/
-data/
+train_results/
+test_results/
+__pycache__/
+IntPlot/
+logdata/
+new_try_lw/
+resimg/
+ORBvoc*
