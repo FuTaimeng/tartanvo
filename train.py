@@ -37,6 +37,10 @@ def get_args():
                         help='name of pretrained flow model (default: "")')
     parser.add_argument('--pose-model-name', default='',
                         help='name of pretrained pose model (default: "")')
+    parser.add_argument('--stereo-model-name', default='',
+                        help='name of pretrained stereo model (default: "")')
+    parser.add_argument('--vo-model-name', default='',
+                        help='name of pretrained vo model. if provided, this will override the other seperated models (default: "")')
     parser.add_argument('--euroc', action='store_true', default=False,
                         help='euroc test (default: False)')
     parser.add_argument('--kitti', action='store_true', default=False,
@@ -91,6 +95,8 @@ def get_args():
                         help='use loop closure or not (default: False)')
     parser.add_argument('--use-stop-constraint', action='store_true', default=False,
                         help='use stop constraint or not (default: False)')
+    parser.add_argument('--use-stereo', action='store_true', default=False,
+                        help='use stereo (default: False)')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -114,11 +120,24 @@ if __name__ == '__main__':
     else:
         datastr = 'tartanair'
         
-    transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), Normalize(), ToTensor()])
+    if args.use_stereo:
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=False), 
+                                DownscaleFlow(), 
+                                Normalize(mean=mean, std=std, keep_old=True), 
+                                ToTensor()  
+                            ])
+    else:
+        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
+                                DownscaleFlow(), 
+                                Normalize(), 
+                                ToTensor()
+                            ])
 
-    trainDataset = TrajFolderDataset(args.image_dir, posefile = args.pose_file, transform=transform, 
+    trainDataset = TrajFolderDataset(imgfolder=args.image_dir, imgfolder_right=args.right_image_dir, posefile = args.pose_file, transform=transform, 
                                         sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
-                                        imudir=args.imu_dir if args.use_imu else '', img_fps=args.frame_fps, imu_mul=10,
+                                        imudir=args.imu_dir, img_fps=args.frame_fps, imu_mul=10,
                                         use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
 
     trainroot = args.result_dir
@@ -193,8 +212,8 @@ if __name__ == '__main__':
             print("No IMU data! Turn use_imu to False. Check imu_dir:", args.imu_dir)
             args.use_imu = False
 
-    tartanvo = TartanVO(flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name, 
-        device=args.device, use_imu=(trainDataset.imu_motions is not None), correct_scale=True)
+    tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name, stereo_model_name=args.stereo_model_name,
+                            device=args.device, use_imu=args.use_imu, use_stereo=args.use_stereo, correct_scale=(not args.use_stereo))
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
     elif args.vo_optimizer == 'rmsprop':
@@ -237,7 +256,6 @@ if __name__ == '__main__':
         timer.tic('cvt')
 
         motions = torch.stack(motionlist)
-        print('motions size:', motions.size())
         motions_np = motions.detach().cpu().numpy()
         poses_np = ses2poses_quat(motions_np[:trainDataset.num_img-1])
 

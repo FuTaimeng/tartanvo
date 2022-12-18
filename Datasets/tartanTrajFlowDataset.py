@@ -1,6 +1,9 @@
 import numpy as np
 import cv2
+
+import torch
 from torch.utils.data import Dataset, DataLoader
+
 from os import listdir, path
 
 from .transformation import pos_quats2SEs, pose2motion, SEs2ses
@@ -36,7 +39,7 @@ class TrajFolderDataset(Dataset):
         self.images_right = None
         if imgfolder_right is not None and imgfolder_right != "":
             files = listdir(imgfolder_right)
-            rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
+            rgbfiles = [(imgfolder_right +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
             rgbfiles.sort()
             rgbfiles = rgbfiles[start_frame:end_frame:sample_step]
             assert self.num_img == len(rgbfiles)
@@ -48,7 +51,7 @@ class TrajFolderDataset(Dataset):
         ############################## load calibrations ######################################################################
         self.focalx, self.focaly, self.centerx, self.centery = dataset_intrinsics('tartanair')
         if imgfolder_right is not None and imgfolder_right != "":
-            self.T_lr, self.P1, self.P2 = dataset_stereo_calibration('tartanair')
+            self.T_lr, self.baseline = dataset_stereo_calibration('tartanair')
 
         ############################## load gt poses ######################################################################
         self.poses = None
@@ -161,6 +164,7 @@ class TrajFolderDataset(Dataset):
             img1_r = self.images_right[self.links[idx][1]].copy()
             res['img0_r'] = [img0_r]
             res['img1_r'] = [img1_r]
+            res['blxfx'] = torch.tensor([self.focalx * self.baseline], dtype=torch.float32) # used for convert disp to depth
 
         h, w, _ = img0.shape
         intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)

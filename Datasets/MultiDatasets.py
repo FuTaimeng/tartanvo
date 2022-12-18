@@ -27,7 +27,7 @@ class MultiDatasetsBase(object):
         self.lossmasks = []
         self.datalens = []
 
-        self.init_datasets( args, mean, std)
+        self.init_datasets(args, mean, std)
 
         # calculate the percentage
         if len(databalence)>1:
@@ -45,17 +45,23 @@ class MultiDatasetsBase(object):
         while randnum > self.accDataLens[datasetInd]: # 
             datasetInd += 1
 
-        # load sample from the dataloader
         try:
-            sample = self.dataiters[datasetInd].next()
-            if sample[list(sample.keys())[0]].shape[0] < self.batch and (fullbatch is True): # the imcomplete batch is thrown away
+            # load sample from the dataloader
+            try:
+                sample = self.dataiters[datasetInd].next()
+                if sample[list(sample.keys())[0]].shape[0] < self.batch and (fullbatch is True): # the imcomplete batch is thrown away
+                    self.dataiters[datasetInd] = iter(self.dataloders[datasetInd])
+                    sample = self.dataiters[datasetInd].next()
+            except StopIteration:
                 self.dataiters[datasetInd] = iter(self.dataloders[datasetInd])
                 sample = self.dataiters[datasetInd].next()
-        except StopIteration:
-            self.dataiters[datasetInd] = iter(self.dataloders[datasetInd])
-            sample = self.dataiters[datasetInd].next()
 
-        return sample, self.lossmasks[datasetInd]
+            return sample, self.lossmasks[datasetInd]
+
+        # when some datasets broken
+        except Exception as e:
+            print('Failed to load sample:', str(e))
+            return self.load_sample(fullbatch)
 
 def parse_datatype_vo(datatype, compressed, platform):
     # vo

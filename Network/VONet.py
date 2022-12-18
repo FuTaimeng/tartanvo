@@ -1,90 +1,153 @@
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2020, Wenshan Wang, Yaoyu Hu,  CMU
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of CMU nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
-from .PWC import PWCDCNet as FlowNet
-from .VOFlowNet import VOFlowRes as FlowPoseNet
-
 
 class VONet(nn.Module):
-    def __init__(self, fix_flow=False):
+    def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True, uncertainty=False):
         super(VONet, self).__init__()
 
-        self.flowNet     = FlowNet()
-        self.flowPoseNet = FlowPoseNet()
+        if network==0: # PWCNet
+            from .PWC import PWCDCNet as FlowNet
+            self.flowNet     = FlowNet(uncertainty=uncertainty)
+        elif network==2:
+            from .FlowNet2 import FlowNet2 as FlowNet
+            self.flowNet     = FlowNet(middleblock=3)
+        elif network==3:
+            from .StereoFlowNet import FlowNet
+            self.flowNet     = FlowNet(uncertainty=uncertainty)
+        else:
+            print('Flow network should be 0 or 2..')
 
-        if fix_flow:
+        from .VOFlowNet import VOFlowRes as FlowPoseNet
+        unc = 1 if uncertainty else 0
+        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, uncertainty=unc)
+
+        self.network = network
+        self.intrinsic = intrinsic
+        self.flowNormFactor = flowNormFactor
+        self.down_scale = down_scale
+        self.uncertainty = uncertainty
+
+        if fixflow:
             for param in self.flowNet.parameters():
                 param.requires_grad = False
 
-    def forward(self, x):
-        # x[0] := left1 (B*3*H*W)
-        # x[1] := left2
-        # x[2] := intrisic (B*2*h*w)
-        # h = H/4, w= W/4
-
+    def forward(self, x, only_flow=False, only_pose=False, gt_flow=False):
+        '''
+        x[0]: rgb frame t-1 and t
+        x[1]: intrinsics
+        x[2]: flow t-1 -> t (optional)
+        '''
         # import ipdb;ipdb.set_trace()
-        flow = self.flowNet(x[(0, 1)]) # B*2*h*w
-        y = torch.cat((flow, x[2]), dim=1)
-        pose = self.flowPoseNet(y)
+        if not only_pose: # forward flownet
+            flow_out, unc_out = self.flowNet(x[0])
+            if only_flow:
+                return flow_out, unc_out
 
-        return flow, pose
+            if self.network == 0:
+                if self.down_scale:
+                    flow = flow_out[0]
+                    if self.uncertainty:
+                        unc = unc_out[0]
+                else:
+                    flow = F.interpolate(flow_out[0], scale_factor=4, mode='bilinear', align_corners=True)
+                    if self.uncertainty:
+                        unc = F.interpolate(unc_out[0], scale_factor=4, mode='bilinear', align_corners=True)
+            elif self.network ==2 or self.network==3:
+                if self.down_scale:
+                    flow_out = F.interpolate(flow_out, scale_factor=0.25, mode='bilinear', align_corners=True)
+                    if self.uncertainty:
+                        unc = F.interpolate(unc_out, scale_factor=0.25, mode='bilinear', align_corners=True)
+                        unc = 0.5 * torch.tanh(-unc*0.5-2)+0.5 # mapping unc to 0-1
+                flow = flow_out
+        else:
+            assert(gt_flow) # when only_pose==True, we should provide gt-flow as input
+            assert(len(x)>2)
+            flow_out = None
+
+        if gt_flow:
+            flow_input = x[2]
+        else:
+            flow_input = flow * self.flowNormFactor
+
+        if self.uncertainty:
+            flow_input = torch.cat((flow_input, unc), dim=1)
+
+        if self.intrinsic:
+            flow_input = torch.cat( ( flow_input, x[1] ), dim=1 )
+        
+        pose = self.flowPoseNet( flow_input )
+
+        return flow_out, pose
+
+    # def get_flow_loss(self, netoutput, target, criterion, mask=None, small_scale=False):
+    #     '''
+    #     small_scale: the target flow and mask are down scaled (when in forward_vo)
+    #     '''
+    #     if self.network == 0: # pwc net
+    #         # netoutput 1/4, 1/8, ..., 1/32 size flow
+    #         # if mask is not None:
+    #         return self.flowNet.calc_loss(netoutput, target, criterion, mask) # To be tested
+    #         # else:
+    #         #     return self.flowNet.get_loss(netoutput, target, criterion, small_scale=small_scale)
+    #     else: 
+    #         if mask is not None:
+    #             # if small_scale:
+    #             #     mask = F.interpolate(mask, scale_factor=0.25, mode='bilinear', align_corners=True)
+    #             valid_mask = mask<128
+    #             valid_mask = valid_mask.expand(target.shape)
+    #             return criterion(netoutput[valid_mask], target[valid_mask])
+    #         else:
+    #             return criterion(netoutput, target)
+
+    def get_flow_loss(self, output, target, criterion, mask=None, unc=None, lamb=1.0):
+        '''
+        Note: criterion is not used when uncertainty is included
+        '''
+        if mask is not None: 
+            output_ = output[mask]
+            target_ = target[mask]
+            if unc is not None:
+                unc = unc[mask]
+        else:
+            output_ = output
+            target_ = target
+
+        if unc is None:
+            return criterion(output_, target_), criterion(output_, target_)
+        else: # if using uncertainty, then no mask 
+            diff = torch.abs( output_ - target_) # hard code L1 loss
+            loss_unc = torch.mean(torch.exp(-unc) * diff + unc * lamb)
+            loss = torch.mean(diff)
+            return  loss_unc/(1.0+lamb), loss
 
 
-class StereoVONet(nn.Module):
-    def __init__(self, fix_flow=False):
-        super(StereoVONet, self).__init__()
+if __name__ == '__main__':
+    
+    voflownet = VONet(network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True) # 
+    voflownet.cuda()
+    voflownet.eval()
+    print (voflownet)
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import time
 
-        self.flowNet     = FlowNet()
-        self.flowPoseNet = FlowPoseNet(inputnum=6)
+    x, y = np.ogrid[:448, :640]
+    # print (x, y, (x+y))
+    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(512 + 384)
+    img = img.astype(np.float32)
+    print (img.dtype)
+    imgInput = img[np.newaxis,...].transpose(0, 3, 1, 2)
+    intrin = imgInput[:,:2,:112,:160].copy()
 
-        if fix_flow:
-            for param in self.flowNet.parameters():
-                param.requires_grad = False
-
-    def forward(self, x):
-        # x[0] := left1 (B*3*H*W)
-        # x[1] := left2
-        # x[2] := right1
-        # x[3] := right2
-        # x[4] := intrisic (B*2*h*w)
-        # h = H/4, w= W/4
-
-        # import ipdb;ipdb.set_trace()
-        flow = self.flowNet(x[(0, 1)]) # B*2*h*w
-        flow_lr = self.flowNet(x[(0, 2)])
-        y = torch.cat((flow, flow_lr, x[4]), dim=1)
-        pose = self.flowPoseNet(y)
-
-        return flow, flow_lr, pose
+    imgTensor = torch.from_numpy(imgInput)
+    intrinTensor = torch.from_numpy(intrin)
+    print (imgTensor.shape)
+    stime = time.time()
+    for k in range(100):
+        flow, pose = voflownet((imgTensor.cuda(), imgTensor.cuda(), intrinTensor.cuda()))
+        print (flow.data.shape, pose.data.shape)
+        print (pose.data.cpu().numpy())
+        print (time.time()-stime)
+    print (time.time()-stime)/100

@@ -31,7 +31,7 @@ import cv2
 
 KEY2DIM =  {'flow':3, 'img0':3, 'img1':3, 'img0_norm':3, 'img1_norm':3, \
             'intrinsic':3, 'fmask':2, 'disp0':2, 'disp1':2, 'depth0':2, 'depth1':2, \
-            'flow_unc':2, 'depth0_unc':2, 'img0_r':3, 'img1_r':3} # these data have 3 dimensions
+            'flow_unc':2, 'depth0_unc':2, 'img0_r':3, 'img1_r':3, 'img0_r_norm':3, 'img1_r_norm':3}
 
 class Compose(object):
     """Composes several transforms together.
@@ -216,10 +216,10 @@ class ToTensor(object):
         for kk in sample.keys():
             if not kk in KEY2DIM:
                 continue
-            if KEY2DIM[kk] ==3: # for sequencial data
+            if KEY2DIM[kk] == 3: # for sequencial data
                 data = np.stack(sample[kk], axis=0)
                 data = data.transpose(0, 3, 1, 2) # frame x channel x h x w
-            elif KEY2DIM[kk] ==2: # for sequencial data
+            elif KEY2DIM[kk] == 2: # for sequencial data
                 data = np.stack(sample[kk], axis=0)
                 data = data[:, np.newaxis, :, :] # frame x channel x h x w
 
@@ -1100,18 +1100,13 @@ def dataset_intrinsics(dataset='tartanair', calibfile=None):
     return focalx, focaly, centerx, centery
 
 def dataset_stereo_calibration(dataset='tartanair'):
-    focalx, focaly, centerx, centery = dataset_intrinsics(dataset)
-    K = torch.tensor([[focalx, 0, centerx],
-                    [0, focaly, centery],
-                    [0, 0, 1]])
     if dataset == 'tartanair':
         T = torch.tensor(  [[1.0000, 0.0000, 0.0000, 0.0000],
                             [0.0000, 1.0000, 0.0000, 0.2500],
                             [0.0000, 0.0000, 1.0000, 0.0000],
                             [0.0000, 0.0000, 0.0000, 1.0000]]  )
-    P1 = K * torch.eye(4)[:3, :]
-    P2 = K * T[:3, :]
-    return T, P1, P2
+        baseline = 0.25
+    return T, baseline
 
 def make_intrinsics_layer(w, h, fx, fy, ox, oy):
     ww, hh = np.meshgrid(range(w), range(h))

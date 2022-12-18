@@ -297,7 +297,7 @@ class DatasetBase(Dataset):
         sample['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
 
         # Transform.
-        if ( self.transform is not None):
+        if self.transform is not None:
             sample = self.transform(sample)
 
         return sample
