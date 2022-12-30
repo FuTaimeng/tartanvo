@@ -91,7 +91,7 @@ class MultiCamVONet(nn.Module):
         self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, uncertainty=0, stereo=2)
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=2)
 
         self.flowNormFactor = flowNormFactor
 
