@@ -36,20 +36,22 @@ import time
 
 np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
-from Network.VONet import VONet
+from Network.VONet import VONet, MultiCamVONet
 from Network.StereoVONet import StereoVONet
 
 class TartanVO(object):
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
-                    use_imu=False, use_stereo=False, device='cuda', correct_scale=True):
+                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True):
         
         # import ipdb;ipdb.set_trace()
-        if not use_stereo:
+        if use_stereo==0:
             self.vonet = VONet()
-        else:
+        elif use_stereo==1:
             stereonorm = 0.02 # the norm factor for the stereonet
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
+        elif use_stereo==2:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, fixflow=True)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
@@ -97,59 +99,58 @@ class TartanVO(object):
         model.load_state_dict(model_dict)
         return model
 
-    def test_batch(self, sample):        
+    def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
         img0   = sample['img0'].to(self.device)
         img1   = sample['img1'].to(self.device)
         intrinsic = sample['intrinsic'].to(self.device)
-        if self.use_stereo:
+        if self.use_stereo==1:
             img0_norm = sample['img0_norm'].to(self.device)
             img0_r_norm = sample['img0_r_norm'].to(self.device)
             blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
+        elif self.use_stereo==2:
+            extrinsic = sample['extrinsic'].to(self.device)
+            img0_r = sample['img0_r'].to(self.device)
 
-        self.vonet.eval()
+        if is_train:
+            self.vonet.train()
+        else:
+            self.vonet.eval()
 
-        with torch.no_grad():
-            starttime = time.time()
-            if not self.use_stereo:
-                inputs = [torch.cat([img0, img1], axis=1), intrinsic]
-                flow, pose = self.vonet(inputs)
-            else:
-                flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic, 
-                                                scale_w=1.0, scale_disp=1.0, blxfx=blxfx)
-            inferencetime = time.time()-starttime
-            # print("Pose inference using {}s".format(inferencetime))
+        res = {}
 
-            # import ipdb;ipdb.set_trace()
-            pose = pose * self.pose_std # The output is normalized during training, now scale it back
-            flow = flow * self.flow_norm
-
-            if self.correct_scale:
-                pose = self.handle_scale(sample, pose)
-
-        return pose, flow
-
-    def train_batch(self, sample):
-        # import ipdb;ipdb.set_trace()
-        img0 = sample['img0'].to(self.device)
-        img1 = sample['img1'].to(self.device)
-        intrinsic = sample['intrinsic'].to(self.device)
-        inputs = [torch.cat([img0, img1], axis=1), intrinsic]
-
-        self.vonet.train()
-
+        _ = torch.set_grad_enabled(is_train)
         starttime = time.time()
-        flow, pose = self.vonet(inputs)
+
+        if self.use_stereo==0:
+            inputs = [torch.cat([img0, img1], axis=1), intrinsic]
+            flow, pose = self.vonet(inputs)
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
+            res['pose'] = pose
+            res['flow'] = flow
+
+        elif self.use_stereo==1:
+            flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic, 
+                                            scale_w=1.0, scale_disp=1.0, blxfx=blxfx)
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
+            res['pose'] = pose
+            res['flow'] = flow
+            res['disp'] = disp
+
+        elif self.use_stereo==2:
+            flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            res['pose'] = pose
+            res['flowAB'] = flowAB
+            res['flowAC'] = flowAC
+            
         inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))
 
-        # import ipdb;ipdb.set_trace()
-        pose = pose * self.pose_std # The output is normalized during training, now scale it back
-        flow = flow * self.flow_norm
+        if self.correct_scale:
+            pose = self.handle_scale(sample, pose)
+            res['pose'] = pose
 
-        pose = self.handle_scale(sample, pose)
-
-        return pose, flow
+        return res
 
     def handle_scale(self, sample, pose):
         motion_tar = None

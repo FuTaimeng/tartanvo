@@ -228,6 +228,20 @@ class ToTensor(object):
 
         return sample
 
+class SqueezeBatchDim(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, sample):
+        # import ipdb;ipdb.set_trace()
+        for kk in sample.keys():
+            if not kk in KEY2DIM:
+                continue
+
+            sample[kk] = sample[kk].squeeze(0)
+
+        return sample
+
 class Normalize(object):
     """Given mean: (R, G, B) and std: (R, G, B),
     This option should be before the to tensor

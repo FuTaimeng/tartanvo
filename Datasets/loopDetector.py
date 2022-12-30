@@ -1,19 +1,26 @@
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
-from .transformation import pos_quats2SE_matrices
 
 
-def is_pose_approximate(T1, T2, trans_th, rot_th):
-    zero = np.array([0, 0, 0, 1]).reshape(4, 1)
-    z1 = np.array([0, 0, 1, 1]).reshape(4, 1)
-    trans_err = np.linalg.norm(np.dot(T1, zero) - np.dot(T2, zero))
-    rot_err = np.rad2deg(np.arccos(np.dot(np.dot(T1[0:3, 0:3], z1[0:3, :]).T, np.dot(T2[0:3, 0:3], z1[0:3, :]))))
-    return trans_err <= trans_th and rot_err <= rot_th
+def is_pose_approximate(pi, pj, trans_th, rot_th):
+    Ri = Rotation.from_quat(pi[3:])
+    Rj = Rotation.from_quat(pj[3:])
+    ti = pi[:3]
+    tj = pj[:3]
+
+    delta_angle = np.rad2deg((Ri.inv() * Rj).magnitude())
+    delta_trans = np.linalg.norm(ti - tj)
+
+    try:
+        return delta_trans <= trans_th and delta_angle <= rot_th
+    except:
+        return (delta_angle > rot_th[0] and delta_angle < rot_th[1] and
+                delta_trans > trans_th[0] and delta_trans < trans_th[1]) 
+
 
 def gt_pose_loop_detector(poses, loop_min_interval, trans_th, rot_th):
     N = len(poses)
-    Ts = pos_quats2SE_matrices(poses)
 
     links = []
     i = 0
@@ -21,7 +28,7 @@ def gt_pose_loop_detector(poses, loop_min_interval, trans_th, rot_th):
         flag = False
         j = i + loop_min_interval
         while j < N:
-            if is_pose_approximate(Ts[i], Ts[j], trans_th, rot_th):
+            if is_pose_approximate(poses[i], poses[j], trans_th, rot_th):
                 links.append((i, j))
                 flag = True
                 # print('loop edge:', (i, j))
@@ -131,3 +138,22 @@ def generate_g2o(output_fname, poses, motions, links):
 
     with open(output_fname, 'w') as f:
         f.write(g2o_file)
+
+
+def multicam_frame_selector(poses, trans_range, angle_range):
+    N = len(poses)
+
+    groups = []
+    for i in range(1, N-1):
+        for j in range(i+2, min(i+10, N-1)):
+            pi = poses[i]
+            pj = poses[j]
+            if is_pose_approximate(pi, pj, trans_range, angle_range):
+                groups.append([i, j, i-1])
+                groups.append([i, j, i+1])
+                groups.append([j, i, j-1])
+                groups.append([j, i, j+1])
+
+    groups = np.array(groups, dtype=np.int)
+    # np.random.shuffle(groups)
+    return groups

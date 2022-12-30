@@ -5,6 +5,7 @@ test_results/
 __pycache__/
 IntPlot/
 logdata/
-new_try_lw/
+*try_lw*/
 resimg/
 ORBvoc*
+*.zip

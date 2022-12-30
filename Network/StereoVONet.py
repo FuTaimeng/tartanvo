@@ -31,7 +31,7 @@ class StereoVONet(nn.Module):
         self.stereoNet = StereoNet()
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, stereo=True, autoDistTarget=autoDistTarget)
+        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, stereo=1, autoDistTarget=autoDistTarget)
 
         self.network = network
         self.intrinsic = intrinsic

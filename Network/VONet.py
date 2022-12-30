@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class VONet(nn.Module):
     def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True, uncertainty=False):
         super(VONet, self).__init__()
@@ -80,6 +81,37 @@ class VONet(nn.Module):
         pose = self.flowPoseNet( flow_input )
 
         return flow_out, pose
+
+
+class MultiCamVONet(nn.Module):
+    def __init__(self, flowNormFactor=1.0, fixflow=True):
+        super(MultiCamVONet, self).__init__()
+
+        from .PWC import PWCDCNet as FlowNet
+        self.flowNet = FlowNet(uncertainty=False)
+
+        from .VOFlowNet import VOFlowRes as FlowPoseNet
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, uncertainty=0, stereo=2)
+
+        self.flowNormFactor = flowNormFactor
+
+        if fixflow:
+            for param in self.flowNet.parameters():
+                param.requires_grad = False
+
+    def forward(self, imgA, imgB, imgC, intrinsic, extrinsic):
+        # import ipdb;ipdb.set_trace()
+        flowAB, _ = self.flowNet(torch.cat([imgA, imgB], dim=1))
+        flowAC, _ = self.flowNet(torch.cat([imgA, imgC], dim=1))
+                
+        flowAB = flowAB[0] * self.flowNormFactor
+        flowAC = flowAC[0] * self.flowNormFactor
+
+        x = torch.cat([flowAB, flowAC, intrinsic], dim=1)
+        pose = self.flowPoseNet(x, extrinsic=extrinsic)
+
+        return flowAB, flowAC, pose
+
 
     # def get_flow_loss(self, netoutput, target, criterion, mask=None, small_scale=False):
     #     '''

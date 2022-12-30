@@ -1,19 +1,20 @@
-from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, visflow
-from Datasets.tartanTrajFlowDataset import TrajFolderDataset
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, visflow
+from Datasets.tartanTrajFlowDataset import TrajFolderDatasetPVGO
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
 from TartanVO import TartanVO
 
-import pypose as pp
 from pgo import run_pgo
 from pvgo import run_pvgo
 from imu_integrator import run_imu_preintegrator
 
 import torch
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 from pytorch3d.transforms import axis_angle_to_quaternion
 
+import pypose as pp
 import numpy as np
 import cv2
 
@@ -95,8 +96,8 @@ def get_args():
                         help='use loop closure or not (default: False)')
     parser.add_argument('--use-stop-constraint', action='store_true', default=False,
                         help='use stop constraint or not (default: False)')
-    parser.add_argument('--use-stereo', action='store_true', default=False,
-                        help='use stereo (default: False)')
+    parser.add_argument('--use-stereo', type=int, default=0,
+                        help='use stereo (default: 0)')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -108,17 +109,8 @@ if __name__ == '__main__':
     timer = Timer()
     args = get_args()
 
-    if args.device.startswith('cuda'):
+    if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
-
-    # load trajectory data from a folder
-    datastr = 'tartanair'
-    if args.kitti:
-        datastr = 'kitti'
-    elif args.euroc:
-        datastr = 'euroc'
-    else:
-        datastr = 'tartanair'
         
     if args.use_stereo:
         mean = [0.485, 0.456, 0.406]
@@ -126,19 +118,23 @@ if __name__ == '__main__':
         transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=False), 
                                 DownscaleFlow(), 
                                 Normalize(mean=mean, std=std, keep_old=True), 
-                                ToTensor()  
+                                ToTensor(),
+                                SqueezeBatchDim()
                             ])
     else:
         transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
                                 DownscaleFlow(), 
                                 Normalize(), 
-                                ToTensor()
+                                ToTensor(),
+                                SqueezeBatchDim()
                             ])
 
-    trainDataset = TrajFolderDataset(imgfolder=args.image_dir, imgfolder_right=args.right_image_dir, posefile = args.pose_file, transform=transform, 
-                                        sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
-                                        imudir=args.imu_dir, img_fps=args.frame_fps, imu_mul=10,
-                                        use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
+    trainDataset = TrajFolderDatasetPVGO(imgfolder=args.image_dir, imgfolder_right=args.right_image_dir, posefile = args.pose_file, transform=transform, 
+                                            sample_step=args.sample_step, start_frame=args.start_frame, end_frame=args.end_frame,
+                                            imudir=args.imu_dir, img_fps=args.frame_fps, imu_mul=10,
+                                            use_loop_closure=args.use_loop_closure, use_stop_constraint=args.use_stop_constraint)
+
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
 
     trainroot = args.result_dir
     print('Train root:', trainroot)
@@ -231,12 +227,12 @@ if __name__ == '__main__':
 
         motionlist = []
         flowlist = []
-        testDataiter = iter(trainDataset)
+        dataiter = iter(trainDataloader)
         tot_batch = len(trainDataset)
         batch_cnt = 0
         while True:
             try:
-                sample = next(testDataiter)
+                sample = next(dataiter)
             except StopIteration:
                 break
             
@@ -244,10 +240,10 @@ if __name__ == '__main__':
             if args.mode.startswith('test'):
                 print('Batch {}/{} ...'.format(batch_cnt, tot_batch), end='\r')
 
-            if args.mode.startswith('train'):
-                motion, flow = tartanvo.train_batch(sample)
-            else:
-                motion, flow = tartanvo.test_batch(sample)
+            is_train = args.mode.startswith('train')
+            res = tartanvo.run_batch(sample, is_train)
+            motion = res['pose']
+            flow = res['flow']
             motionlist.extend(motion)
             flowlist.extend(flow)
 
@@ -295,7 +291,7 @@ if __name__ == '__main__':
 
         if train_step_cnt % args.print_interval == 0:
             motions_gt = ses2pos_quat(trainDataset.motions)
-            R_errs, t_errs = calc_motion_error(motions_gt, motions_np, allow_rescale=True)
+            R_errs, t_errs = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
             print("%s #%d - loss:%.6f - lr:%.6f - [avgtime] vo:%.2f, cvt:%.2f, pgo:%.2f, opt:%.2f" % (trainroot.split('/')[-1], 
                 train_step_cnt, torch.mean(loss), args.lr, timer.avg('vo'), timer.avg('cvt'), timer.avg('pgo'), timer.avg('opt')))
             timer.clear(['vo', 'cvt', 'pgo', 'opt'])
