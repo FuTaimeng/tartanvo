@@ -148,13 +148,23 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
     R_errs = []
     t_errs = []
     for i in range(len(motions_gt)):
+
         t_gt = motions_gt[i, :3]
-        R_gt = Rotation.from_quat(motions_gt[i, 3:])
+        if motions_gt.shape[1] == 7:
+            R_gt = Rotation.from_quat(motions_gt[i, 3:])
+        else:
+            R_gt = Rotation.from_rotvec(motions_gt[i, 3:])
+
         t_est = motions_est[i, :3] * factor
-        R_est = Rotation.from_quat(motions_est[i, 3:])
+        if motions_est.shape[1] == 7:
+            R_est = Rotation.from_quat(motions_est[i, 3:])
+        else:
+            R_est = Rotation.from_rotvec(motions_est[i, 3:])
+
         t_err = np.linalg.norm(t_gt - t_est)
         R_err = np.rad2deg((R_gt.inv() * R_est).magnitude())
         t_errs.append(t_err)
         R_errs.append(R_err)
+
     return np.array(R_errs), np.array(t_errs)
         

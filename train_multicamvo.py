@@ -1,4 +1,4 @@
-from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, visflow
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, save_images
 from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
@@ -50,6 +50,10 @@ def get_args():
                     help='number of interactions in total (default: 1000000)')
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='learning rate (default: 1e-4)')
+    parser.add_argument('--lr-decay-rate', type=float, default=0.4,
+                        help='learning rate decay rate (default: 0.4)')
+    parser.add_argument('--lr-decay-point', default='()',
+                        help='learning rate decay point (default: \'()\')')
     parser.add_argument('--print-interval', type=int, default=1,
                         help='the interval for printing the loss (default: 1)')
     parser.add_argument('--snapshot-interval', type=int, default=1000,
@@ -64,9 +68,18 @@ def get_args():
                         help='running mode: test, train-all (default: train-all)')
     parser.add_argument('--vo-optimizer', default='adam', choices=['adam', 'rmsprop', 'sgd'],
                         help='VO optimizer: adam, rmsprop, sgd (default: adam)')
+    parser.add_argument('--debug-flag', default='0',
+                        help='Debug flag: (default: 0) \
+                                [0] rot/trans error. \
+                                [1] flow loss. \
+                                [2] pose output. \
+                                [3] flow output. \
+                                [4] images.')
 
     args = parser.parse_args()
 
+    args.lr_decay_point = (np.array(eval(args.lr_decay_point)) * args.train_step).astype(int)
+    
     return args
 
 
@@ -102,18 +115,17 @@ if __name__ == '__main__':
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=2, correct_scale=False)
+    lr = args.lr
     if args.vo_optimizer == 'adam':
-        posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'rmsprop':
-        posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'sgd':
-        posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
     criterion = torch.nn.L1Loss()
 
-    if args.mode == 'test':
-        args.train_step = 1
-    for train_step_cnt in range(args.train_step):
+    for train_step_cnt in range(1, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
 
@@ -132,13 +144,56 @@ if __name__ == '__main__':
         loss.backward()
         posenetOptimizer.step()
 
+        if train_step_cnt in args.lr_decay_point:
+            lr *= args.lr_decay_rate
+            for param_group in posenetOptimizer.param_groups: 
+                param_group['lr'] = lr
+            print('[!] lr decay to {} at step {}!'.format(lr, train_step_cnt))
+
         timer.toc('step')
 
-        if train_step_cnt % args.print_interval == 0:
+        if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
-                loss_trans = criterion(motion[:3], gt_motion[:3])
-                loss_rot = criterion(motion[3:], gt_motion[3:])
-            print('step:{}, loss:{}, trans:{}, rot:{}, time:{}'.format(train_step_cnt, loss.item(), loss_trans.item(), loss_rot.item(), timer.last('step')))
+                tot_loss = loss.item()
+                trans_loss = criterion(motion[:3], gt_motion[:3]).item()
+                rot_loss = criterion(motion[3:], gt_motion[3:]).item()
+                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                trans_err = np.mean(trans_errs)
+                rot_err = np.mean(rot_errs)
+            print('step:{}, loss:{}, trans_loss:{}, rot_loss:{}, trans_err:{}, rot_err:{}, time:{}'.format(
+                train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')))
+            
+            if args.debug_flag != '':
+                if not isdir(trainroot+'/debug'):
+                    mkdir(trainroot+'/debug')
+                debugdir = trainroot+'/debug/'+str(train_step_cnt)
+                mkdir(debugdir)
+
+            if '0' in args.debug_flag:
+                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
+                np.savetxt(debugdir+'/info.txt', info)
+
+            if '1' in args.debug_flag:
+                pass
+            
+            if '2' in args.debug_flag:
+                np.savetxt(debugdir+'/motion.txt', motion.detach().cpu().numpy())
+                np.savetxt(debugdir+'/gt_motion.txt', gt_motion.detach().cpu().numpy())
+
+            verbose_debug = True
+            if '3' in args.debug_flag:
+                save_images(debugdir, res['flowAB']*20, suffix='_flowAB')
+                save_images(debugdir, res['flowAC']*20, suffix='_flowAC')
+
+            if '4' in args.debug_flag:
+                save_images(debugdir, sample['img0'], suffix='_A')
+                save_images(debugdir, sample['img0_r'], suffix='_B')
+                save_images(debugdir, sample['img1'], suffix='_C')
+                
+        else:
+            print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.snapshot_interval == 0:
-            pass
+            if not isdir(trainroot+'/models'):
+                mkdir(trainroot+'/models')
+            torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/multicamvo_posenet_{}.pkl'.format(trainroot, train_step_cnt))

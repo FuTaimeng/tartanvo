@@ -175,16 +175,16 @@ class TrajFolderDatasetPVGO(TrajFolderDatasetBase):
 
         # img0 = self.images[self.links[idx][0]].copy()
         # img1 = self.images[self.links[idx][1]].copy()
-        img0 = cv2.imread(self.rgbfiles[self.links[idx][0]])
-        img1 = cv2.imread(self.rgbfiles[self.links[idx][1]])
+        img0 = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
+        img1 = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
         res['img0'] = [img0]
         res['img1'] = [img1]
 
         if self.rgbfiles_right is not None:
             # img0_r = self.images_right[self.links[idx][0]].copy()
             # img1_r = self.images_right[self.links[idx][1]].copy()
-            img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]])
-            img1_r = cv2.imread(self.rgbfiles_right[self.links[idx][1]])
+            img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
+            img1_r = cv2.imread(self.rgbfiles_right[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
             res['img0_r'] = [img0_r]
             res['img1_r'] = [img1_r]
             res['blxfx'] = torch.tensor([self.focalx * self.baseline], dtype=torch.float32) # used for convert disp to depth
@@ -239,9 +239,9 @@ class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
         # imgA = self.images[self.links[idx][0]].copy()
         # imgB = self.images[self.links[idx][1]].copy()
         # imgC = self.images[self.links[idx][2]].copy()
-        imgA = cv2.imread(self.rgbfiles[self.links[idx][0]])
-        imgB = cv2.imread(self.rgbfiles[self.links[idx][1]])
-        imgC = cv2.imread(self.rgbfiles[self.links[idx][2]])
+        imgA = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
+        imgB = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
+        imgC = cv2.imread(self.rgbfiles[self.links[idx][2]], cv2.IMREAD_UNCHANGED)
         res['img0'] = [imgA]
         res['img1'] = [imgC]
         res['img0_r'] = [imgB]

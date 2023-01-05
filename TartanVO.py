@@ -56,19 +56,19 @@ class TartanVO(object):
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
             print('load vo network...')
-            self.load_model(self.vonet, 'models/' + vo_model_name)
+            self.load_model(self.vonet, vo_model_name)
         else:
             if flow_model_name is not None and flow_model_name != "":
                 print('load pwc network...')
                 # data = torch.load('models/' + flow_model_name)
                 # self.vonet.flowNet.load_state_dict(data)
-                self.load_model(self.vonet.flowNet, 'models/' + flow_model_name)
+                self.load_model(self.vonet.flowNet, flow_model_name)
             if pose_model_name is not None and pose_model_name != "":
                 print('load pose network...')
-                self.load_model(self.vonet.flowPoseNet, 'models/' + pose_model_name)
+                self.load_model(self.vonet.flowPoseNet, pose_model_name)
             if use_stereo and stereo_model_name is not None and stereo_model_name != "":
                 print('load stereo network...')
-                self.load_model(self.vonet.stereoNet, 'models/' + stereo_model_name)
+                self.load_model(self.vonet.stereoNet, stereo_model_name)
             
         self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
         self.flow_norm = 20 # scale factor for flow

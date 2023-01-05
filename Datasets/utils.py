@@ -982,6 +982,36 @@ def visdepth(disp, scale=3):
     res = np.tile(res[:,:,np.newaxis], (1, 1, 3))
     return res
 
+def save_images(dir, data, prefix='', suffix=''):
+    if torch.is_tensor(data):
+        data = data.detach().cpu().numpy()
+
+    # before: (batch, channel, height, width)
+    data = data.transpose(0, 2, 3, 1)
+    # after: (batch, height, width, channel)
+
+    np.save('{}/{}{}.npy'.format(dir, prefix, suffix), data)
+
+    # print(suffix, data.dtype, np.max(data), np.min(data))
+
+    if data.shape[-1] == 3:
+        data = (data*255).astype(np.uint8)
+    if data.shape[-1] == 2:
+        flow_images = []
+        for i in range(data.shape[0]):
+            flow_images.append(visflow(data[i]))
+        data = np.stack(flow_images)
+    elif data.shape[-1] == 1:
+        disp_images = []
+        for i in range(data.shape[0]):
+            disp_images.append(visdepth(data[i]))
+        data = np.stack(disp_images)
+    
+    # print(suffix, data.dtype, np.max(data), np.min(data))
+
+    for i in range(data.shape[0]):
+        cv2.imwrite('{}/{}{}{}.png'.format(dir, prefix, i, suffix), data[i])
+
 # ========= ADJUST CAMERA INTRINSICS =======
 
 

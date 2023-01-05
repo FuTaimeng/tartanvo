@@ -1,6 +1,7 @@
 *.pyc
 models/
 train_results/
+train_multicamvo/
 test_results/
 __pycache__/
 IntPlot/
