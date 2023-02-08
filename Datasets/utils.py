@@ -243,7 +243,8 @@ class SqueezeBatchDim(object):
         return sample
 
 class Normalize(object):
-    """Given mean: (R, G, B) and std: (R, G, B),
+    """
+    Given mean: (R, G, B) and std: (R, G, B),
     This option should be before the to tensor
     """
 
@@ -947,6 +948,12 @@ def calculate_angle_distance_from_du_dv(du, dv, flagDegree=False):
 
     return a, d, angleShift
 
+def visrgb(img, mean=None, std=None):
+    if mean is not None and std is not None:
+        for k in range(3):
+            img[...,k] = img[...,k] * std[k] + mean[k]
+    return (img*255).astype(np.uint8)
+
 def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0): 
     """
     Show a optical flow field as the KITTI dataset does.
@@ -982,7 +989,7 @@ def visdepth(disp, scale=3):
     res = np.tile(res[:,:,np.newaxis], (1, 1, 3))
     return res
 
-def save_images(dir, data, prefix='', suffix=''):
+def save_images(dir, data, prefix='', suffix='', mean=None, std=None):
     if torch.is_tensor(data):
         data = data.detach().cpu().numpy()
 
@@ -995,7 +1002,10 @@ def save_images(dir, data, prefix='', suffix=''):
     # print(suffix, data.dtype, np.max(data), np.min(data))
 
     if data.shape[-1] == 3:
-        data = (data*255).astype(np.uint8)
+        rgb_images = []
+        for i in range(data.shape[0]):
+            rgb_images.append(visrgb(data[i], mean=mean, std=std))
+        data = np.stack(rgb_images)
     if data.shape[-1] == 2:
         flow_images = []
         for i in range(data.shape[0]):

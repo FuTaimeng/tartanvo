@@ -10,13 +10,13 @@ class VONet(nn.Module):
 
         if network==0: # PWCNet
             from .PWC import PWCDCNet as FlowNet
-            self.flowNet     = FlowNet(uncertainty=uncertainty)
+            self.flowNet = FlowNet(uncertainty=uncertainty)
         elif network==2:
             from .FlowNet2 import FlowNet2 as FlowNet
-            self.flowNet     = FlowNet(middleblock=3)
+            self.flowNet = FlowNet(middleblock=3)
         elif network==3:
             from .StereoFlowNet import FlowNet
-            self.flowNet     = FlowNet(uncertainty=uncertainty)
+            self.flowNet = FlowNet(uncertainty=uncertainty)
         else:
             print('Flow network should be 0 or 2..')
 
@@ -46,7 +46,7 @@ class VONet(nn.Module):
             if only_flow:
                 return flow_out, unc_out
 
-            if self.network == 0:
+            if self.network==0:
                 if self.down_scale:
                     flow = flow_out[0]
                     if self.uncertainty:
@@ -55,7 +55,7 @@ class VONet(nn.Module):
                     flow = F.interpolate(flow_out[0], scale_factor=4, mode='bilinear', align_corners=True)
                     if self.uncertainty:
                         unc = F.interpolate(unc_out[0], scale_factor=4, mode='bilinear', align_corners=True)
-            elif self.network ==2 or self.network==3:
+            elif self.network==2 or self.network==3:
                 if self.down_scale:
                     flow_out = F.interpolate(flow_out, scale_factor=0.25, mode='bilinear', align_corners=True)
                     if self.uncertainty:
@@ -84,14 +84,14 @@ class VONet(nn.Module):
 
 
 class MultiCamVONet(nn.Module):
-    def __init__(self, flowNormFactor=1.0, fixflow=True):
+    def __init__(self, flowNormFactor=1.0, fixflow=True, use_stereo=2.1):
         super(MultiCamVONet, self).__init__()
 
         from .PWC import PWCDCNet as FlowNet
         self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=2)
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=use_stereo)
 
         self.flowNormFactor = flowNormFactor
 

@@ -270,10 +270,10 @@ class MultiTrajFolderDataset(Dataset):
         self.datasets = []
         self.accmulatedDataSize = [0]
 
-        scenedirs = ['abandonedfactory', 'endofworld', 'house', 'office', 'ocean', 'seasonsforest']
+        scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         # scenedirs = listdir(root)
         for scene in scenedirs:
-            for level in ['Data']:
+            for level in ['Easy']:
                 trajdirs = ['P000']
                 # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 for traj in trajdirs:
@@ -283,7 +283,7 @@ class MultiTrajFolderDataset(Dataset):
                         dataset = DatasetType(  imgfolder = folder+'/image_left', imgfolder_right = folder+'/image_right', 
                                                 posefile = folder+'/pose_left.txt', transform = transform, 
                                                 sample_step = 1, start_frame = 0, end_frame = -1,
-                                                imudir = folder+'/imu', img_fps = 10.0, imu_mul = 10  )
+                                                imudir = None, img_fps = 10.0, imu_mul = 10  )
                         self.datasets.append(dataset)
                         self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
         

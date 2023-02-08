@@ -47,11 +47,11 @@ class VOFlowRes(nn.Module):
         self.uncertainty = uncertainty
 
         self.feat_net, feat_dim = self.__feature_embedding()
-        if stereo==2:
-            self.feat_net2, feat_dim2 = self.__feature_embedding()
+        if stereo==2.2:
+            self.feat_net2, _ = self.__feature_embedding()
 
-        if stereo==2:
-            feat_dim_trans = feat_dim + feat_dim2 + 10*2*6
+        if stereo==2.1 or stereo==2.2:
+            feat_dim_trans = feat_dim*2 + 10*2*6
             fc1_trans = linear(feat_dim_trans, 256)
             fc2_trans = linear(256, 32)
             fc3_trans = nn.Linear(32, 3)
@@ -138,7 +138,7 @@ class VOFlowRes(nn.Module):
         return z
 
     def forward(self, x, extrinsic=None):
-        if self.stereo==2:
+        if self.stereo==2.1 or self.stereo==2.2:
             return self.forward_multicam(x, extrinsic)
         else:
             return self.forward_(x)
@@ -158,7 +158,10 @@ class VOFlowRes(nn.Module):
         x_AB = x[:, (0,1, 4,5), ...]
         x_AC = x[:, (2,3, 4,5), ...]
 
-        x_AB = self.feat_net2(x_AB)
+        if self.stereo==2.2:
+            x_AB = self.feat_net2(x_AB)
+        else:
+            x_AB = self.feat_net(x_AB)
         x_AC = self.feat_net(x_AC)
 
         x_AB = x_AB.view(x_AB.shape[0], -1)

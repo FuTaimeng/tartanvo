@@ -50,8 +50,8 @@ class TartanVO(object):
             stereonorm = 0.02 # the norm factor for the stereonet
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
-        elif use_stereo==2:
-            self.vonet = MultiCamVONet(flowNormFactor=1.0, fixflow=True)
+        elif use_stereo==2.1 or use_stereo==2.2:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, fixflow=True, use_stereo=use_stereo)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
@@ -66,7 +66,7 @@ class TartanVO(object):
             if pose_model_name is not None and pose_model_name != "":
                 print('load pose network...')
                 self.load_model(self.vonet.flowPoseNet, pose_model_name)
-            if use_stereo and stereo_model_name is not None and stereo_model_name != "":
+            if use_stereo==1 and stereo_model_name is not None and stereo_model_name != "":
                 print('load stereo network...')
                 self.load_model(self.vonet.stereoNet, stereo_model_name)
             
@@ -108,7 +108,7 @@ class TartanVO(object):
             img0_norm = sample['img0_norm'].to(self.device)
             img0_r_norm = sample['img0_r_norm'].to(self.device)
             blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
-        elif self.use_stereo==2:
+        elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].to(self.device)
             img0_r = sample['img0_r'].to(self.device)
 
@@ -137,7 +137,7 @@ class TartanVO(object):
             res['flow'] = flow
             res['disp'] = disp
 
-        elif self.use_stereo==2:
+        elif self.use_stereo==2.1 or self.use_stereo==2.2:
             flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
             res['pose'] = pose
             res['flowAB'] = flowAB

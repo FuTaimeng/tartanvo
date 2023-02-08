@@ -1,4 +1,4 @@
-from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, save_images
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
 from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
@@ -75,6 +75,10 @@ def get_args():
                                 [2] pose output. \
                                 [3] flow output. \
                                 [4] images.')
+    parser.add_argument('--random-intrinsic', type=float, default=0.0,
+                        help='similar with random-crop but cover contineous intrinsic values (default: 0.0)')
+    parser.add_argument('--hsv-rand', type=float, default=0.0,
+                        help='augment rand-hsv by adding different hsv to a set of images (default: 0.0)')
 
     args = parser.parse_args()
 
@@ -90,12 +94,27 @@ if __name__ == '__main__':
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
         
-    transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
-                            DownscaleFlow(), 
-                            Normalize(), 
-                            ToTensor(),
-                            SqueezeBatchDim(),
-                        ])
+    # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
+    #                         DownscaleFlow(), 
+    #                         Normalize(), 
+    #                         ToTensor(),
+    #                         SqueezeBatchDim()
+    #                     ])
+
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+
+    if args.random_intrinsic>0:
+        transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
+                                            max_scale=args.random_intrinsic/320.0, 
+                                            keep_center=False, fix_ratio=False) ]
+    else:
+        transformlist = [ CropCenter( size=(args.image_height, args.image_width), 
+                                      fix_ratio=False, scale_w=1.0, scale_disp=False)]
+    transformlist.append(DownscaleFlow())
+    transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
+    transformlist.extend([Normalize(mean=mean, std=std), ToTensor(), SqueezeBatchDim()])
+    transform = Compose(transformlist)
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                             root=args.data_root, transform=transform)
@@ -114,7 +133,7 @@ if __name__ == '__main__':
         f.write(str(args))
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=2, correct_scale=False)
+                            device=args.device, use_stereo=2.1, correct_scale=False)
     lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -155,8 +174,8 @@ if __name__ == '__main__':
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
-                trans_loss = criterion(motion[:3], gt_motion[:3]).item()
-                rot_loss = criterion(motion[3:], gt_motion[3:]).item()
+                trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+                rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
                 rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
@@ -186,9 +205,9 @@ if __name__ == '__main__':
                 save_images(debugdir, res['flowAC']*20, suffix='_flowAC')
 
             if '4' in args.debug_flag:
-                save_images(debugdir, sample['img0'], suffix='_A')
-                save_images(debugdir, sample['img0_r'], suffix='_B')
-                save_images(debugdir, sample['img1'], suffix='_C')
+                save_images(debugdir, sample['img0'], suffix='_A', mean=mean, std=std)
+                save_images(debugdir, sample['img0_r'], suffix='_B', mean=mean, std=std)
+                save_images(debugdir, sample['img1'], suffix='_C', mean=mean, std=std)
                 
         else:
             print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
