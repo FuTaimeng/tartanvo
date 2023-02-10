@@ -112,74 +112,52 @@ class MultiCamVONet(nn.Module):
 
         return flowAB, flowAC, pose
 
-
-    # def get_flow_loss(self, netoutput, target, criterion, mask=None, small_scale=False):
+    # def get_flow_loss(self, output, target, criterion, mask=None, unc=None, lamb=1.0):
     #     '''
-    #     small_scale: the target flow and mask are down scaled (when in forward_vo)
+    #     Note: criterion is not used when uncertainty is included
     #     '''
-    #     if self.network == 0: # pwc net
-    #         # netoutput 1/4, 1/8, ..., 1/32 size flow
-    #         # if mask is not None:
-    #         return self.flowNet.calc_loss(netoutput, target, criterion, mask) # To be tested
-    #         # else:
-    #         #     return self.flowNet.get_loss(netoutput, target, criterion, small_scale=small_scale)
-    #     else: 
-    #         if mask is not None:
-    #             # if small_scale:
-    #             #     mask = F.interpolate(mask, scale_factor=0.25, mode='bilinear', align_corners=True)
-    #             valid_mask = mask<128
-    #             valid_mask = valid_mask.expand(target.shape)
-    #             return criterion(netoutput[valid_mask], target[valid_mask])
-    #         else:
-    #             return criterion(netoutput, target)
+    #     if mask is not None: 
+    #         output_ = output[mask]
+    #         target_ = target[mask]
+    #         if unc is not None:
+    #             unc = unc[mask]
+    #     else:
+    #         output_ = output
+    #         target_ = target
 
-    def get_flow_loss(self, output, target, criterion, mask=None, unc=None, lamb=1.0):
-        '''
-        Note: criterion is not used when uncertainty is included
-        '''
-        if mask is not None: 
-            output_ = output[mask]
-            target_ = target[mask]
-            if unc is not None:
-                unc = unc[mask]
-        else:
-            output_ = output
-            target_ = target
-
-        if unc is None:
-            return criterion(output_, target_), criterion(output_, target_)
-        else: # if using uncertainty, then no mask 
-            diff = torch.abs( output_ - target_) # hard code L1 loss
-            loss_unc = torch.mean(torch.exp(-unc) * diff + unc * lamb)
-            loss = torch.mean(diff)
-            return  loss_unc/(1.0+lamb), loss
+    #     if unc is None:
+    #         return criterion(output_, target_), criterion(output_, target_)
+    #     else: # if using uncertainty, then no mask 
+    #         diff = torch.abs( output_ - target_) # hard code L1 loss
+    #         loss_unc = torch.mean(torch.exp(-unc) * diff + unc * lamb)
+    #         loss = torch.mean(diff)
+    #         return  loss_unc/(1.0+lamb), loss
 
 
-if __name__ == '__main__':
-    
-    voflownet = VONet(network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True) # 
-    voflownet.cuda()
-    voflownet.eval()
-    print (voflownet)
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import time
+# if __name__ == '__main__':
+#     voflownet = VONet(network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True) # 
+#     voflownet.cuda()
+#     voflownet.eval()
+#     print (voflownet)
+#     import numpy as np
+#     import matplotlib.pyplot as plt
+#     import time
 
-    x, y = np.ogrid[:448, :640]
-    # print (x, y, (x+y))
-    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(512 + 384)
-    img = img.astype(np.float32)
-    print (img.dtype)
-    imgInput = img[np.newaxis,...].transpose(0, 3, 1, 2)
-    intrin = imgInput[:,:2,:112,:160].copy()
+#     x, y = np.ogrid[:448, :640]
+#     # print (x, y, (x+y))
+#     img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(512 + 384)
+#     img = img.astype(np.float32)
+#     print (img.dtype)
+#     imgInput = img[np.newaxis,...].transpose(0, 3, 1, 2)
+#     intrin = imgInput[:,:2,:112,:160].copy()
 
-    imgTensor = torch.from_numpy(imgInput)
-    intrinTensor = torch.from_numpy(intrin)
-    print (imgTensor.shape)
-    stime = time.time()
-    for k in range(100):
-        flow, pose = voflownet((imgTensor.cuda(), imgTensor.cuda(), intrinTensor.cuda()))
-        print (flow.data.shape, pose.data.shape)
-        print (pose.data.cpu().numpy())
-        print (time.time()-stime)
-    print (time.time()-stime)/100
+#     imgTensor = torch.from_numpy(imgInput)
+#     intrinTensor = torch.from_numpy(intrin)
+#     print (imgTensor.shape)
+#     stime = time.time()
+#     for k in range(100):
+#         flow, pose = voflownet((imgTensor.cuda(), imgTensor.cuda(), intrinTensor.cuda()))
+#         print (flow.data.shape, pose.data.shape)
+#         print (pose.data.cpu().numpy())
+#         print (time.time()-stime)
+#     print (time.time()-stime)/100

@@ -5,10 +5,10 @@ data_dir=/data/tartanair
 
 lr=1e-4
 batch=64
-step=1000
+step=10000
 
 root_dir=train_multicamvo
-train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}
+train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_fixposenorm
 # continue_from=multicamvo_lr=2e-4_batch=128_step=1000
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_continue=\(${continue_from}\)
 
@@ -22,7 +22,7 @@ python train_multicamvo.py \
     --result-dir ${root_dir}/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
-    --pose-model-name models/multicamvo_posenet_init.pkl \
+    --pose-model-name models/multicamvo_posenet_init_stereo=2.1.pkl \
     --batch-size ${batch} \
     --worker-num 1 \
     --data-root ${data_dir} \
@@ -31,7 +31,7 @@ python train_multicamvo.py \
     --snapshot-interval 100 \
     --lr ${lr} \
     --lr-decay-rate 0.4 \
-    --lr-decay-point '()' \
+    --lr-decay-point '(0.5, 0.75, 0.875)' \
     --device cuda \
     --mode train-all \
     --debug-flag 0 \

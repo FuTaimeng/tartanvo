@@ -39,7 +39,7 @@ np.set_printoptions(precision=4, suppress=True, threshold=10000)
 from Network.VONet import VONet, MultiCamVONet
 from Network.StereoVONet import StereoVONet
 
-class TartanVO(object):
+class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
                     use_imu=False, use_stereo=0, device='cuda', correct_scale=True):
         
@@ -89,11 +89,15 @@ class TartanVO(object):
             print("Does not find any module to load. Try DataParallel version.")
             for k, v in preTrainDict.items():
                 kk = k[7:]
-                if ( kk in model_dict ):
+                if kk in model_dict:
                     preTrainDictTemp[kk] = v
 
         if 0 == len(preTrainDictTemp):
             raise Exception("Could not load model from %s." % (modelname), "load_model")
+
+        for k in model_dict.keys():
+            if k not in preTrainDictTemp:
+                print("! [load_model] Key {} in model but not in {}!".format(k, modelname))
 
         model_dict.update(preTrainDictTemp)
         model.load_state_dict(model_dict)
@@ -139,6 +143,7 @@ class TartanVO(object):
 
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
