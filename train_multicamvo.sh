@@ -8,8 +8,9 @@ batch=64
 step=10000
 
 root_dir=train_multicamvo
-train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_6TransLayers
+# train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_6TransLayers
 # train_name="test_4e-5_1000_tunetrans"
+train_name=all_frames
 # continue_from=multicamvo_lr=2e-4_batch=128_step=1000
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_continue=\(${continue_from}\)
 

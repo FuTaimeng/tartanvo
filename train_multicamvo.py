@@ -93,6 +93,15 @@ if __name__ == '__main__':
 
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
+
+    trainroot = args.result_dir
+    print('Train root:', trainroot)
+    print(args)
+
+    if not isdir(trainroot):
+        mkdir(trainroot)
+    with open(trainroot+'/args.txt', 'w') as f:
+        f.write(str(args))
         
     # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
     #                         DownscaleFlow(), 
@@ -119,18 +128,13 @@ if __name__ == '__main__':
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                             root=args.data_root, transform=transform)
 
+    all_frames = trainDataset.list_all_frames()
+    np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
+    quit()
+
     trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
 
     dataiter = iter(trainDataloader)
-
-    trainroot = args.result_dir
-    print('Train root:', trainroot)
-    print(args)
-
-    if not isdir(trainroot):
-        mkdir(trainroot)
-    with open(trainroot+'/args.txt', 'w') as f:
-        f.write(str(args))
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=2.1, correct_scale=False)

@@ -267,6 +267,7 @@ class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
 
 class MultiTrajFolderDataset(Dataset):
     def __init__(self, DatasetType, root, transform = None):
+        self.dataroot = root
         self.datasets = []
         self.accmulatedDataSize = [0]
 
@@ -299,3 +300,10 @@ class MultiTrajFolderDataset(Dataset):
         ds_idx -= 1
 
         return self.datasets[ds_idx].getitem(idx - self.accmulatedDataSize[ds_idx])
+
+    def list_all_frames(self):
+        all_frames = []
+        for ds in self.datasets:
+            rgb = np.array([fname.replace(self.dataroot, '') for fname in ds.rgbfiles])
+            all_frames.extend(rgb[ds.links].tolist())
+        return all_frames
