@@ -12,7 +12,6 @@ from imu_integrator import run_imu_preintegrator
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from pytorch3d.transforms import axis_angle_to_quaternion
 
 import pypose as pp
 import numpy as np
@@ -52,8 +51,8 @@ def get_args():
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--lr-decay-rate', type=float, default=0.4,
                         help='learning rate decay rate (default: 0.4)')
-    parser.add_argument('--lr-decay-point', default='()',
-                        help='learning rate decay point (default: \'()\')')
+    parser.add_argument('--lr-decay-point', type=float, default=[], nargs='+',
+                        help='learning rate decay point (default: [])')
     parser.add_argument('--print-interval', type=int, default=1,
                         help='the interval for printing the loss (default: 1)')
     parser.add_argument('--snapshot-interval', type=int, default=1000,
@@ -70,19 +69,27 @@ def get_args():
                         help='VO optimizer: adam, rmsprop, sgd (default: adam)')
     parser.add_argument('--debug-flag', default='0',
                         help='Debug flag: (default: 0) \
-                                [0] rot/trans error. \
-                                [1] flow loss. \
-                                [2] pose output. \
-                                [3] flow output. \
-                                [4] images.')
+                                [0] rot/trans error \
+                                [1] flow loss \
+                                [2] pose output \
+                                [3] flow output \
+                                [4] images')
     parser.add_argument('--random-intrinsic', type=float, default=0.0,
                         help='similar with random-crop but cover contineous intrinsic values (default: 0.0)')
     parser.add_argument('--hsv-rand', type=float, default=0.0,
                         help='augment rand-hsv by adding different hsv to a set of images (default: 0.0)')
+    parser.add_argument('--use-stereo', type=float, default=0, 
+                        help='stereo mode (default: 0) \
+                                [0] monocular \
+                                [1] stereo disp \
+                                [2.1] multicam single feat endocer \
+                                [2.2] multicam sep feat encoder')
+    parser.add_argument('--fix_model_parts', default=[], nargs='+',
+                        help='fix some parts of the model (default: [])')
 
     args = parser.parse_args()
 
-    args.lr_decay_point = (np.array(eval(args.lr_decay_point)) * args.train_step).astype(int)
+    args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
     
     return args
 
@@ -128,16 +135,16 @@ if __name__ == '__main__':
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                             root=args.data_root, transform=transform)
 
-    all_frames = trainDataset.list_all_frames()
-    np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
-    quit()
+    # all_frames = trainDataset.list_all_frames()
+    # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
+    # quit()
 
     trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
 
     dataiter = iter(trainDataloader)
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=2.1, correct_scale=False)
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
     lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)

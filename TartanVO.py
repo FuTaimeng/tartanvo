@@ -42,7 +42,7 @@ from Network.StereoVONet import StereoVONet
 
 class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
-                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True):
+                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=()):
         
         # import ipdb;ipdb.set_trace()
         if use_stereo==0:
@@ -52,8 +52,7 @@ class TartanVO:
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
         elif use_stereo==2.1 or use_stereo==2.2:
-            fixparts = ("flow", "feat", "feat2", "rot")
-            self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fixparts=fixparts)
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fix_parts=fix_parts)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":

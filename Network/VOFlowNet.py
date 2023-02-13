@@ -38,7 +38,7 @@ class BasicBlock(nn.Module):
         return F.relu(out, inplace=True)
 
 class VOFlowRes(nn.Module):
-    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fixparts=()):
+    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=()):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
@@ -75,13 +75,13 @@ class VOFlowRes(nn.Module):
         fc3_rot = nn.Linear(32, 3)
         self.voflow_rot = nn.Sequential(fc1_rot, fc2_rot, fc3_rot)
 
-        if "feat" in fixparts:
+        if "feat" in fix_parts:
             self.fix_param(self.feat_net)
-        if "feat2" in fixparts and stereo==2.2:
+        if "feat2" in fix_parts and stereo==2.2:
             self.fix_param(self.feat_net2)
-        if "rot" in fixparts:
+        if "rot" in fix_parts:
             self.fix_param(self.voflow_rot)
-        if "trans" in fixparts:
+        if "trans" in fix_parts:
             self.fix_param(self.voflow_trans)
 
 

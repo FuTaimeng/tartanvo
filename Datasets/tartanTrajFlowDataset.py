@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 from os import listdir, path
+from os.path import isdir, isfile
 
 from .transformation import pos_quats2SEs, pose2motion, SEs2ses
 from .utils import make_intrinsics_layer, dataset_intrinsics, dataset_stereo_calibration
@@ -38,7 +39,7 @@ class TrajFolderDatasetBase(Dataset):
 
         ############################## load stereo right images ######################################################################
         self.rgbfiles_right = None
-        if imgfolder_right is not None and imgfolder_right != "":
+        if imgfolder_right is not None and isdir(imgfolder_right):
             files = listdir(imgfolder_right)
             rgbfiles = [(imgfolder_right +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
             rgbfiles.sort()
@@ -52,18 +53,18 @@ class TrajFolderDatasetBase(Dataset):
 
         ############################## load calibrations ######################################################################
         self.focalx, self.focaly, self.centerx, self.centery = dataset_intrinsics('tartanair')
-        if imgfolder_right is not None and imgfolder_right != "":
+        if self.rgbfiles_right is not None:
             self.T_lr, self.baseline = dataset_stereo_calibration('tartanair')
 
         ############################## load gt poses ######################################################################
         self.poses = None
-        if posefile is not None and posefile != "":
+        if posefile is not None and isfile(posefile):
             poselist = np.loadtxt(posefile).astype(np.float32)
             assert(poselist.shape[1] == 7) # position + quaternion
             self.poses = poselist[start_frame:end_frame:sample_step]
 
         ############################## load imu data ######################################################################
-        if imudir is not None and imudir != "":
+        if imudir is not None and isdir(imudir):
             # acceleration in the body frame
             accels = np.load(path.join(imudir, "accel_left.npy"))
             # angular rate in the body frame
