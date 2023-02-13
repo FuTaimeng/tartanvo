@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import torch
+import torch.nn as nn
 import numpy as np
 import time
 
@@ -51,7 +52,8 @@ class TartanVO:
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
         elif use_stereo==2.1 or use_stereo==2.2:
-            self.vonet = MultiCamVONet(flowNormFactor=1.0, fixflow=True, use_stereo=use_stereo)
+            fixparts = ("flow", "feat", "feat2", "rot")
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fixparts=fixparts)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
@@ -83,14 +85,18 @@ class TartanVO:
     def load_model(self, model, modelname):
         preTrainDict = torch.load(modelname)
         model_dict = model.state_dict()
-        preTrainDictTemp = {k:v for k,v in preTrainDict.items() if k in model_dict}
 
-        if 0 == len(preTrainDictTemp):
-            print("Does not find any module to load. Try DataParallel version.")
-            for k, v in preTrainDict.items():
-                kk = k[7:]
-                if kk in model_dict:
-                    preTrainDictTemp[kk] = v
+        preTrainDictTemp = {}
+        for k, v in preTrainDict.items():
+            if k in model_dict and v.size() == model_dict[k].size():
+                preTrainDictTemp[k] = v
+
+        # if 0 == len(preTrainDictTemp):
+        #     print("Does not find any module to load. Try DataParallel version.")
+        #     for k, v in preTrainDict.items():
+        #         kk = k[7:]
+        #         if kk in model_dict:
+        #             preTrainDictTemp[kk] = v
 
         if 0 == len(preTrainDictTemp):
             raise Exception("Could not load model from %s." % (modelname), "load_model")
@@ -98,6 +104,14 @@ class TartanVO:
         for k in model_dict.keys():
             if k not in preTrainDictTemp:
                 print("! [load_model] Key {} in model but not in {}!".format(k, modelname))
+                if k.endswith('weight'):
+                    print('\tinit with kaiming_normal_')
+                    w = torch.rand_like(model_dict[k])
+                    nn.init.kaiming_normal_(w, mode='fan_out', nonlinearity='relu')
+                else:
+                    print('\tinit to zeros')
+                    w = torch.zeros_like(model_dict[k])
+                preTrainDictTemp[k] = w
 
         model_dict.update(preTrainDictTemp)
         model.load_state_dict(model_dict)

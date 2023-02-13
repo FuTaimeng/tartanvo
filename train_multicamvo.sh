@@ -3,12 +3,13 @@
 # data_dir=/data/datasets/wenshanw/tartan_data
 data_dir=/data/tartanair
 
-lr=1e-4
+lr=1e-5
 batch=64
 step=10000
 
 root_dir=train_multicamvo
-train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_fixposenorm
+train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_6TransLayers
+# train_name="test_4e-5_1000_tunetrans"
 # continue_from=multicamvo_lr=2e-4_batch=128_step=1000
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_continue=\(${continue_from}\)
 
@@ -30,12 +31,12 @@ python train_multicamvo.py \
     --print-interval 10 \
     --snapshot-interval 100 \
     --lr ${lr} \
-    --lr-decay-rate 0.4 \
-    --lr-decay-point '(0.5, 0.75, 0.875)' \
+    --lr-decay-rate 0.5 \
+    --lr-decay-point '(0.5, 0.75)' \
     --device cuda \
     --mode train-all \
     --debug-flag 0 \
-    --random-intrinsic 600 \
+    --random-intrinsic 800 \
     --hsv-rand 0.2 \
 | tee ${root_dir}/${train_name}/log.txt
 
@@ -64,20 +65,20 @@ python train_multicamvo.py \
 #     --result-dir ${root_dir}/${train_name} \
 #     --train-name ${train_name} \
 #     --flow-model-name models/pwc_net.pth.tar \
-#     --pose-model-name models/multicamvo_posenet_init.pkl \
+#     --pose-model-name train_multicamvo/multicamvo_lr=4e-5_batch=64_step=10000_tunetrans/models/multicamvo_posenet_100.pkl \
 #     --batch-size ${batch} \
 #     --worker-num 1 \
 #     --data-root ${data_dir} \
-#     --train-step ${step} \
+#     --train-step 1 \
 #     --print-interval 1 \
-#     --snapshot-interval 1 \
+#     --snapshot-interval 100 \
 #     --lr ${lr} \
-#     --lr-decay-rate 0.4 \
-#     --lr-decay-point '(0.5, 0.75, 0.875)' \
+#     --lr-decay-rate 0.5 \
+#     --lr-decay-point '()' \
 #     --device cuda \
 #     --mode train-all \
-#     --debug-flag 01234 \
-#     --random-intrinsic 600 \
+#     --debug-flag 012 \
+#     --random-intrinsic 800 \
 #     --hsv-rand 0.2 \
 # | tee ${root_dir}/${train_name}/log.txt
 

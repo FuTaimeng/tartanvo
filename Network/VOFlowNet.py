@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 import math
 
 def conv(in_planes, out_planes, kernel_size=3, stride=2, padding=1, dilation=1):
@@ -37,7 +38,7 @@ class BasicBlock(nn.Module):
         return F.relu(out, inplace=True)
 
 class VOFlowRes(nn.Module):
-    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0):
+    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fixparts=()):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
@@ -52,20 +53,42 @@ class VOFlowRes(nn.Module):
 
         if stereo==2.1 or stereo==2.2:
             feat_dim_trans = feat_dim*2 + 10*2*6
-            fc1_trans = linear(feat_dim_trans, 256)
-            fc2_trans = linear(256, 32)
-            fc3_trans = nn.Linear(32, 3)
+            # fc1_trans = linear(feat_dim_trans, 256)
+            # fc2_trans = linear(256, 32)
+            # fc3_trans = nn.Linear(32, 3)
+            self.fcAB_trans = linear(feat_dim, 128)
+            self.fcAC_trans = linear(feat_dim, 128)
+            fc1_trans = linear(128*2 + 10*2*6, 128)
+            fc2_trans = linear(128, 128)
+            fc3_trans = linear(128, 128)
+            fc4_trans = linear(128, 32)
+            fc5_trans = nn.Linear(32, 3)
+            self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
         else:
             fc1_trans = linear(feat_dim, 128)
             fc2_trans = linear(128, 32)
             fc3_trans = nn.Linear(32, 3)
+            self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
 
         fc1_rot = linear(feat_dim, 128)
         fc2_rot = linear(128, 32)
         fc3_rot = nn.Linear(32, 3)
-
-        self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
         self.voflow_rot = nn.Sequential(fc1_rot, fc2_rot, fc3_rot)
+
+        if "feat" in fixparts:
+            self.fix_param(self.feat_net)
+        if "feat2" in fixparts and stereo==2.2:
+            self.fix_param(self.feat_net2)
+        if "rot" in fixparts:
+            self.fix_param(self.voflow_rot)
+        if "trans" in fixparts:
+            self.fix_param(self.voflow_trans)
+
+
+    def fix_param(self, model):
+        for param in model.parameters():
+            param.requires_grad = False
+
 
     def __feature_embedding(self):
         if self.intrinsic:
@@ -127,7 +150,7 @@ class VOFlowRes(nn.Module):
         layers.append(block(self.inplanes, planes, stride, downsample, pad, dilation))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes,1,None,pad,dilation))
+            layers.append(block(self.inplanes, planes, 1, None, pad, dilation))
 
         return nn.Sequential(*layers)
 
@@ -169,8 +192,18 @@ class VOFlowRes(nn.Module):
 
         x_ex = self.__encode_pose(extrinsic, L=10)
 
-        x_trans = torch.cat((x_AC, x_AB, x_ex), dim=1)
+        # x_trans = torch.cat((x_AC, x_AB, x_ex), dim=1)
+        # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
+        # # np.savetxt("train_multicamvo/temp/trans_in.txt", x_trans.detach().cpu().numpy())
+        # x_trans = self.voflow_trans(x_trans)
+        # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
+        # # np.savetxt("train_multicamvo/temp/trans_out.txt", x_trans.detach().cpu().numpy())
+
+        x_AB_128 = self.fcAB_trans(x_AB)
+        x_AC_128 = self.fcAC_trans(x_AC)
+        x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
         x_trans = self.voflow_trans(x_trans)
+        assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
 
         x_rot = self.voflow_rot(x_AC)
 

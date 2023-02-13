@@ -84,18 +84,18 @@ class VONet(nn.Module):
 
 
 class MultiCamVONet(nn.Module):
-    def __init__(self, flowNormFactor=1.0, fixflow=True, use_stereo=2.1):
+    def __init__(self, flowNormFactor=1.0, fixparts=("flow"), use_stereo=2.1):
         super(MultiCamVONet, self).__init__()
 
         from .PWC import PWCDCNet as FlowNet
         self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=use_stereo)
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=use_stereo, fixparts=fixparts)
 
         self.flowNormFactor = flowNormFactor
 
-        if fixflow:
+        if "flow" in fixparts:
             for param in self.flowNet.parameters():
                 param.requires_grad = False
 
