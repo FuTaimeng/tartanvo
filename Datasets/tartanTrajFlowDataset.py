@@ -271,12 +271,26 @@ class MultiTrajFolderDataset(Dataset):
         self.dataroot = root
         self.datasets = []
         self.accmulatedDataSize = [0]
+        self.mode = 'train'
 
-        scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
+        scenedirs = '''
+        abandonedfactory        gascola        office         seasonsforest_winter
+        abandonedfactory_night  hospital       office2        soulcity
+        amusement               japanesealley  oldtown        westerndesert
+        carwelding              neighborhood   seasidetown
+        endofworld              ocean          seasonsforest
+        '''
+        scenedirs = scenedirs.replace('\n', '').split()
+        if self.mode == 'train':
+            scenedirs = scenedirs[0:10]
+        print(scenedirs)
+
+        # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         # scenedirs = listdir(root)
         for scene in scenedirs:
             for level in ['Easy']:
-                trajdirs = ['P000']
+                trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
+                # trajdirs = ['P000']
                 # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 for traj in trajdirs:
                     if len(traj)==4 and traj.startswith('P0'):

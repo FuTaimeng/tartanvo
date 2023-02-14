@@ -5,14 +5,14 @@ data_dir=/data/tartanair
 
 lr=1e-5
 batch=32
-step=10000
+step=100000
 
 root_dir=train_multicamvo
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder
 # train_name="test_4e-5_1000_tunetrans"
 # train_name=all_frames
-continue_from=multicamvo_lr=1e-5_batch=32_step=10000_SepFeatEncoder
-train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder_s=5000
+continue_from=multicamvo_lr=1e-5_batch=32_step=100000_SepFeatEncoder_s=12500
+train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_10Scenes_s=29000
 
 rm -r ${root_dir}/${train_name}
 mkdir ${root_dir}/${train_name}
@@ -48,7 +48,7 @@ python train_multicamvo.py \
     --result-dir ${root_dir}/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
-    --pose-model-name ${root_dir}/${continue_from}/models/multicamvo_posenet_5000.pkl \
+    --pose-model-name ${root_dir}/${continue_from}/models/multicamvo_posenet_16500.pkl \
     --batch-size ${batch} \
     --worker-num 1 \
     --data-root ${data_dir} \
