@@ -154,6 +154,6 @@ def multicam_frame_selector(poses, trans_range, angle_range):
                 groups.append([j, i, j-1])
                 groups.append([j, i, j+1])
 
-    groups = np.array(groups, dtype=np.int)
+    groups = np.array(groups, dtype=int)
     # np.random.shuffle(groups)
     return groups
