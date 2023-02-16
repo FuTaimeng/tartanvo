@@ -144,8 +144,7 @@ class TartanVO:
         starttime = time.time()
 
         if self.use_stereo==0:
-            inputs = [torch.cat([img0, img1], axis=1), intrinsic]
-            flow, pose = self.vonet(inputs)
+            flow, pose = self.vonet(img0, img1, intrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flow'] = flow
@@ -165,15 +164,15 @@ class TartanVO:
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
         elif self.use_stereo==3:
-            # flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
-            # pose = pose_scale[:, :-1]
-            # scale = pose_scale[:, -1]
-            flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            pose = pose_scale[:, :-1]
+            scale = pose_scale[:, -1]
+            # flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
-            # res['scale'] = scale
+            # res['scale'] = scaleVONet
             
         inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))

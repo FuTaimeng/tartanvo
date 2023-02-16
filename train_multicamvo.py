@@ -129,7 +129,7 @@ if __name__ == '__main__':
                                       fix_ratio=False, scale_w=1.0, scale_disp=False)]
     transformlist.append(DownscaleFlow())
     transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    transformlist.extend([Normalize(mean=mean, std=std), ToTensor(), SqueezeBatchDim()])
+    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
     # trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
@@ -178,12 +178,17 @@ if __name__ == '__main__':
         gt_motion = sample['motion'].to(args.device)
 
         if args.use_stereo==3:
-            rot_loss = L1Loss(motion[..., 3:], gt_motion[..., 3:])
+            rot = motion[..., 3:]
+            gt_rot = gt_motion[..., 3:]
+            rot_loss = L1Loss(rot, gt_rot)
 
-            gt_scale = torch.linalg.norm(gt_motion, dim=1)
-            motion_norm = motion / torch.linalg.norm(motion, dim=1).view(-1, 1)
-            gt_motion_norm = gt_motion / gt_scale.view(-1, 1)
-            trans_loss = L1Loss(motion_norm, gt_motion_norm)
+            trans = motion[..., :3]
+            gt_trans = gt_motion[..., :3]
+            scale = torch.linalg.norm(trans, dim=1)
+            gt_scale = torch.linalg.norm(gt_trans, dim=1)
+            trans_norm = trans / scale.view(-1, 1)
+            gt_trans_norm = gt_trans / gt_scale.view(-1, 1)
+            trans_loss = L1Loss(trans_norm, gt_trans_norm)
 
             # scale = res['scale']
             # scale_loss = L1Loss(scale, gt_scale)
@@ -193,8 +198,8 @@ if __name__ == '__main__':
         else:
             loss = L1Loss(motion, gt_motion)
 
-        loss.backward()
-        posenetOptimizer.step()
+        # loss.backward()
+        # posenetOptimizer.step()
 
         if train_step_cnt in args.lr_decay_point:
             lr *= args.lr_decay_rate
@@ -211,7 +216,9 @@ if __name__ == '__main__':
                     rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                     scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
                 else:
-                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                    gt_motion_quat = ses2pos_quat(gt_motion.cpu().numpy())
+                    motion_quat = ses2pos_quat(motion.cpu().numpy())
+                    rot_errs, trans_errs = calc_motion_error(gt_motion_quat, motion_quat, allow_rescale=False)
                     scale = torch.linalg.norm(motion[..., :3], dim=1)
                     gt_scale = torch.linalg.norm(gt_motion[..., :3], dim=1)
                     scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 

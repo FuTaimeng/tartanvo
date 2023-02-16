@@ -5,82 +5,30 @@ import torch.nn.functional as F
 
 
 class VONet(nn.Module):
-    def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True, uncertainty=False):
+    def __init__(self, flowNormFactor=1.0, fixflow=True):
         super(VONet, self).__init__()
 
-        if network==0: # PWCNet
-            from .PWC import PWCDCNet as FlowNet
-            self.flowNet = FlowNet(uncertainty=uncertainty)
-        elif network==2:
-            from .FlowNet2 import FlowNet2 as FlowNet
-            self.flowNet = FlowNet(middleblock=3)
-        elif network==3:
-            from .StereoFlowNet import FlowNet
-            self.flowNet = FlowNet(uncertainty=uncertainty)
-        else:
-            print('Flow network should be 0 or 2..')
+        from .PWC import PWCDCNet as FlowNet
+        self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        unc = 1 if uncertainty else 0
-        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, uncertainty=unc)
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=0)
 
-        self.network = network
-        self.intrinsic = intrinsic
         self.flowNormFactor = flowNormFactor
-        self.down_scale = down_scale
-        self.uncertainty = uncertainty
 
         if fixflow:
             for param in self.flowNet.parameters():
                 param.requires_grad = False
 
-    def forward(self, x, only_flow=False, only_pose=False, gt_flow=False):
-        '''
-        x[0]: rgb frame t-1 and t
-        x[1]: intrinsics
-        x[2]: flow t-1 -> t (optional)
-        '''
+    def forward(self, imgA, imgC, intrinsic):
         # import ipdb;ipdb.set_trace()
-        if not only_pose: # forward flownet
-            flow_out, unc_out = self.flowNet(x[0])
-            if only_flow:
-                return flow_out, unc_out
+        flowAC, _ = self.flowNet(torch.cat([imgA, imgC], dim=1))
+        flowAC = flowAC[0] * self.flowNormFactor
 
-            if self.network==0:
-                if self.down_scale:
-                    flow = flow_out[0]
-                    if self.uncertainty:
-                        unc = unc_out[0]
-                else:
-                    flow = F.interpolate(flow_out[0], scale_factor=4, mode='bilinear', align_corners=True)
-                    if self.uncertainty:
-                        unc = F.interpolate(unc_out[0], scale_factor=4, mode='bilinear', align_corners=True)
-            elif self.network==2 or self.network==3:
-                if self.down_scale:
-                    flow_out = F.interpolate(flow_out, scale_factor=0.25, mode='bilinear', align_corners=True)
-                    if self.uncertainty:
-                        unc = F.interpolate(unc_out, scale_factor=0.25, mode='bilinear', align_corners=True)
-                        unc = 0.5 * torch.tanh(-unc*0.5-2)+0.5 # mapping unc to 0-1
-                flow = flow_out
-        else:
-            assert(gt_flow) # when only_pose==True, we should provide gt-flow as input
-            assert(len(x)>2)
-            flow_out = None
+        x = torch.cat([flowAC, intrinsic], dim=1)
+        pose = self.flowPoseNet(x)
 
-        if gt_flow:
-            flow_input = x[2]
-        else:
-            flow_input = flow * self.flowNormFactor
-
-        if self.uncertainty:
-            flow_input = torch.cat((flow_input, unc), dim=1)
-
-        if self.intrinsic:
-            flow_input = torch.cat( ( flow_input, x[1] ), dim=1 )
-        
-        pose = self.flowPoseNet( flow_input )
-
-        return flow_out, pose
+        return flowAC, pose
 
 
 class MultiCamVONet(nn.Module):
@@ -91,8 +39,8 @@ class MultiCamVONet(nn.Module):
         self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        # self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=stereo, fix_parts=fix_parts, sep_feat=sep_feat)
-        self.flowPoseNet = FlowPoseNet(inputnum=4)
+        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=stereo, fix_parts=fix_parts, sep_feat=sep_feat)
+        # self.flowPoseNet = FlowPoseNet(inputnum=4)
 
         self.flowNormFactor = flowNormFactor
 
@@ -108,10 +56,10 @@ class MultiCamVONet(nn.Module):
         flowAB = flowAB[0] * self.flowNormFactor
         flowAC = flowAC[0] * self.flowNormFactor
 
-        # x = torch.cat([flowAB, flowAC, intrinsic], dim=1)
-        x = torch.cat([flowAC, intrinsic], dim=1)
-        # pose = self.flowPoseNet(x, extrinsic=extrinsic)
-        pose = self.flowPoseNet(x)
+        x = torch.cat([flowAB, flowAC, intrinsic], dim=1)
+        # x = torch.cat([flowAC, intrinsic], dim=1)
+        pose = self.flowPoseNet(x, extrinsic=extrinsic)
+        # pose = self.flowPoseNet(x)
 
         return flowAB, flowAC, pose
 

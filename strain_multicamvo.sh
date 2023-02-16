@@ -43,7 +43,7 @@ step=10
 root_dir=train_multicamvo
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder
 # train_name="test_4e-5_1000_tunetrans"
-train_name=test
+train_name=test2
 # continue_from=multicamvo_lr=1e-5_batch=32_step=100000_10Scenes_s=29000
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_10Scenes_s=44000
 
@@ -57,7 +57,7 @@ python train_multicamvo.py \
     --result-dir ${root_dir}/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
-    --pose-model-name models/tartanvo_1914.pkl \
+    --pose-model-name models/multicamvo_posenet_init_stereo=3.pkl \
     --batch-size ${batch} \
     --worker-num 1 \
     --data-root ${data_dir} \
