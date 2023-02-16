@@ -57,7 +57,7 @@ python train_multicamvo.py \
     --result-dir ${root_dir}/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
-    --pose-model-name models/multicamvo_posenet_init_stereo=3.pkl \
+    --pose-model-name models/tartanvo_1914.pkl \
     --batch-size ${batch} \
     --worker-num 1 \
     --data-root ${data_dir} \

@@ -91,7 +91,8 @@ class MultiCamVONet(nn.Module):
         self.flowNet = FlowNet(uncertainty=False)
 
         from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=stereo, fix_parts=fix_parts, sep_feat=sep_feat)
+        # self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=stereo, fix_parts=fix_parts, sep_feat=sep_feat)
+        self.flowPoseNet = FlowPoseNet(inputnum=4)
 
         self.flowNormFactor = flowNormFactor
 
@@ -107,8 +108,10 @@ class MultiCamVONet(nn.Module):
         flowAB = flowAB[0] * self.flowNormFactor
         flowAC = flowAC[0] * self.flowNormFactor
 
-        x = torch.cat([flowAB, flowAC, intrinsic], dim=1)
-        pose = self.flowPoseNet(x, extrinsic=extrinsic)
+        # x = torch.cat([flowAB, flowAC, intrinsic], dim=1)
+        x = torch.cat([flowAC, intrinsic], dim=1)
+        # pose = self.flowPoseNet(x, extrinsic=extrinsic)
+        pose = self.flowPoseNet(x)
 
         return flowAB, flowAC, pose
 

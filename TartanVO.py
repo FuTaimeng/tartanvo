@@ -94,12 +94,12 @@ class TartanVO:
             if k in model_dict and v.size() == model_dict[k].size():
                 preTrainDictTemp[k] = v
 
-        # if 0 == len(preTrainDictTemp):
-        #     print("Does not find any module to load. Try DataParallel version.")
-        #     for k, v in preTrainDict.items():
-        #         kk = k[7:]
-        #         if kk in model_dict:
-        #             preTrainDictTemp[kk] = v
+        if 0 == len(preTrainDictTemp):
+            print("Does not find any module to load. Try DataParallel version.")
+            for k, v in preTrainDict.items():
+                kk = k[len('module.flowPoseNet.'):]
+                if kk in model_dict and v.size() == model_dict[kk].size():
+                    preTrainDictTemp[kk] = v
 
         if 0 == len(preTrainDictTemp):
             raise Exception("Could not load model from %s." % (modelname), "load_model")
@@ -165,14 +165,15 @@ class TartanVO:
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
         elif self.use_stereo==3:
-            flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
-            pose = pose_scale[:, :-1]
-            scale = pose_scale[:, -1]
+            # flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            # pose = pose_scale[:, :-1]
+            # scale = pose_scale[:, -1]
+            flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
-            res['scale'] = scale
+            # res['scale'] = scale
             
         inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))

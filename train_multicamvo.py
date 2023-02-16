@@ -185,10 +185,11 @@ if __name__ == '__main__':
             gt_motion_norm = gt_motion / gt_scale.view(-1, 1)
             trans_loss = L1Loss(motion_norm, gt_motion_norm)
 
-            scale = res['scale']
-            scale_loss = L1Loss(scale, gt_scale)
+            # scale = res['scale']
+            # scale_loss = L1Loss(scale, gt_scale)
 
-            loss = rot_loss + trans_loss + scale_loss
+            # loss = rot_loss + trans_loss + scale_loss
+            loss = rot_loss + trans_loss
         else:
             loss = L1Loss(motion, gt_motion)
 
@@ -206,7 +207,7 @@ if __name__ == '__main__':
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
-                if args.use_stereo==3:
+                if args.use_stereo==3 and False:
                     rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                     scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
                 else:
