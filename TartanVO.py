@@ -51,8 +51,12 @@ class TartanVO:
             stereonorm = 0.02 # the norm factor for the stereonet
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
-        elif use_stereo==2.1 or use_stereo==2.2:
-            self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fix_parts=fix_parts)
+        elif use_stereo==2.1:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=2, fix_parts=fix_parts, sep_feat=False)
+        elif use_stereo==2.2:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=2, fix_parts=fix_parts, sep_feat=True)
+        elif use_stereo==3:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=3, fix_parts=fix_parts, sep_feat=True)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
@@ -125,7 +129,7 @@ class TartanVO:
             img0_norm = sample['img0_norm'].to(self.device)
             img0_r_norm = sample['img0_r_norm'].to(self.device)
             blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
-        elif self.use_stereo==2.1 or self.use_stereo==2.2:
+        elif self.use_stereo==2.1 or self.use_stereo==2.2 or self.use_stereo==3:
             extrinsic = sample['extrinsic'].to(self.device)
             img0_r = sample['img0_r'].to(self.device)
 
@@ -160,6 +164,15 @@ class TartanVO:
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
+        elif self.use_stereo==3:
+            flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            pose = pose_scale[:, :-1]
+            scale = pose_scale[:, -1]
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
+            res['pose'] = pose
+            res['flowAB'] = flowAB
+            res['flowAC'] = flowAC
+            res['scale'] = scale
             
         inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))
