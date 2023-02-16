@@ -216,9 +216,10 @@ class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
                                                         imudir, img_fps, imu_mul)
 
         ############################## generate links ######################################################################
-        angle_range = (0, 5)
-        trans_range = (0.1, 0.5)
-        self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
+        # angle_range = (0, 5)
+        # trans_range = (0.1, 0.5)
+        # self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
+        self.links = np.array([[i, i+3, i+1] for i in range(0, len(self.rgbfiles)-10)])
 
         self.num_link = len(self.links)
 
@@ -283,14 +284,13 @@ class MultiTrajFolderDataset(Dataset):
         scenedirs = scenedirs.replace('\n', '').split()
         if self.mode == 'train':
             scenedirs = scenedirs[0:10]
-        print(scenedirs)
 
-        # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
+        scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         # scenedirs = listdir(root)
         for scene in scenedirs:
             for level in ['Easy']:
-                trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
-                # trajdirs = ['P000']
+                # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
+                trajdirs = ['P000']
                 # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 for traj in trajdirs:
                     if len(traj)==4 and traj.startswith('P0'):

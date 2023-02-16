@@ -132,19 +132,25 @@ if __name__ == '__main__':
     transformlist.extend([Normalize(mean=mean, std=std), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                            root=args.data_root, transform=transform)
+    # trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
+    #                                         root=args.data_root, transform=transform)
+    root = args.data_root + '/abandonedfactory/Easy/P000'
+    trainDataset = TrajFolderDatasetMultiCam(
+                        imgfolder = root + '/image_left', imgfolder_right = None,
+                        posefile = root + '/pose_left.txt', transform = transform, 
+                        sample_step = 1, start_frame=0, end_frame=-1,
+                        imudir = None, img_fps = 10.0, imu_mul = 10)
 
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
 
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
 
     dataiter = iter(trainDataloader)
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=True, fix_parts=args.fix_model_parts)
     lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -201,7 +207,7 @@ if __name__ == '__main__':
             with torch.no_grad():
                 tot_loss = loss.item()
                 if args.use_stereo==3:
-                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=True)
+                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                     scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
                 else:
                     rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
