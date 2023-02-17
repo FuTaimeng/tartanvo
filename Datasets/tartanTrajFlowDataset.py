@@ -209,16 +209,20 @@ class TrajFolderDatasetPVGO(TrajFolderDatasetBase):
 class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
     def __init__(self, imgfolder, imgfolder_right = None, posefile = None, transform = None, 
                     sample_step = 1, start_frame=0, end_frame=-1,
-                    imudir = None, img_fps = 10.0, imu_mul = 10):
+                    imudir = None, img_fps = 10.0, imu_mul = 10,
+                    use_fix_intervel_links = False):
 
         super(TrajFolderDatasetMultiCam, self).__init__(imgfolder, imgfolder_right, posefile, transform,
                                                         sample_step, start_frame, end_frame,
                                                         imudir, img_fps, imu_mul)
 
         ############################## generate links ######################################################################
-        angle_range = (0, 5)
-        trans_range = (0.1, 0.5)
-        self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
+        if use_fix_intervel_links:
+            self.links = np.array([[i, i+2, i+1] for i in range(len(self.rgbfiles)-5)])
+        else:
+            angle_range = (0, 5)
+            trans_range = (0.1, 0.5)
+            self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
 
         self.num_link = len(self.links)
 

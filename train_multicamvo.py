@@ -131,14 +131,19 @@ if __name__ == '__main__':
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                             root=args.data_root, transform=transform)
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
+
+    # debug dataset
+    # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
+    # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
+    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fix_intervel_links=True)
+    # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
+    
+    dataiter = iter(trainDataloader)
 
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
-
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
-
-    dataiter = iter(trainDataloader)
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
