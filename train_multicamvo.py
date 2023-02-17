@@ -117,9 +117,6 @@ if __name__ == '__main__':
     #                         SqueezeBatchDim()
     #                     ])
 
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
-
     if args.random_intrinsic>0:
         transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
                                             max_scale=args.random_intrinsic/320.0, 
@@ -129,7 +126,7 @@ if __name__ == '__main__':
                                       fix_ratio=False, scale_w=1.0, scale_disp=False)]
     transformlist.append(DownscaleFlow())
     transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    transformlist.extend([Normalize(mean=mean, std=std), ToTensor(), SqueezeBatchDim()])
+    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
@@ -216,9 +213,9 @@ if __name__ == '__main__':
                 save_images(debugdir, res['flowAC']*20, suffix='_flowAC')
 
             if '4' in args.debug_flag:
-                save_images(debugdir, sample['img0'], suffix='_A', mean=mean, std=std)
-                save_images(debugdir, sample['img0_r'], suffix='_B', mean=mean, std=std)
-                save_images(debugdir, sample['img1'], suffix='_C', mean=mean, std=std)
+                save_images(debugdir, sample['img0'], suffix='_A')
+                save_images(debugdir, sample['img0_r'], suffix='_B')
+                save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
             print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
