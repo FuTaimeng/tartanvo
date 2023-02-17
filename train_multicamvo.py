@@ -23,6 +23,8 @@ from os import mkdir
 from os.path import isdir
 from timer import Timer
 
+from torch.utils.tensorboard import SummaryWriter
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='HRL')
@@ -109,6 +111,11 @@ if __name__ == '__main__':
         mkdir(trainroot)
     with open(trainroot+'/args.txt', 'w') as f:
         f.write(str(args))
+
+    tb_dir = 'tensorboard/' + trainroot
+    if not isdir(tb_dir):
+        mkdir(tb_dir)
+    writer = SummaryWriter(tb_dir)
         
     # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
     #                         DownscaleFlow(), 
@@ -131,14 +138,19 @@ if __name__ == '__main__':
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                             root=args.data_root, transform=transform)
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
+
+    # debug dataset
+    # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
+    # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
+    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
+    # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
+
+    dataiter = iter(trainDataloader)
 
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
-
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
-
-    dataiter = iter(trainDataloader)
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
@@ -187,8 +199,13 @@ if __name__ == '__main__':
                 rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
-            print('step:{}, loss:{}, trans_loss:{}, rot_loss:{}, trans_err:{}, rot_err:{}, time:{}'.format(
-                train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')))
+
+            writer.add_scalar('loss', tot_loss, train_step_cnt)
+            writer.add_scalar('trans_err', trans_err, train_step_cnt)
+            writer.add_scalar('rot_err', rot_err, train_step_cnt)
+            writer.add_scalar('time', timer.last('step'), train_step_cnt)
+            print('step:{}, loss:{}, trans_err:{}, rot_err:{}, scale_err:{}, time:{}'.format(
+                train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')))
             
             if args.debug_flag != '':
                 if not isdir(trainroot+'/debug'):
@@ -218,6 +235,7 @@ if __name__ == '__main__':
                 save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
+            writer.add_scalar('loss', loss.item(), train_step_cnt)
             print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.snapshot_interval == 0:
