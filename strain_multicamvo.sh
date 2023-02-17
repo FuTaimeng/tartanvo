@@ -38,12 +38,12 @@ data_dir=~/projects/tartanair/TartanAir
 
 lr=1e-5
 batch=32
-step=10
+step=100000
 
 root_dir=train_multicamvo
-# train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder
+train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_PredScale
 # train_name="test_4e-5_1000_tunetrans"
-train_name=test
+# train_name=test
 # continue_from=multicamvo_lr=1e-5_batch=32_step=100000_10Scenes_s=29000
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_10Scenes_s=44000
 

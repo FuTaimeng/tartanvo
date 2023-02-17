@@ -117,9 +117,6 @@ if __name__ == '__main__':
     #                         SqueezeBatchDim()
     #                     ])
 
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
-
     if args.random_intrinsic>0:
         transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
                                             max_scale=args.random_intrinsic/320.0, 
@@ -129,7 +126,7 @@ if __name__ == '__main__':
                                       fix_ratio=False, scale_w=1.0, scale_disp=False)]
     transformlist.append(DownscaleFlow())
     transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    transformlist.extend([Normalize(mean=mean, std=std), ToTensor(), SqueezeBatchDim()])
+    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
@@ -172,12 +169,17 @@ if __name__ == '__main__':
         gt_motion = sample['motion'].to(args.device)
 
         if args.use_stereo==3:
-            rot_loss = L1Loss(motion[..., 3:], gt_motion[..., 3:])
+            rot = motion[..., 3:]
+            gt_rot = gt_motion[..., 3:]
+            rot_loss = L1Loss(rot, gt_rot)
 
-            gt_scale = torch.linalg.norm(gt_motion, dim=1)
-            motion_norm = motion / torch.linalg.norm(motion, dim=1).view(-1, 1)
-            gt_motion_norm = gt_motion / gt_scale.view(-1, 1)
-            trans_loss = L1Loss(motion_norm, gt_motion_norm)
+            trans = motion[..., :3]
+            gt_trans = gt_motion[..., :3]
+            scale = torch.linalg.norm(trans, dim=1)
+            gt_scale = torch.linalg.norm(gt_trans, dim=1)
+            trans_norm = trans / scale.view(-1, 1)
+            gt_trans_norm = gt_trans / gt_scale.view(-1, 1)
+            trans_loss = L1Loss(trans_norm, gt_trans_norm)
 
             scale = res['scale']
             scale_loss = L1Loss(scale, gt_scale)
@@ -237,9 +239,9 @@ if __name__ == '__main__':
                 save_images(debugdir, res['flowAC']*20, suffix='_flowAC')
 
             if '4' in args.debug_flag:
-                save_images(debugdir, sample['img0'], suffix='_A', mean=mean, std=std)
-                save_images(debugdir, sample['img0_r'], suffix='_B', mean=mean, std=std)
-                save_images(debugdir, sample['img1'], suffix='_C', mean=mean, std=std)
+                save_images(debugdir, sample['img0'], suffix='_A')
+                save_images(debugdir, sample['img0_r'], suffix='_B')
+                save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
             print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
