@@ -34,7 +34,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import time
-
+import random
 np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
 from Network.VONet import VONet, MultiCamVONet
@@ -116,11 +116,53 @@ class TartanVO:
         model.load_state_dict(model_dict)
         return model
 
+
+    # def forward_vo(self, sample, use_mask=False):
+    #     # use_gtflow = random.random()<self.args.vo_gt_flow # use gt flow as the input of the posenet
+    #     use_gtflow = False
+
+    #     # import ipdb;ipdb.set_trace()
+    #     # load the variables
+        
+    #     fix_flow = True
+    #     if use_gtflow and fix_flow: # flownet is not trained, neither forward nor backward
+    #         # img0, img1 = None, None
+    #         imgs = None
+    #         compute_flowloss = False
+    #     else: 
+    #         b,s,c,h,w = sample['img0'].shape
+    #         imgs   = sample['img0'].reshape(b,6,h,w).cuda()
+    #         # img1   = sample['img0'][:,1,:,:,:].cuda()
+    #         compute_flowloss = True
+
+    #     # if self.args.intrinsic_layer:
+    #     intrinsic = sample['intrinsic'].squeeze(1).cuda()
+    #     # else: 
+    #     #     intrinsic = None
+
+    #     flow, mask = None, None
+    #     if 'flow' in sample:
+    #         flow = sample['flow'].squeeze(1).cuda()
+    #         if use_mask:
+    #             mask = sample['fmask'].squeeze(1).cuda()
+
+    #     if use_gtflow: # the gt flow will be input to the posenet
+    #         flow_output, pose_output = self.vonet([imgs, intrinsic, flow], only_pose= fix_flow, gt_flow=True)
+    #     else: # use GT flow as the input
+    #         flow_output, pose_output = self.vonet([imgs, intrinsic])
+
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        img0   = sample['img0'].to(self.device)
-        img1   = sample['img1'].to(self.device)
-        intrinsic = sample['intrinsic'].to(self.device)
+        # img0   = sample['img0'].to(self.device)
+        # img1   = sample['img1'].to(self.device)
+        # intrinsic = sample['intrinsic'].to(self.device)
+
+        img0   = sample['img0'].cuda()
+        img1   = sample['img1'].cuda()
+        intrinsic = sample['intrinsic'].squeeze(1).cuda()
+
+
+
         if self.use_stereo==1:
             img0_norm = sample['img0_norm'].to(self.device)
             img0_r_norm = sample['img0_r_norm'].to(self.device)
@@ -136,11 +178,14 @@ class TartanVO:
 
         res = {}
 
+        # start_time = time.time()
         _ = torch.set_grad_enabled(is_train)
-        starttime = time.time()
+        
 
         if self.use_stereo==0:
             inputs = [torch.cat([img0, img1], axis=1), intrinsic]
+            # starttime = time.time()
+            # flow_output, pose_output = self.vonet([imgs, intrinsic])
             flow, pose = self.vonet(inputs)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
@@ -161,7 +206,7 @@ class TartanVO:
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
             
-        inferencetime = time.time()-starttime
+        # inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))
 
         if self.correct_scale:

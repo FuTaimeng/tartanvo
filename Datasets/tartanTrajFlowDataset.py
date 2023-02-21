@@ -283,11 +283,14 @@ class MultiTrajFolderDataset(Dataset):
         scenedirs = scenedirs.replace('\n', '').split()
         if self.mode == 'train':
             scenedirs = scenedirs[0:10]
-        print(scenedirs)
-
+        # print(scenedirs)
+        # print('Debugging!!!!')
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
+        # scenedirs = ['abandonedfactory']
         # scenedirs = listdir(root)
+        print('scenedirs = {}'.format(scenedirs))
         for scene in scenedirs:
+            print('Loading dataset at {} ...'.format(scene))
             for level in ['Easy']:
                 trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 # trajdirs = ['P000']
@@ -295,7 +298,7 @@ class MultiTrajFolderDataset(Dataset):
                 for traj in trajdirs:
                     if len(traj)==4 and traj.startswith('P0'):
                         folder = '{}/{}/{}/{}'.format(root, scene, level, traj)
-                        print('Loading dataset at {} ...'.format(folder))
+                        # print('Loading dataset at {} ...'.format(folder))
                         dataset = DatasetType(  imgfolder = folder+'/image_left', imgfolder_right = folder+'/image_right', 
                                                 posefile = folder+'/pose_left.txt', transform = transform, 
                                                 sample_step = 1, start_frame = 0, end_frame = -1,
