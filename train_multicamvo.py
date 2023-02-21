@@ -1,5 +1,5 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
-from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
+from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     transform = Compose(transformlist)
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                            root=args.data_root, transform=transform)
+                                            dataroot=args.data_root, transform=transform)
     trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
 
     # debug dataset
