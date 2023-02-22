@@ -57,7 +57,7 @@ def get_args():
     parser.add_argument('--save-flow', action='store_true', default=False,
                         help='save optical flow (default: False)')
     parser.add_argument('--train-step', type=int, default=1000000,
-                    help='number of interactions in total (default: 1000000)')
+                        help='number of interactions in total (default: 1000000)')
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--lr-decay-rate', type=float, default=0.4,
@@ -115,6 +115,20 @@ def get_args():
 
     parser.add_argument('--not-write-log',action='store_true', default=False,
                         help='write log file')
+    parser.add_argument('--enable-decay',action='store_true', default=False,
+                        help='write log file')
+
+    # parser.add_argument('--enable-lr',action='store_true', default=False,
+    #                     help='write log file')
+
+    parser.add_argument('--tuning-val', default=[], nargs='+',
+                        help='tuning variables for optuna (default: [])')
+    parser.add_argument('--start-iter', type=int, default=1,
+                        help='The number of trails for optuna.')
+    parser.add_argument('--lr-lb', type=float, default=1e-7,
+                        help='lower bound of learning rate')
+    parser.add_argument('--lr-ub', type=float, default=1e-6,
+                        help='upper bound of learning rate')
 
     args = parser.parse_args()
 
@@ -133,8 +147,17 @@ def objective(trial, study_name):
 
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
+    
+    if "lr" in args.tuning_val:
+        lr = trial.suggest_float("lr", args.lr_lb, args.lr_ub, log=True)
+    else:
+        lr = args.lr
 
-    lr = trial.suggest_float("lr", 1e-6, 1e-5, log=True)
+    if args.enable_decay:
+        print('\nEnable lr decay\n')
+    else:
+        print('\nDisable lr decay\n')
+    
     LrDecrease = [int(args.train_step/2), int(args.train_step*3/4), int(args.train_step*7/8)]
 
     batch_size = args.batch_size 
@@ -172,7 +195,7 @@ def objective(trial, study_name):
     print('\nTrain root:', trainroot)
 
     if not isdir(trainroot):
-        mkdir(trainroot)
+        makedirs(trainroot)
     with open(trainroot+'/args.txt', 'w') as f:
         f.write(str(args))
 
@@ -242,8 +265,9 @@ def objective(trial, study_name):
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
     criterion = torch.nn.L1Loss()
-
-    for train_step_cnt in range(1, args.train_step+1):
+    start_iter = args.start_iter
+    
+    for train_step_cnt in range(start_iter, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
         start_time = time.time()
@@ -296,7 +320,7 @@ def objective(trial, study_name):
         bp_time = bp_time_inst - infer_time_inst
 
         # if train_step_cnt in args.lr_decay_point:
-        if train_step_cnt in LrDecrease:
+        if train_step_cnt in LrDecrease and args.enable_decay:
             lr *= args.lr_decay_rate
             for param_group in posenetOptimizer.param_groups: 
                 param_group['lr'] = lr
@@ -339,7 +363,7 @@ def objective(trial, study_name):
             
             if args.debug_flag != '':
                 if not isdir(trainroot+'/debug'):
-                    mkdir(trainroot+'/debug')
+                    makedirs(trainroot+'/debug')
                 debugdir = trainroot+'/debug/'+str(train_step_cnt)
 
                 debugdir = args.result_dir + '/' +study_name + '/' + file_name + '/debug/' + str(train_step_cnt)
@@ -382,8 +406,10 @@ def objective(trial, study_name):
             torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/{}/{}_posenet_{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
             print()
         # print('total time: ', time.time() - start_time)
-
-    return loss.item()
+    
+    if not args.not_write_log:
+        wandb.finish()
+    return trans_err
 
 
 if __name__ == "__main__":
@@ -391,7 +417,7 @@ if __name__ == "__main__":
     args = get_args()
     print('debug_flag: ', args.debug_flag)
 
-    torch.cuda.set_device(1)
+    # torch.cuda.set_device(0)
     
     start_time = time.time()
     
@@ -423,7 +449,10 @@ if __name__ == "__main__":
             i += 1
     print(' \n\nRecord File Name: ')
     print(record_file_name)
-    
+
+    if not isdir("./record/"):
+        makedirs("./record/")
+
     with open('optuna_strain_multicamvo.sh','r') as firstfile, open("./record/"+record_file_name+".txt", "w") as secondfile:
         # read content from first file
         for line in firstfile:

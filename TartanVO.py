@@ -45,6 +45,7 @@ class TartanVO:
                     use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=()):
         
         # import ipdb;ipdb.set_trace()
+        self.device = device
         if use_stereo==0:
             self.vonet = VONet()
         elif use_stereo==1:
@@ -74,7 +75,7 @@ class TartanVO:
         self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
         self.flow_norm = 20 # scale factor for flow
 
-        self.device = device
+        
         self.use_imu = use_imu
         self.use_stereo = use_stereo
         self.correct_scale = correct_scale
@@ -82,7 +83,7 @@ class TartanVO:
         self.vonet.to(self.device)
 
     def load_model(self, model, modelname):
-        preTrainDict = torch.load(modelname)
+        preTrainDict = torch.load(modelname, map_location=self.device)
         model_dict = model.state_dict()
 
         preTrainDictTemp = {}
