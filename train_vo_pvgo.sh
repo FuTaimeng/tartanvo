@@ -1,7 +1,9 @@
-
-# data_dir=data/EuRoC_V102
 # data_dir=/data/datasets/wenshanw/tartan_data/abandonedfactory/Data/P000
-data_dir=~/projects/euroc/MH_01_easy/mav0
+# data_type=tartanvo
+# data_dir=~/projects/euroc/MH_01_easy/mav0
+# data_type=euroc
+data_dir=~/projects/kitti_raw/2011_09_26/2011_09_26_drive_0001_sync
+data_type=kitti
 
 loss_weight='(0.01,0.1,10,1)'
 lr=1e-5
@@ -14,7 +16,7 @@ mkdir train_results/${train_name}
 
 python train.py \
     --data-root ${data_dir} \
-    --data-type euroc \
+    --data-type ${data_type} \
     --result-dir train_results/${train_name} \
     --train-name ${train_name} \
     --flow-model-name pwc_net.pth.tar \

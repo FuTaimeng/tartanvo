@@ -95,14 +95,14 @@ class EuRoCTrajFolderLoader:
 
         ############################## load images ######################################################################
         df = pandas.read_csv(datadir + '/cam0/data.csv')
-        timestamps_left = df.values[:, 0].astype(int)
+        timestamps_left = df.values[:, 0].astype(int) // int(1e6)
         all_timestamps.append(timestamps_left)
         self.rgbfiles = datadir + '/cam0/data/' + df.values[:, 1]
 
         ############################## load stereo right images ######################################################################
         if isfile(datadir + '/cam1/data.csv'):
             df = pandas.read_csv(datadir + '/cam1/data.csv')
-            timestamps_right = df.values[:, 0].astype(int)
+            timestamps_right = df.values[:, 0].astype(int) // int(1e6)
             all_timestamps.append(timestamps_right)
             self.rgbfiles_right = datadir + '/cam1/data/' + df.values[:, 1]
         else:
@@ -130,7 +130,7 @@ class EuRoCTrajFolderLoader:
 
         ############################## load gt poses ######################################################################
         df = pandas.read_csv(datadir + '/state_groundtruth_estimate0/data.csv')
-        timestamps_pose = df.values[:, 0].astype(int)
+        timestamps_pose = df.values[:, 0].astype(int) // int(1e6)
         all_timestamps.append(timestamps_pose)
         self.poses = (df.values[:, 1:8])[:, (0,1,2, 4,5,6,3)]
         self.vels = df.values[:, 8:11]
@@ -152,14 +152,14 @@ class EuRoCTrajFolderLoader:
         ############################## load imu data ######################################################################
         if isfile(datadir + '/imu0/data.csv'):
             df = pandas.read_csv(datadir + '/imu0/data.csv')
-            timestamps_imu = df.values[:, 0].astype(int)
+            timestamps_imu = df.values[:, 0].astype(int) // int(1e6)
             accels = df.values[:, 4:7]
             gyros = df.values[:, 1:4]
             
             self.accels = accels - accel_bias
             self.gyros = gyros - gyro_bias
 
-            self.imu_dts = np.diff(timestamps_imu) * 1e-9
+            self.imu_dts = np.diff(timestamps_imu).astype(np.float32) * 1e-3
             
             self.rgb2imu_sync = np.searchsorted(timestamps_imu, timestamps)
 
@@ -187,12 +187,96 @@ class EuRoCTrajFolderLoader:
             self.has_imu = False
 
 
+class KITTITrajFolderLoader:
+    def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
+        import pykitti
+
+        datadir_split = datadir.split('/')
+        # Change this to the directory where you store KITTI data
+        basedir = '/'.join(datadir_split[:-2])
+
+        # Specify the dataset to load
+        date = datadir_split[-2]
+        drive = datadir_split[-1].split('_')[-2]
+
+        # Load the data. Optionally, specify the frame range to load.
+        dataset = pykitti.raw(basedir, date, drive)
+        # dataset = pykitti.raw(basedir, date, drive, frames=range(0, 20, 5))
+
+        # dataset.calib:         Calibration data are accessible as a named tuple
+        # dataset.timestamps:    Timestamps are parsed into a list of datetime objects
+        # dataset.oxts:          List of OXTS packets and 6-dof poses as named tuples
+        # dataset.camN:          Returns a generator that loads individual images from camera N
+        # dataset.get_camN(idx): Returns the image from camera N at idx
+        # dataset.gray:          Returns a generator that loads monochrome stereo pairs (cam0, cam1)
+        # dataset.get_gray(idx): Returns the monochrome stereo pair at idx
+        # dataset.rgb:           Returns a generator that loads RGB stereo pairs (cam2, cam3)
+        # dataset.get_rgb(idx):  Returns the RGB stereo pair at idx
+        # dataset.velo:          Returns a generator that loads velodyne scans as [x,y,z,reflectance]
+        # dataset.get_velo(idx): Returns the velodyne scan at idx
+
+        ############################## load images ######################################################################
+        self.rgbfiles = dataset.cam2_files
+
+        ############################## load stereo right images ######################################################################
+        self.rgbfiles_right = dataset.cam3_files
+
+        ############################## load calibrations ######################################################################
+        K = dataset.calib.K_cam2
+        self.intrinsic = np.array([K[0,0], K[1,1], K[0,2], K[1,2]])
+        K = dataset.calib.K_cam3
+        self.intrinsic_right = np.array([K[0,0], K[1,1], K[0,2], K[1,2]])
+
+        T_LI = dataset.calib.T_cam2_imu
+        T_RI = dataset.calib.T_cam3_imu
+        T_LR = np.matmul(T_LI, np.linalg.inv(T_RI))
+        self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type)
+
+        ############################## load gt poses ######################################################################
+        T_w_imu = np.array([oxts_frame.T_w_imu for oxts_frame in dataset.oxts])
+        self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type)
+        vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float64)
+        self.vels = self.poses.rotation() @ vels_local
+        self.poses = self.poses.numpy()
+        self.vels = self.vels.numpy()
+
+        ############################## load imu data ######################################################################
+        # self.accels = np.array([[oxts_frame.packet.af, oxts_frame.packet.al, oxts_frame.packet.au] for oxts_frame in dataset.oxts])
+        # self.gyros = np.array([[oxts_frame.packet.wf, oxts_frame.packet.wl, oxts_frame.packet.wu] for oxts_frame in dataset.oxts])
+        self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
+        self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
+
+        timestamps_imu = np.array([t.timestamp() for t in dataset.timestamps])
+        self.imu_dts = np.diff(timestamps_imu)
+
+        self.rgb2imu_sync = np.array([i for i in range(len(self.rgbfiles))])
+
+        T_IL = np.linalg.inv(T_LI)
+        self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type)
+
+        if self.poses is not None:
+            init_pos = self.poses[0, :3]
+            init_rot = self.poses[0, 3:]
+            init_vel = self.vels[0, :]
+        else:
+            init_pos = np.zeros(3, dtype=np.float32)
+            init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
+            init_vel = np.zeros(3, dtype=np.float32)
+        self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
+
+        self.gravity = 9.81
+
+        self.has_imu = True
+
+
 class TrajFolderDataset(Dataset):
     def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1):
         if datatype == 'tartanair':
             loader = TartanAirTrajFolderLoader(datadir)
         elif datatype == 'euroc':
             loader = EuRoCTrajFolderLoader(datadir)
+        elif datatype == 'kitti':
+            loader = KITTITrajFolderLoader(datadir)
 
         if end_frame <= 0:
             end_frame += len(loader.rgbfiles)
