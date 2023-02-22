@@ -45,8 +45,6 @@ def get_args():
                         help='name of pretrained pose model (default: "")')
     parser.add_argument('--vo-model-name', default='',
                         help='name of pretrained vo model. if provided, this will override the other seperated models (default: "")')
-    parser.add_argument('--save-flow', action='store_true', default=False,
-                        help='save optical flow (default: False)')
     parser.add_argument('--train-step', type=int, default=1000000,
                     help='number of interactions in total (default: 1000000)')
     parser.add_argument('--lr', type=float, default=1e-4,
@@ -63,10 +61,8 @@ def get_args():
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
                         help='root directory of results (default: "")')
-    parser.add_argument('--device', default='cuda',
-                        help='device (default: "cuda")')
-    parser.add_argument('--mode', default='train-all', choices=['test', 'train-all'],
-                        help='running mode: test, train-all (default: train-all)')
+    parser.add_argument('--mode', default='train', choices=['test', 'train'],
+                        help='running mode: test, train (default: train)')
     parser.add_argument('--vo-optimizer', default='adam', choices=['adam', 'rmsprop', 'sgd'],
                         help='VO optimizer: adam, rmsprop, sgd (default: adam)')
     parser.add_argument('--debug-flag', default='0',
@@ -136,19 +132,19 @@ if __name__ == '__main__':
     transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                            dataroot=args.data_root, transform=transform)
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
+    dataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
+                                            dataroot=args.data_root, transform=transform, mode=args.mode)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
 
     # debug dataset
     # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
-    # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
+    # dataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
     #                                             sample_step = 1, start_frame=0, end_frame=-1)
-    # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False, num_workers=args.worker_num)
+    # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.worker_num)
 
-    dataiter = iter(trainDataloader)
+    dataiter = iter(dataloader)
 
-    # all_frames = trainDataset.list_all_frames()
+    # all_frames = dataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
 
@@ -172,7 +168,7 @@ if __name__ == '__main__':
         try:
             sample = next(dataiter)
         except StopIteration:
-            dataiter = iter(trainDataloader)
+            dataiter = iter(dataloader)
             sample = next(dataiter)
         timer.toc('load')
 

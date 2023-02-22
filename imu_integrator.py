@@ -24,7 +24,6 @@ def plot_gaussian(ax, means, covs, color=None, sigma=3):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description='IMU Preintegration')
     parser.add_argument("--device", type=str, default='cpu', help="cuda or cpu")
     parser.add_argument("--integrating-step", type=int, default=1, help="number of integrated steps")
@@ -78,7 +77,7 @@ if __name__ == '__main__':
         print("Saved to", figure)
 
 
-def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device='cuda:0', motion_mode=False):
+def run_imu_preintegrator(accels, gyros, dts, rgb2imu_sync, init=None, gravity=9.81, device='cuda:0', motion_mode=False):
     dtype = torch.get_default_dtype()
     
     if init is not None:
@@ -104,7 +103,6 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device
     gyros = torch.tensor(gyros, dtype=dtype).to(device)
     dts = torch.tensor(dts, dtype=dtype).unsqueeze(-1).to(device)
 
-    N = accels.shape[0]
     if motion_mode:
         # for relative pose
         poses, rots, covs, vels = [], [], [], []
@@ -115,12 +113,15 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device
         covs = [np.eye(9)]
         vels = [init_vel.cpu().numpy()]
 
-    for i in range(N):
-        # print(dts[i].shape, gyros[i].shape, accels[i].shape)
+    N = len(rgb2imu_sync)   # num of images
+    for i in range(1, N):
+        st = rgb2imu_sync[i-1]
+        end = rgb2imu_sync[i]
+
         if motion_mode:
-            state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i], init_state=last_state)
+            state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end], init_state=last_state)
         else:
-            state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i])
+            state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end])
 
         poses.append(state['pos'][..., -1, :].squeeze().cpu().numpy())
         if motion_mode:
