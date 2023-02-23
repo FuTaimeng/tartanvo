@@ -347,7 +347,7 @@ def objective(trial, study_name):
                 writer.add_scalar('error/rot_err', rot_err, train_step_cnt)
                 
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
-                wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss }, step= train_step_cnt)
+                wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, "training trans err": trans_err, "training rot err": rot_err }, step= train_step_cnt)
 
 
             if args.enable_pruning:

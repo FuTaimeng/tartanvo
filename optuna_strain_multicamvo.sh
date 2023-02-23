@@ -3,6 +3,7 @@
 # data_dir=/data/datasets/wenshanw/tartan_data
 # data_dir=/data/tartanair
 data_dir=/home/data/tartanair/TartanAir_comb
+# data_dir=/user/shaoshus/projects/tartanair/TartanAir
 
 # lr=1e-5
 batch=32
@@ -44,8 +45,9 @@ python optuna_train_multicamvo2.py \
     --pose-model-name ./models/multicamvo_posenet_15000.pkl \
     --train-step ${step} \
     --trail-num 5 \
-    --enable-pruning
-
+    --enable-pruning \
+    # --load-study \
+    # --study-name multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55
     #  --out-to-cml
 # python train_multicamvo.py \
 #     --result-dir ${root_dir}/${train_name} \
