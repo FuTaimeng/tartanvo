@@ -63,6 +63,17 @@ class VOFlowRes(nn.Module):
             fc3_trans = linear(128, 128)
             fc4_trans = linear(128, 32)
             fc5_trans = nn.Linear(32, 3)
+
+            # Apply Kaiming initialization to the weights of the linear layers
+            # nn.init.kaiming_normal_(self.fcAB_trans[0].weight)
+            # nn.init.kaiming_normal_(self.fcAC_trans[0].weight)
+            # nn.init.kaiming_normal_(fc1_trans[0].weight)
+            # nn.init.kaiming_normal_(fc2_trans[0].weight)
+            # nn.init.kaiming_normal_(fc3_trans[0].weight)
+            # nn.init.kaiming_normal_(fc4_trans[0].weight)
+            # nn.init.kaiming_normal_(fc5_trans.weight)
+
+            
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
         else:
             fc1_trans = linear(feat_dim, 128)
