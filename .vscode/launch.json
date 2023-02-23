@@ -1,0 +1,108 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        // autotune
+        {
+            // "name": "Python: Current File",
+            "name": "autotune",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--result-dir", "./train_multicamvo",
+                // train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_FixNormBug
+                "--train-name", "debug_autotuna",
+                "--flow-model-name", "${workspaceFolder}/models/pwc_net.pth.tar",
+                // "--pose-model-name", "${workspaceFolder}/models/multicamvo_posenet_init_stereo=2.2.pkl",
+                "--pose-model-name", "${workspaceFolder}/models/multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55_B32_lr2_694e-06_posenet_50000.pkl",
+                "--batch-size", "32",
+                "--worker-num", "4",
+                "--data-root", 
+                // "/home/data/tartanair/TartanAir_comb",
+                "/user/shaoshus/projects/tartanair/TartanAir",
+                "--train-step", "100000",
+                "--print-interval", "10",
+                "--snapshot-interval", "100",
+                
+                "--device", "cuda",
+                "--mode", "train-all",
+                "--debug-flag", "",
+                "--random-intrinsic", "800",
+                "--hsv-rand", "0.2",
+                "--use-stereo", "2.2",
+                "--out-to-cml",
+                "--fix_model_parts", "flow", "feat", "rot",
+                "--trail-num","3",
+                // "--load-study",
+                // "--study-name", "multicamvo_batch_64_step_50000_optuna_lr_dev3090_Feb_18_2023_03_21_51",
+                "--not-write-log",
+                "--enable-pruning",
+                "--tuning-val", "lr",
+                // "--lr", "2.694e-06",
+                "--start-iter", "50000",
+                "--train-step", "100000",
+                "--lr-lb", "1e-7",
+                "--lr-ub", "1e-6",
+
+                // "--data-file", "data/tartan_train.txt",
+                // "--train-data-type", "tartan", 
+
+
+                // "--exp-prefix", "test_reproduce_", "--use-int-plotter", 
+                // // "--train-step", "1000", 
+                // // "--print-interval", "10", 
+                // // "--snapshot", "100",
+                // // "--batch-size", "1", 
+                // // "--worker-num", "1", "--lr", "0.00002", 
+                // "--lr-flow", "0.00001", "--lr-decay", "--platform", "local3",
+                // "--fix-flow",
+                // "--data-file", "data/tartan_train.txt", "--train-data-type", "tartan", 
+                // // "--data-file", "data/tartan_train.txt,data/tartan_train_flow2.txt", "--train-data-type", "tartan,tartan2", 
+                // "--val-file", "data/tartan_test.txt",
+                // "--image-height", "448", "--image-width", "640", "--linear-norm-trans-loss", "--normalize-output", "0.05", 
+                // "--downscale-flow", "--intrinsic-layer",
+                // "--resvo-config", "1", "--network", "0", "--lambda-flow", "0.2", 
+                // // "--random-intrinsic", "600", 
+                // // "--hsv-rand", "0.2",
+                // "--load-flow-model", "--flow-model", "pwc_net.pth.tar", 
+                // "--load-pose-model", 
+                // // "--pose-model", "1_1_samplevoflow_200000.pkl",
+                // // "--pose-model", "1_1_samplevoflow_200000.pkl",
+                // "--pose-model", 
+                // // "pypose_ttvo_S1_SE3_output_loss_debug_L2_3090_Jan_26_2023_12_21_voflow_40000.pkl",
+                // "ttvo_S1_largedata_16_B64_voflow_200000.pkl",
+                // "--load-model",
+                // "--model-name",
+                // "ttvo_S2_largedata_trainfromS1_3090_Jan_23_2023_22_34_vonet_0.pkl" ,
+                // // "--model-name2_1",
+                // // "ttvo_S2_largedata_vonet_0.pkl" ,
+                // "--config-file", "config/s2_training.yaml",
+                // // "--log_dir", "None",
+                // // "--output-SE3",
+                // "--not-write-log",
+                // // "--out-to-cml",
+                // "--train-vo"
+                // "--test-interval", "50",
+                
+            ],
+            // "env": {
+                // "CUDA_VISIBLE_DEVICES": "0"
+                // "root_dir" : "train_multicamvo"
+            // },
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -11,3 +11,13 @@ logdata/
 resimg/
 ORBvoc*
 *.zip
+*.db
+/record
+/tensorboard
+/data/*.txt
+/data/tartan_test.txt
+/data/*.txt
+/data/*.npy
+/wandb
+test*
+*.out

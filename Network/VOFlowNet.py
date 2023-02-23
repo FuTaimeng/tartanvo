@@ -225,7 +225,7 @@ class VOFlowRes(nn.Module):
         x_AC_128 = self.fcAC_trans(x_AC)
         x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
         x_trans = self.voflow_trans(x_trans)
-        assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
+        # assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
 
         x_rot = self.voflow_rot(x_AC)
 

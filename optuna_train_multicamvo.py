@@ -19,12 +19,18 @@ import cv2
 from scipy.spatial.transform import Rotation
 
 import argparse
-from os import mkdir
+from os import mkdir,makedirs
 from os.path import isdir
 from timer import Timer
 
 from torch.utils.tensorboard import SummaryWriter
+import optuna
+from optuna.trial import TrialState
 
+import time
+from datetime import datetime
+import re
+import sys
 
 def get_args():
     parser = argparse.ArgumentParser(description='HRL')
@@ -80,14 +86,20 @@ def get_args():
                         help='similar with random-crop but cover contineous intrinsic values (default: 0.0)')
     parser.add_argument('--hsv-rand', type=float, default=0.0,
                         help='augment rand-hsv by adding different hsv to a set of images (default: 0.0)')
-    parser.add_argument('--use-stereo', type=float, default=2.2, 
-                        help='stereo mode (default: 2.2) \
+    parser.add_argument('--use-stereo', type=float, default=0, 
+                        help='stereo mode (default: 0) \
+                                [0] monocular \
                                 [1] stereo disp \
                                 [2.1] multicam single feat endocer \
-                                [2.2] multicam sep feat encoder \
-                                [3] multicam standalone scale')
+                                [2.2] multicam sep feat encoder')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
+
+    parser.add_argument('--out-to-cml',action='store_true', default=False,
+                        help='Save output to a File')
+
+    parser.add_argument('--trail-num', type=int, default=10,
+                    help='The number of trails for optuna.')
 
     args = parser.parse_args()
 
@@ -96,27 +108,52 @@ def get_args():
     return args
 
 
-if __name__ == '__main__':
+
+
+
+def objective(trial, study_name):
+
     timer = Timer()
     args = get_args()
 
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
 
-    trainroot = args.result_dir
-    print('Train root:', trainroot)
+    lr = trial.suggest_float("lr", 1e-7, 1e-3, log=True)
+    batch_size = args.batch_size
+
+    # study_name = args.train_name # Unique identifier of the study.
+    # storage_name = "sqlite:///{}.db".format(study_name)
+    # study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name)
+    # study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
+
+    lr_rate =  "{:.3e}".format(lr).replace(".","_")
+    batchsz_num = str(args.batch_size)
+
+    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate
+
+    print(' \n\n\nExp Name: ')
+    print(file_name)
+    print('lr:{} batch size : {}'.format(lr, batch_size))
+    print()
     print(args)
+
+    # trainroot = args.result_dir
+    trainroot = args.result_dir + '/' +study_name
+
+    print('\nTrain root:', trainroot)
 
     if not isdir(trainroot):
         mkdir(trainroot)
     with open(trainroot+'/args.txt', 'w') as f:
         f.write(str(args))
 
-    tb_dir = 'tensorboard/' + trainroot
+    tb_dir = './tensorboard/' + study_name +'/' + file_name
+    print('\nTensorboard dir:', tb_dir)
     if not isdir(tb_dir):
-        mkdir(tb_dir)
+        makedirs(tb_dir)
     writer = SummaryWriter(tb_dir)
-        
+    
     # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
     #                         DownscaleFlow(), 
     #                         Normalize(), 
@@ -143,7 +180,7 @@ if __name__ == '__main__':
     # debug dataset
     # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
     # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
-    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fix_intervel_links=True)
+    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
     # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
 
     dataiter = iter(trainDataloader)
@@ -154,7 +191,7 @@ if __name__ == '__main__':
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
-    lr = args.lr
+    # lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'rmsprop':
@@ -162,7 +199,7 @@ if __name__ == '__main__':
     elif args.vo_optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
-    L1Loss = torch.nn.L1Loss()
+    criterion = torch.nn.L1Loss()
 
     for train_step_cnt in range(1, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
@@ -176,30 +213,10 @@ if __name__ == '__main__':
 
         is_train = args.mode.startswith('train')
         res = tartanvo.run_batch(sample, is_train)
-
         motion = res['pose']
+
         gt_motion = sample['motion'].to(args.device)
-
-        if args.use_stereo==3:
-            rot = motion[..., 3:]
-            gt_rot = gt_motion[..., 3:]
-            rot_loss = L1Loss(rot, gt_rot)
-
-            trans = motion[..., :3]
-            gt_trans = gt_motion[..., :3]
-            scale = torch.linalg.norm(trans, dim=1)
-            gt_scale = torch.linalg.norm(gt_trans, dim=1)
-            trans_norm = trans / scale.view(-1, 1)
-            gt_trans_norm = gt_trans / gt_scale.view(-1, 1)
-            trans_loss = L1Loss(trans_norm, gt_trans_norm)
-
-            scale = res['scale']
-            scale_loss = L1Loss(scale, gt_scale)
-
-            loss = rot_loss + trans_loss + scale_loss
-        else:
-            loss = L1Loss(motion, gt_motion)
-
+        loss = criterion(motion, gt_motion)
         loss.backward()
         posenetOptimizer.step()
 
@@ -214,35 +231,43 @@ if __name__ == '__main__':
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
-                if args.use_stereo==3:
-                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=True)
-                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
-                else:
-                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
-                    scale = torch.linalg.norm(motion[..., :3], dim=1)
-                    gt_scale = torch.linalg.norm(gt_motion[..., :3], dim=1)
-                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
+                trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+                rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
+                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
 
-                scale_err = np.mean(scale_errs)
-            writer.add_scalar('loss', tot_loss, train_step_cnt)
-            writer.add_scalar('trans_err', trans_err, train_step_cnt)
-            writer.add_scalar('rot_err', rot_err, train_step_cnt)
-            writer.add_scalar('scale_err', scale_err, train_step_cnt)
+            writer.add_scalar('loss/loss', tot_loss, train_step_cnt)
+            
+            writer.add_scalar('loss/trans_loss', trans_loss, train_step_cnt)
+            writer.add_scalar('loss/rot_loss', rot_loss, train_step_cnt)
 
-            writer.add_scalar('time', timer.last('step'), train_step_cnt)
-            print('step:{}, loss:{}, trans_err:{}, rot_err:{}, scale_err:{}, time:{}'.format(
-                train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')))
+            writer.add_scalar('error/trans_err', trans_err, train_step_cnt)
+            writer.add_scalar('error/rot_err', rot_err, train_step_cnt)
+            
+            writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
+
+            trial.report(tot_loss, train_step_cnt)
+
+            # Handle pruning based on the intermediate value.
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned()
+
+
+            print('step:{}, loss:{}, trans_err:{}, rot_err:{},  time:{}'.format(
+                train_step_cnt, tot_loss, trans_err, rot_err, timer.last('step')))
             
             if args.debug_flag != '':
                 if not isdir(trainroot+'/debug'):
                     mkdir(trainroot+'/debug')
                 debugdir = trainroot+'/debug/'+str(train_step_cnt)
-                mkdir(debugdir)
+
+                debugdir = args.result_dir + '/' +study_name + '/' + file_name + '/debug/' + str(train_step_cnt)
+                if not isdir(debugdir):
+                    makedirs(debugdir)
 
             if '0' in args.debug_flag:
-                info = np.array([train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')])
+                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
                 np.savetxt(debugdir+'/info.txt', info)
 
             if '1' in args.debug_flag:
@@ -263,10 +288,118 @@ if __name__ == '__main__':
                 save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
-            writer.add_scalar('loss', loss.item(), train_step_cnt)
+            writer.add_scalar('loss/loss', loss.item(), train_step_cnt)
             print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.snapshot_interval == 0:
             if not isdir(trainroot+'/models'):
                 mkdir(trainroot+'/models')
             torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/multicamvo_posenet_{}.pkl'.format(trainroot, train_step_cnt))
+
+    return loss.item()
+
+
+if __name__ == "__main__":
+    
+    args = get_args()
+    print('debug_flag: ', args.debug_flag)
+
+    torch.cuda.set_device(1)
+    
+    start_time = time.time()
+    
+    args.exp_prefix = args.train_name
+
+    device_name = torch.cuda.get_device_name(0)
+    device_name_num = str(re.findall(r'\d+', device_name)[-1]) +'_'
+    current_time = datetime.now().strftime('%b_%d_%Y_%H_%M_%S')
+    file_name = args.exp_prefix+"_dev"+  device_name_num+current_time
+    print(' \nStudy Name: ')
+    print(file_name)
+
+    # open both files
+    with open('optuna_strain_multicamvo.sh','r') as firstfile, open("./record/"+file_name+".txt", "w") as secondfile:
+        # read content from first file
+        for line in firstfile:
+                # write content to second file
+                secondfile.write(line)
+    # save to file or output to command line
+    if not args.out_to_cml:
+        print('\n=====================')
+        print('Saving to txt Files')
+        print('=====================\n')
+        print('\n============')
+        print("Record Start")
+        print('============\n')
+        stdoutOrigin=sys.stdout  
+        sys.stdout = open("./record/"+file_name+".txt", "a")
+        print(' \n\n\nStudy Name: ')
+        print(file_name)
+    else:
+        print('\n========================')
+        print(' PRINT TO COMMAND LINE')
+        print('========================\n')     
+    
+    now_date = time.ctime()
+    print('==========================================')
+    print('Traning Start at [{}]'.format(now_date) )
+    print(' \ntorch.cuda.is_available() ')
+    print(torch.cuda.is_available())
+    print(' \nDevice Name: ')
+    print(device_name)
+    print('==========================================')
+    
+    # Add stream handler of stdout to show the messages
+    # optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
+    
+    study_name = file_name # Unique identifier of the study.
+    storage_name = "sqlite:///{}.db".format(study_name)
+
+
+    study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name)
+
+    study.optimize(lambda trial: objective(trial, file_name),  n_trials=args.trail_num)
+
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+    print("Study statistics: ")
+    print("  Number of finished trials: ", len(study.trials))
+    print("  Number of pruned trials: ", len(pruned_trials))
+    print("  Number of complete trials: ", len(complete_trials))
+
+    print("Best trial:")
+    trial = study.best_trial
+
+    print("  Value: ", trial.value)
+
+    print("  Params: ")
+    for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
+
+    best_trial = study.best_trial
+
+    print('\n\n========================')
+    print('      FINAL RESULT')
+    print('========================\n')  
+
+    for trial in study.trials:
+        print("\nTrial number: {}".format(trial.number))
+        print("Value: {}".format(trial.value))
+        print("Params: {}".format(trial.params))
+        print("Trial {} finished with value: {} and parameters: {}".format(trial.number, trial.value, trial.params))
+        print(" Best is trial {} with value: {}.".format(best_trial.number, best_trial.value))
+        print("\n")
+
+    print("Done.")
+    
+    end_time = time.time()
+    time_difference = int(end_time - start_time)
+    end_date = time.ctime()
+
+    print('Finished at [{}]'.format(end_date) )
+    print('Total use [{}]s'.format(time_difference) )
+
+    if not args.out_to_cml:
+        sys.stdout.close()
+        sys.stdout=stdoutOrigin

@@ -41,7 +41,9 @@ batch=32
 step=100000
 
 root_dir=train_multicamvo
+
 train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_PredScale
+
 # train_name="test_4e-5_1000_tunetrans"
 # train_name=test
 # continue_from=multicamvo_lr=1e-5_batch=32_step=100000_10Scenes_s=29000
@@ -57,7 +59,9 @@ python train_multicamvo.py \
     --result-dir ${root_dir}/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
+
     --pose-model-name models/multicamvo_posenet_init_stereo=3.pkl \
+
     --batch-size ${batch} \
     --worker-num 1 \
     --data-root ${data_dir} \
@@ -72,6 +76,7 @@ python train_multicamvo.py \
     --hsv-rand 0.2 \
     --use-stereo 3 \
     --fix_model_parts 'flow' 'feat' 'rot', 'trans' \
+
 | tee ${root_dir}/${train_name}/log.txt
 
 # continue
