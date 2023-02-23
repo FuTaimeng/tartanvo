@@ -139,27 +139,25 @@ def evaluate_trajectory(traj_gt, traj_est, param_max_pairs=10000, param_fixed_de
 def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
     from scipy.spatial.transform import Rotation
 
-    factor = 1
-    if allow_rescale:
-        s1 = np.linalg.norm(motions_gt[:, :3], axis=1)
-        s2 = np.linalg.norm(motions_est[:, :3], axis=1)
-        factor = np.median(s1 / s2)
-
     R_errs = []
     t_errs = []
     for i in range(len(motions_gt)):
-
         t_gt = motions_gt[i, :3]
+        s_gt = np.linalg.norm(t_gt)
         if motions_gt.shape[1] == 7:
             R_gt = Rotation.from_quat(motions_gt[i, 3:])
         else:
             R_gt = Rotation.from_rotvec(motions_gt[i, 3:])
 
-        t_est = motions_est[i, :3] * factor
+        t_est = motions_est[i, :3]
+        s_est = np.linalg.norm(t_est)
         if motions_est.shape[1] == 7:
             R_est = Rotation.from_quat(motions_est[i, 3:])
         else:
             R_est = Rotation.from_rotvec(motions_est[i, 3:])
+
+        if allow_rescale:
+            t_est *= s_gt/s_est
 
         t_err = np.linalg.norm(t_gt - t_est)
         R_err = np.rad2deg((R_gt.inv() * R_est).magnitude())

@@ -38,7 +38,7 @@ class BasicBlock(nn.Module):
         return F.relu(out, inplace=True)
 
 class VOFlowRes(nn.Module):
-    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=()):
+    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=(), sep_feat=True):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
@@ -46,16 +46,18 @@ class VOFlowRes(nn.Module):
         self.config = config
         self.stereo = stereo
         self.uncertainty = uncertainty
+        self.sep_feat = sep_feat
 
         self.feat_net, feat_dim = self.__feature_embedding()
-        if stereo==2.2:
+        if sep_feat:
             self.feat_net2, _ = self.__feature_embedding()
 
-        if stereo==2.1 or stereo==2.2:
+        if stereo==2:
             feat_dim_trans = feat_dim*2 + 10*2*6
             # fc1_trans = linear(feat_dim_trans, 256)
             # fc2_trans = linear(256, 32)
             # fc3_trans = nn.Linear(32, 3)
+            # self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
             self.fcAB_trans = linear(feat_dim, 128)
             self.fcAC_trans = linear(feat_dim, 128)
             fc1_trans = linear(128*2 + 10*2*6, 128)
@@ -70,6 +72,17 @@ class VOFlowRes(nn.Module):
             fc3_trans = nn.Linear(32, 3)
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
 
+        if stereo==3:
+            feat_dim_scale = feat_dim*2 + 10*2*6
+            self.fcAB_scale = linear(feat_dim, 128)
+            self.fcAC_scale = linear(feat_dim, 128)
+            fc1_scale = linear(128*2 + 10*2*6, 128)
+            fc2_scale = linear(128, 128)
+            fc3_scale = linear(128, 128)
+            fc4_scale = linear(128, 32)
+            fc5_scale = nn.Linear(32, 1)
+            self.voflow_scale = nn.Sequential(fc1_scale, fc2_scale, fc3_scale, fc4_scale, fc5_scale)
+
         fc1_rot = linear(feat_dim, 128)
         fc2_rot = linear(128, 32)
         fc3_rot = nn.Linear(32, 3)
@@ -77,12 +90,19 @@ class VOFlowRes(nn.Module):
 
         if "feat" in fix_parts:
             self.fix_param(self.feat_net)
-        if "feat2" in fix_parts and stereo==2.2:
+        if "feat2" in fix_parts and sep_feat:
             self.fix_param(self.feat_net2)
         if "rot" in fix_parts:
             self.fix_param(self.voflow_rot)
         if "trans" in fix_parts:
+            if stereo==2:
+                self.fix_parts(self.fcAB_trans)
+                self.fix_parts(self.fcAC_trans)
             self.fix_param(self.voflow_trans)
+        if "scale" in fix_parts and stereo==3:
+            self.fix_parts(self.fcAB_scale)
+            self.fix_parts(self.fcAC_scale)
+            self.fix_param(self.voflow_scale)
 
 
     def fix_param(self, model):
@@ -161,8 +181,10 @@ class VOFlowRes(nn.Module):
         return z
 
     def forward(self, x, extrinsic=None):
-        if self.stereo==2.1 or self.stereo==2.2:
-            return self.forward_multicam(x, extrinsic)
+        if self.stereo==2:
+            return self.forward_2(x, extrinsic)
+        elif self.stereo==3:
+            return self.forward_3(x, extrinsic)
         else:
             return self.forward_(x)
 
@@ -177,11 +199,11 @@ class VOFlowRes(nn.Module):
 
         return torch.cat((x_trans, x_rot), dim=1)
 
-    def forward_multicam(self, x, extrinsic):
+    def forward_2(self, x, extrinsic):
         x_AB = x[:, (0,1, 4,5), ...]
         x_AC = x[:, (2,3, 4,5), ...]
 
-        if self.stereo==2.2:
+        if self.sep_feat:
             x_AB = self.feat_net2(x_AB)
         else:
             x_AB = self.feat_net(x_AB)
@@ -208,3 +230,28 @@ class VOFlowRes(nn.Module):
         x_rot = self.voflow_rot(x_AC)
 
         return torch.cat((x_trans, x_rot), dim=1)
+
+    def forward_3(self, x, extrinsic):
+        x_AB = x[:, (0,1, 4,5), ...]
+        x_AC = x[:, (2,3, 4,5), ...]
+
+        if self.sep_feat:
+            x_AB = self.feat_net2(x_AB)
+        else:
+            x_AB = self.feat_net(x_AB)
+        x_AC = self.feat_net(x_AC)
+
+        x_AB = x_AB.view(x_AB.shape[0], -1)
+        x_AC = x_AC.view(x_AC.shape[0], -1)
+
+        x_ex = self.__encode_pose(extrinsic, L=10)
+
+        x_AB_128 = self.fcAB_scale(x_AB)
+        x_AC_128 = self.fcAC_scale(x_AC)
+        x_scale = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
+        x_scale = self.voflow_scale(x_scale).view(-1, 1)
+
+        x_trans = self.voflow_trans(x_AC)
+        x_rot = self.voflow_rot(x_AC)
+
+        return torch.cat((x_trans, x_rot, x_scale), dim=1)

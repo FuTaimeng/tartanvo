@@ -80,12 +80,12 @@ def get_args():
                         help='similar with random-crop but cover contineous intrinsic values (default: 0.0)')
     parser.add_argument('--hsv-rand', type=float, default=0.0,
                         help='augment rand-hsv by adding different hsv to a set of images (default: 0.0)')
-    parser.add_argument('--use-stereo', type=float, default=0, 
-                        help='stereo mode (default: 0) \
-                                [0] monocular \
+    parser.add_argument('--use-stereo', type=float, default=2.2, 
+                        help='stereo mode (default: 2.2) \
                                 [1] stereo disp \
                                 [2.1] multicam single feat endocer \
-                                [2.2] multicam sep feat encoder')
+                                [2.2] multicam sep feat encoder \
+                                [3] multicam standalone scale')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     # debug dataset
     # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
     # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
-    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
+    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fix_intervel_links=True)
     # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
 
     dataiter = iter(trainDataloader)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     elif args.vo_optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
-    criterion = torch.nn.L1Loss()
+    L1Loss = torch.nn.L1Loss()
 
     for train_step_cnt in range(1, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
@@ -176,10 +176,30 @@ if __name__ == '__main__':
 
         is_train = args.mode.startswith('train')
         res = tartanvo.run_batch(sample, is_train)
-        motion = res['pose']
 
+        motion = res['pose']
         gt_motion = sample['motion'].to(args.device)
-        loss = criterion(motion, gt_motion)
+
+        if args.use_stereo==3:
+            rot = motion[..., 3:]
+            gt_rot = gt_motion[..., 3:]
+            rot_loss = L1Loss(rot, gt_rot)
+
+            trans = motion[..., :3]
+            gt_trans = gt_motion[..., :3]
+            scale = torch.linalg.norm(trans, dim=1)
+            gt_scale = torch.linalg.norm(gt_trans, dim=1)
+            trans_norm = trans / scale.view(-1, 1)
+            gt_trans_norm = gt_trans / gt_scale.view(-1, 1)
+            trans_loss = L1Loss(trans_norm, gt_trans_norm)
+
+            scale = res['scale']
+            scale_loss = L1Loss(scale, gt_scale)
+
+            loss = rot_loss + trans_loss + scale_loss
+        else:
+            loss = L1Loss(motion, gt_motion)
+
         loss.backward()
         posenetOptimizer.step()
 
@@ -194,15 +214,23 @@ if __name__ == '__main__':
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
-                trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
-                rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
-                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                if args.use_stereo==3:
+                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=True)
+                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
+                else:
+                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                    scale = torch.linalg.norm(motion[..., :3], dim=1)
+                    gt_scale = torch.linalg.norm(gt_motion[..., :3], dim=1)
+                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
 
+                scale_err = np.mean(scale_errs)
             writer.add_scalar('loss', tot_loss, train_step_cnt)
             writer.add_scalar('trans_err', trans_err, train_step_cnt)
             writer.add_scalar('rot_err', rot_err, train_step_cnt)
+            writer.add_scalar('scale_err', scale_err, train_step_cnt)
+
             writer.add_scalar('time', timer.last('step'), train_step_cnt)
             print('step:{}, loss:{}, trans_err:{}, rot_err:{}, scale_err:{}, time:{}'.format(
                 train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')))
@@ -214,7 +242,7 @@ if __name__ == '__main__':
                 mkdir(debugdir)
 
             if '0' in args.debug_flag:
-                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
+                info = np.array([train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')])
                 np.savetxt(debugdir+'/info.txt', info)
 
             if '1' in args.debug_flag:
