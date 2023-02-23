@@ -84,6 +84,8 @@ def get_args():
                                 [2.2] multicam sep feat encoder')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
+    parser.add_argument('--device', default='cuda', choices=['cuda', 'cpu'],
+                        help='device: cuda cpu (default: cuda)')
 
     args = parser.parse_args()
 

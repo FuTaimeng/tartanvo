@@ -80,7 +80,7 @@ class VOPGO(Data.Dataset):
 
 
 class PVGO_Dataset(Data.Dataset):
-    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, device='cpu'):
+    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device='cpu'):
         super().__init__()
 
         N = poses_np.shape[0]
@@ -89,30 +89,44 @@ class PVGO_Dataset(Data.Dataset):
 
         self.ids = torch.arange(0, N, dtype=torch.int64).view(-1, 1)
         self.edges = torch.tensor(links, dtype=torch.int64).to(device)
-        self.poses = pp.SE3(motions.detach()).to(self.dtype).to(device)
-        self.poses_withgrad = pp.SE3(motions).to(self.dtype).to(device)
-
+        if motions.shape[-1] == 7:
+            self.poses = pp.SE3(motions.detach()).to(self.dtype).to(device)
+            self.poses_withgrad = pp.SE3(motions).to(self.dtype).to(device)
+        else:
+            self.poses = (pp.se3(motions.detach()).to(self.dtype).to(device)).Exp()
+            self.poses_withgrad = (pp.se3(motions).to(self.dtype).to(device)).Exp()
+        
         # No use
         self.infos = torch.stack([torch.eye(6)]*M).to(self.dtype).to(device)
 
-        self.imu_drots = pp.SO3(imu_drots_np).to(self.dtype).to(device)
+        if imu_drots_np.shape[-1] == 4:
+            self.imu_drots = pp.SO3(imu_drots_np).to(self.dtype).to(device)
+        else:
+            self.imu_drots = (pp.so3(imu_drots_np).to(self.dtype).to(device)).Exp()
         self.imu_dtrans = torch.from_numpy(imu_dtrans_np).to(self.dtype).to(device)
         self.imu_dvels = torch.from_numpy(imu_dvels_np).to(self.dtype).to(device)
-        self.dt = torch.tensor(dt_).to(self.dtype).to(device)
+        self.dts = torch.from_numpy(dts).to(self.dtype).to(device)
         
         init_with_imu_rot = True
         if init_with_imu_rot:
-            rot = pp.SO3(poses_np[0, 3:])
+            if poses_np.shape[-1] == 7:
+                rot = pp.SO3(poses_np[0, 3:]).to(self.dtype).to(device)
+            else:
+                rot = (pp.so3(poses_np[0, 3:]).to(self.dtype).to(device)).Exp()
             rots = [rot]
-            for drot in imu_drots_np:
-                rot = rot @ pp.SO3(drot)
+            for drot in self.imu_drots:
+                rot = rot @ drot
                 rots.append(rot)
             rots = torch.stack(rots)
-            trans = torch.from_numpy(poses_np[:, :3])
+            trans = torch.from_numpy(poses_np[:, :3]).to(self.dtype).to(device)
             assert N == rots.size(0) == trans.size(0)
             nodes_ = pp.SE3(torch.cat([trans, rots.tensor()], dim=1)).to(self.dtype).to(device)
         else:
-            nodes_ = pp.SE3(poses_np).to(self.dtype).to(device)
+            if poses_np.shape[-1] == 7:
+                nodes_ = pp.SE3(poses_np).to(self.dtype).to(device)
+            else:
+                nodes_ = (pp.SE3(poses_np).to(self.dtype).to(device)).Exp()
+            
         self.nodes = self.align_nodes(imu_init['rot'], imu_init['pos'], 0, nodes_)
         self.node0 = self.nodes[0].clone()
 
@@ -121,7 +135,7 @@ class PVGO_Dataset(Data.Dataset):
             vels_np = np.cumsum(np.concatenate([imu_init['vel'].reshape(1, -1), imu_dvels_np], axis=0), axis=0)
             self.vels = torch.from_numpy(vels_np).to(self.dtype).to(device)
         else:
-            vels_ = torch.diff(self.nodes.translation(), dim=0) / self.dt
+            vels_ = torch.diff(self.nodes.translation(), dim=0) / self.dts.view(-1, 1)
             self.vel0 = torch.from_numpy(imu_init['vel']).to(self.dtype).to(device)
             self.vels = torch.cat((self.vel0.view(1, -1), vels_), dim=0)
             

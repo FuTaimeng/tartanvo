@@ -62,9 +62,9 @@ def get_args():
     parser.add_argument('--result-dir', default='',
                         help='root directory of results (default: "")')
     parser.add_argument('--use-imu', action='store_true', default=True,
-                        help='use imu (default: "True")')                    
+                        help='use imu (default: True)')                    
     parser.add_argument('--use-pvgo', action='store_true', default=True,
-                        help='use pose-velocity graph optimization (default: "True")')
+                        help='use pose-velocity graph optimization (default: True)')
     parser.add_argument('--loss-weight', default='(1,1,1,1)',
                         help='weight of the loss terms (default: (1,1,1,1))')
     parser.add_argument('--mode', default='train', choices=['test', 'train'],
@@ -77,6 +77,10 @@ def get_args():
                         help='use stop constraint or not (default: False)')
     parser.add_argument('--use-stereo', type=int, default=0,
                         help='use stereo (default: 0)')
+    parser.add_argument('--device', default='cuda', choices=['cuda', 'cpu'],
+                        help='device: cuda cpu (default: cuda)')
+    parser.add_argument('--only-backpropagate-loop-edge', action='store_true', default=False,
+                        help='only backpropagate loop edge (default: False)')   
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -109,7 +113,9 @@ if __name__ == '__main__':
                                     transform=transform, start_frame=args.start_frame, end_frame=args.end_frame,
                                     use_loop_closure=False, use_stop_constraint=False)
 
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.worker_num)
+    dataloader = DataLoader(dataset, batch_size=len(dataset), shuffle=False, num_workers=args.worker_num)
+
+    dataiter = iter(dataloader)
 
     trainroot = args.result_dir
     print('Train root:', trainroot)
@@ -134,7 +140,7 @@ if __name__ == '__main__':
 
             imu_trans, imu_rots, imu_covs, imu_vels = run_imu_preintegrator(
                 dataset.accels, dataset.gyros, dataset.imu_dts, dataset.rgb2imu_sync,
-                init=dataset.imu_init, gravity=dataset.gravity, device='cuda', motion_mode=imu_motion_mode)
+                init=dataset.imu_init, gravity=dataset.gravity, device=args.device, motion_mode=imu_motion_mode)
 
             imu_poses = np.concatenate((imu_trans, imu_rots), axis=1)
             np.savetxt(trainroot+'/imu_pose.txt', imu_poses)
@@ -147,7 +153,7 @@ if __name__ == '__main__':
 
             imu_trans, imu_rots, imu_covs, imu_vels = run_imu_preintegrator(
                 dataset.accels, dataset.gyros, dataset.imu_dts, dataset.rgb2imu_sync,
-                init=dataset.imu_init, gravity=dataset.gravity, device='cuda', motion_mode=imu_motion_mode)
+                init=dataset.imu_init, gravity=dataset.gravity, device=args.device, motion_mode=imu_motion_mode)
             # imu_trans, imu_rots, imu_covs, imu_vels = run_imu_preintegrator(
             #     dataset.accels.reshape(-1,3), dataset.gyros.reshape(-1,3), dataset.imu_dts.reshape(-1), 
             #     init=dataset.imu_init, gravity=dataset.gravity, 
@@ -169,66 +175,45 @@ if __name__ == '__main__':
             print("No IMU data! Turn use_imu to False.")
             args.use_imu = False
 
-    quit()
-
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name, stereo_model_name=args.stereo_model_name,
-                            device=args.device, use_imu=args.use_imu, use_stereo=args.use_stereo, correct_scale=(not args.use_stereo))
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), fix_parts=['flow'])
+    lr = args.lr
     if args.vo_optimizer == 'adam':
-        posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'rmsprop':
-        posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'sgd':
-        posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
+        posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
-    if args.mode == 'test':
-        args.train_step = 1
-    for train_step_cnt in range(args.train_step):
+    for train_step_cnt in range(1, args.train_step+1):
         print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
 
+        timer.tic('load')
+        try:
+            sample = next(dataiter)
+        except StopIteration:
+            break
+        timer.toc('load')
+
+        N = dataset.num_img - 1
+
         timer.tic('vo')
 
-        motionlist = []
-        flowlist = []
-        dataiter = iter(dataloader)
-        tot_batch = len(dataset)
-        batch_cnt = 0
-        while True:
-            try:
-                sample = next(dataiter)
-            except StopIteration:
-                break
-            
-            batch_cnt += 1
-            if args.mode.startswith('test'):
-                print('Batch {}/{} ...'.format(batch_cnt, tot_batch), end='\r')
-
-            is_train = args.mode.startswith('train')
-            res = tartanvo.run_batch(sample, is_train)
-            motion = res['pose']
-            flow = res['flow']
-            motionlist.extend(motion)
-            flowlist.extend(flow)
+        is_train = args.mode.startswith('train')
+        res = tartanvo.run_batch(sample, is_train)
+        motions = res['pose']
 
         timer.toc('vo')
 
-        timer.tic('cvt')
-
-        motions = torch.stack(motionlist)
         motions_np = motions.detach().cpu().numpy()
-        poses_np = ses2poses_quat(motions_np[:dataset.num_img-1])
-
-        quats = axis_angle_to_quaternion(motions[:, 3:])
-        motions = torch.cat((motions[:, :3], quats[:, 1:], quats[:, :1]), dim=1)
-        motions_np = motions.detach().cpu().numpy()
-
-        timer.toc('cvt')
+        poses_np = ses2poses_quat(motions_np[:N])
         
         timer.tic('pgo')
 
         if args.use_imu and args.use_pvgo:
             loss, pgo_poses, pgo_vels = run_pvgo(poses_np, motions, dataset.links, 
-                imu_rots, imu_trans, imu_vels, dataset.imu_init, 1.0/args.frame_fps, 
+                imu_rots, imu_trans, imu_vels, dataset.imu_init, dataset.rgb_dts, 
                 device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames)
         else:
             loss, pgo_poses = run_pgo(poses_np, motions, dataset.links, device=args.device)
@@ -240,7 +225,6 @@ if __name__ == '__main__':
         if args.mode.startswith('train'):
             posenetOptimizer.zero_grad()
             if args.only_backpropagate_loop_edge:
-                N = dataset.num_img - 1
                 loss[N:].backward(torch.ones_like(loss[N:]))
             else:
                 loss.backward(torch.ones_like(loss))
@@ -253,12 +237,10 @@ if __name__ == '__main__':
         timer.tic('print')
 
         if train_step_cnt % args.print_interval == 0:
-            motions_gt = ses2pos_quat(dataset.motions)
+            motions_gt = sample['motion'].cpu().numpy()
             R_errs, t_errs = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
-            print("%s #%d - loss:%.6f - lr:%.6f - [avgtime] vo:%.2f, cvt:%.2f, pgo:%.2f, opt:%.2f" % (trainroot.split('/')[-1], 
-                train_step_cnt, torch.mean(loss), args.lr, timer.avg('vo'), timer.avg('cvt'), timer.avg('pgo'), timer.avg('opt')))
-            timer.clear(['vo', 'cvt', 'pgo', 'opt'])
-            N = dataset.num_img - 1
+            print("#%d - loss:%.6f - lr:%.6f - [time] step:%.2f, load:%.2f, vo:%.2f, pgo:%.2f, opt:%.2f" % 
+                    (train_step_cnt, torch.mean(loss), lr, timer.last('step'), timer.last('load'), timer.last('vo'), timer.last('pgo'), timer.last('opt')))
             print("\tadj.\tloop\ttot.")
             print("R\t%.4f\t%.4f\t%.4f" % (np.mean(R_errs[:N]), np.mean(R_errs[N:]), np.mean(R_errs)))
             print("t\t%.4f\t%.4f\t%.4f" % (np.mean(t_errs[:N]), np.mean(t_errs[N:]), np.mean(t_errs)))
@@ -278,19 +260,4 @@ if __name__ == '__main__':
             if args.use_imu and args.use_pvgo:
                 np.savetxt(traindir+'/pgo_vel.txt', pgo_vels)
 
-            if args.save_flow:
-                flowdir = traindir+'/flow'
-                if not isdir(flowdir):
-                    mkdir(flowdir)
-
-                for flowcnt, flow in enumerate(flowlist):
-                    for k in range(flow.shape[0]):
-                        flowk = flow[k].transpose(1,2,0)
-                        np.save(flowdir+'/'+str(flowcnt).zfill(6)+'.npy', flowk)
-                        flow_vis = visflow(flowk)
-                        cv2.imwrite(flowdir+'/'+str(flowcnt).zfill(6)+'.png', flow_vis)
-
         timer.toc('snapshot')
-
-        print('[time] step: {}, print: {}, snapshot: {}'.format(timer.avg('step'), timer.avg('print'), timer.avg('snapshot')))
-        timer.clear(['step', 'print', 'snapshot'])

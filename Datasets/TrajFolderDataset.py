@@ -24,6 +24,7 @@ class TartanAirTrajFolderLoader:
         files = listdir(imgfolder)
         self.rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
         self.rgbfiles.sort()
+        self.rgb_dts = np.ones(len(self.rgbfiles)-1, dtype=np.float32) * 0.1
 
         ############################## load stereo right images ######################################################################
         if isdir(datadir + '/image_right'):
@@ -62,7 +63,7 @@ class TartanAirTrajFolderLoader:
             self.gyros = gyros - gyro_bias
 
             # imu_fps = 100
-            self.imu_dts = np.ones(len(accels), dtype=np.float32) * 0.01
+            self.imu_dts = np.ones(len(accels)-1, dtype=np.float32) * 0.01
             
             # img_fps = 10
             self.rgb2imu_sync = np.arange(0, len(self.rgbfiles)) * 10
@@ -148,6 +149,7 @@ class EuRoCTrajFolderLoader:
         self.vels = self.vels[[i for i, t in enumerate(timestamps_pose) if t in timestamps]]
         timestamps = np.array(list(timestamps))
         timestamps.sort()
+        self.rgb_dts = np.diff(timestamps).astype(np.float32) * 1e-3
 
         ############################## load imu data ######################################################################
         if isfile(datadir + '/imu0/data.csv'):
@@ -215,8 +217,12 @@ class KITTITrajFolderLoader:
         # dataset.velo:          Returns a generator that loads velodyne scans as [x,y,z,reflectance]
         # dataset.get_velo(idx): Returns the velodyne scan at idx
 
+        ############################## load times ######################################################################
+        timestamps = np.array([t.timestamp() for t in dataset.timestamps])
+
         ############################## load images ######################################################################
         self.rgbfiles = dataset.cam2_files
+        self.rgb_dts = np.diff(timestamps).astype(np.float32)
 
         ############################## load stereo right images ######################################################################
         self.rgbfiles_right = dataset.cam3_files
@@ -246,10 +252,9 @@ class KITTITrajFolderLoader:
         self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
         self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
 
-        timestamps_imu = np.array([t.timestamp() for t in dataset.timestamps])
-        self.imu_dts = np.diff(timestamps_imu)
-
         self.rgb2imu_sync = np.array([i for i in range(len(self.rgbfiles))])
+
+        self.imu_dts = self.rgb_dts
 
         T_IL = np.linalg.inv(T_LI)
         self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type)
@@ -282,6 +287,7 @@ class TrajFolderDataset(Dataset):
             end_frame += len(loader.rgbfiles)
         
         self.rgbfiles = loader.rgbfiles[start_frame:end_frame]
+        self.rgb_dts = loader.rgb_dts[start_frame:end_frame-1]
         self.num_img = len(self.rgbfiles)
 
         self.rgbfiles_right = loader.rgbfiles_right
@@ -311,7 +317,7 @@ class TrajFolderDataset(Dataset):
             self.imu_init = loader.imu_init
             self.gravity = loader.gravity
 
-            self.imu_motion = None
+            self.imu_motions = None
             self.has_imu = True
 
         else:
@@ -342,20 +348,20 @@ class TrajFolderDataset(Dataset):
     def __getitem__(self, idx):
         res = {}
 
-        img0 = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
-        img1 = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
+        img0 = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_COLOR)
+        img1 = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_COLOR)
         res['img0'] = [img0]
         res['img1'] = [img1]
 
         if self.rgbfiles_right is not None:
-            img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
-            img1_r = cv2.imread(self.rgbfiles_right[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
+            img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_COLOR)
+            img1_r = cv2.imread(self.rgbfiles_right[self.links[idx][1]], cv2.IMREAD_COLOR)
             res['img0_r'] = [img0_r]
             res['img1_r'] = [img1_r]
-            res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
+            # res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
 
         h, w, _ = img0.shape
-        intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)
+        intrinsicLayer = make_intrinsics_layer(w, h, self.intrinsic[0], self.intrinsic[1], self.intrinsic[2], self.intrinsic[3])
         res['intrinsic'] = [intrinsicLayer]
 
         if self.transform:
@@ -420,9 +426,9 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
     def __getitem__(self, idx):
         res = {}
 
-        imgA = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_UNCHANGED)
-        imgB = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_UNCHANGED)
-        imgC = cv2.imread(self.rgbfiles[self.links[idx][2]], cv2.IMREAD_UNCHANGED)
+        imgA = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_COLOR)
+        imgB = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_COLOR)
+        imgC = cv2.imread(self.rgbfiles[self.links[idx][2]], cv2.IMREAD_COLOR)
         res['img0'] = [imgA]
         res['img1'] = [imgC]
         res['img0_r'] = [imgB]
