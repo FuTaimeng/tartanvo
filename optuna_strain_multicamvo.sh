@@ -7,7 +7,7 @@ data_dir=/home/data/tartanair/TartanAir_comb
 
 # lr=1e-5
 batch=32
-step=100000
+step=20000
 
 root_dir=train_multicamvo
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder
@@ -16,7 +16,7 @@ root_dir=train_multicamvo
 # continue_from=multicamvo_lr=1e-5_batch=32_step=100000_SepFeatEncoder_s=12500
 # train_name = debug_autotuna_lr_batch=${batch}_step=${step}_10Scenes_s=29000
 
-train_name=multicamvo_B${batch}_St${step}_optuna_lr
+train_name=multicamvo_B${batch}_St${step}_optuna_lr_predict_scale
 
 # rm -r ${root_dir}/${train_name}
 # mkdir ${root_dir}/${train_name}
@@ -37,15 +37,17 @@ python optuna_train_multicamvo2.py \
     --mode train-all \
     --random-intrinsic 800 \
     --hsv-rand 0.2 \
-    --use-stereo 2.2 \
-    --fix_model_parts 'flow' 'feat' 'rot' \
+    --use-stereo 3 \
+    --fix_model_parts 'flow' 'feat' 'rot', 'trans' \
     --result-dir ./train_multicamvo \
     --train-name ${train_name} \
     --debug-flag '' \
-    --pose-model-name ./models/multicamvo_posenet_15000.pkl \
+    --pose-model-name models/multicamvo_posenet_init_stereo=3.pkl \
     --train-step ${step} \
     --trail-num 5 \
     --enable-pruning \
+    --out-to-cml
+    # --pose-model-name ./models/multicamvo_posenet_15000.pkl \
     # --load-study \
     # --study-name multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55
     #  --out-to-cml
