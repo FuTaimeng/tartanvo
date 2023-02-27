@@ -26,7 +26,8 @@
                 // train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_FixNormBug
                 "--train-name", "debug_autotuna",
                 "--flow-model-name", "${workspaceFolder}/models/pwc_net.pth.tar",
-                "--pose-model-name", "${workspaceFolder}/models/multicamvo_posenet_init_stereo=2.2.pkl",
+                // "--pose-model-name", "${workspaceFolder}/models/multicamvo_posenet_init_stereo=2.2.pkl",
+                "--pose-model-name", "${workspaceFolder}/models/multicamvo_posenet_15000.pkl",
                 // "--pose-model-name", "${workspaceFolder}/models/multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55_B32_lr2_694e-06_posenet_50000.pkl",
                 "--batch-size", "32",
                 "--worker-num", "4",

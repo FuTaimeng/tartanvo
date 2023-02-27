@@ -22,10 +22,44 @@ train_name=multicamvo_B${batch}_St${step}_optuna_lr_testset
 # mkdir ${root_dir}/${train_name}
 
 # export CUDA_VISIBLE_DEVICES=0
-echo "train_name: ${train_name}"
+# echo "train_name: ${train_name}"
 
 # train
 # train
+# python optuna_train_multicamvo2.py \
+#     --flow-model-name ./models/pwc_net.pth.tar \
+#     --batch-size ${batch} \
+#     --worker-num 4 \
+#     --data-root ${data_dir} \
+#     --print-interval 10 \
+#     --snapshot-interval 1000 \
+#     --device cuda \
+#     --mode train-all \
+#     --random-intrinsic 800 \
+#     --hsv-rand 0.2 \
+#     --use-stereo 2.2 \
+#     --fix_model_parts 'flow' 'feat' 'rot' \
+#     --result-dir ./train_multicamvo \
+#     --train-name ${train_name} \
+#     --debug-flag '' \
+#     --pose-model-name ./models/multicamvo_posenet_15000.pkl \
+#     --train-step ${step} \
+#     --trail-num 5 \
+#     --enable-pruning \
+#     # --load-study \
+#     # --study-name multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55
+#     #  --out-to-cml
+
+# train_name=multicamvo_B${batch}_St${step}_optuna_lr_conti
+
+
+# echo "train_name: ${train_name}"
+
+# train
+# continue training
+# tuning lr
+train_name=multicamvo_B${batch}_St${step}_optuna_lr
+echo "train_name: ${train_name}"
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
     --batch-size ${batch} \
