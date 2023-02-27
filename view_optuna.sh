@@ -1,0 +1,1 @@
+optuna-dashboard sqlite:///multicamvo_B32_St500_optuna_lr_new_archi_dev3090_Feb_25_2023_17_28_29.db

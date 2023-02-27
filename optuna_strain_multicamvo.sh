@@ -7,16 +7,16 @@ data_dir=/home/data/tartanair/TartanAir_comb
 
 # lr=1e-5
 batch=32
-step=100000
+step=2000
 
 root_dir=train_multicamvo
 # train_name=multicamvo_lr=${lr}_batch=${batch}_step=${step}_SepFeatEncoder
 # train_name="test_4e-5_1000_tunetrans"
-# train_name=all_frames
+train_name=all_frames
 # continue_from=multicamvo_lr=1e-5_batch=32_step=100000_SepFeatEncoder_s=12500
 # train_name = debug_autotuna_lr_batch=${batch}_step=${step}_10Scenes_s=29000
 
-train_name=multicamvo_B${batch}_St${step}_optuna_lr
+train_name=multicamvo_B${batch}_St${step}_optuna_lr_testset
 
 # rm -r ${root_dir}/${train_name}
 # mkdir ${root_dir}/${train_name}
@@ -44,11 +44,20 @@ python optuna_train_multicamvo2.py \
     --debug-flag '' \
     --pose-model-name ./models/multicamvo_posenet_15000.pkl \
     --train-step ${step} \
-    --trail-num 5 \
+    --trail-num 10 \
+    --tuning-val 'lr' \
+    --lr-lb  1e-6 \
+    --lr-ub  1e-3 \
     --enable-pruning \
+    --test-interval 10 \
     # --load-study \
-    # --study-name multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55
-    #  --out-to-cml
+    # --study-name multicamvo_B32_St500_optuna_lr_testset_dev3090_Feb_27_2023_12_44_00 \
+    # --out-to-cml
+    # --enable-decay \
+    # --start-iter 100000 \
+    # --not-write-log
+    # --pose-model-name ./models/multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55_B32_lr3_843e-06_posenet_100000.pkl \
+    # --
 # python train_multicamvo.py \
 #     --result-dir ${root_dir}/${train_name} \
 #     --train-name ${train_name} \

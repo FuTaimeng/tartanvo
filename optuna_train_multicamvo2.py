@@ -68,6 +68,9 @@ def get_args():
                         help='the interval for printing the loss (default: 1)')
     parser.add_argument('--snapshot-interval', type=int, default=1000,
                         help='the interval for snapshot results (default: 1000)')
+    parser.add_argument('--test-interval', type=int, default=100,
+                        help='the interval for test results (default: 100)')
+    
     parser.add_argument('--train-name', default='',
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
@@ -226,8 +229,12 @@ def objective(trial, study_name):
     transform = Compose(transformlist)
 
     trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                            root=args.data_root, transform=transform)
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True,num_workers=8)
+                                            root=args.data_root, transform=transform, mode = 'train')
+    testDataset  = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
+                                            root=args.data_root, transform=transform, mode = 'test')
+    
+    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
+    testDataloader  = DataLoader(testDataset,  batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
 
     # mean = None
     # std = None
@@ -248,7 +255,8 @@ def objective(trial, study_name):
     #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
     # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
 
-    dataiter = iter(trainDataloader)
+    traindataiter = iter(trainDataloader)
+    testdataiter  = iter(testDataloader)
 
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
@@ -272,7 +280,7 @@ def objective(trial, study_name):
         timer.tic('step')
         start_time = time.time()
         try:
-            sample = next(dataiter)
+            sample = next(traindataiter)
             
             # print()      
             load_time_inst = time.time()
@@ -301,8 +309,8 @@ def objective(trial, study_name):
             #     print()
 
         except StopIteration:
-            dataiter = iter(trainDataloader)
-            sample = next(dataiter)
+            traindataiter = iter(trainDataloader)
+            sample = next(traindataiter)
 
         is_train = args.mode.startswith('train')
         res = tartanvo.run_batch(sample, is_train)
@@ -313,6 +321,8 @@ def objective(trial, study_name):
 
         gt_motion = sample['motion'].to(args.device)
         loss = criterion(motion, gt_motion)
+        # print('motion: ', motion[0,:] , 'gt_motion: ', gt_motion[0,:], 'loss: ', loss.item())
+        
         loss.backward()
         posenetOptimizer.step()
 
@@ -338,24 +348,19 @@ def objective(trial, study_name):
                 rot_err = np.mean(rot_errs)
 
             if not args.not_write_log:
-                writer.add_scalar('loss/loss', tot_loss, train_step_cnt)
+                writer.add_scalar('loss/train_loss', tot_loss, train_step_cnt)
                 
-                writer.add_scalar('loss/trans_loss', trans_loss, train_step_cnt)
-                writer.add_scalar('loss/rot_loss', rot_loss, train_step_cnt)
+                writer.add_scalar('loss/train_trans_loss', trans_loss, train_step_cnt)
+                writer.add_scalar('loss/train_rot_loss', rot_loss, train_step_cnt)
 
-                writer.add_scalar('error/trans_err', trans_err, train_step_cnt)
-                writer.add_scalar('error/rot_err', rot_err, train_step_cnt)
+                writer.add_scalar('error/train_trans_err', trans_err, train_step_cnt)
+                writer.add_scalar('error/train_rot_err', rot_err, train_step_cnt)
                 
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
                 wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, "training trans err": trans_err, "training rot err": rot_err }, step= train_step_cnt)
 
 
-            if args.enable_pruning:
-                trial.report(trans_err, train_step_cnt)
 
-                # Handle pruning based on the intermediate value.
-                if trial.should_prune():
-                    raise optuna.exceptions.TrialPruned()
 
 
             print('step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
@@ -398,6 +403,68 @@ def objective(trial, study_name):
                 wandb.log({"training loss": loss.item() }, step= train_step_cnt)
                 # print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
+        if train_step_cnt % args.test_interval == 0:
+            start_time = time.time()
+            try:
+                sample = next(testdataiter)   
+                load_time_inst = time.time()
+                load_time =  load_time_inst - start_time
+
+            except StopIteration:
+                testdataiter = iter(testDataloader)
+                sample = next(testdataiter)
+
+            res = tartanvo.run_batch(sample, is_train = True)
+            motion = res['pose']
+
+            infer_time_inst = time.time()
+            infer_time = infer_time_inst - load_time_inst
+
+            gt_motion = sample['motion'].to(args.device)
+            test_loss = criterion(motion, gt_motion)
+            # print('motion: ', motion[0,:] , 'gt_motion: ', gt_motion[0,:], 'test_loss: ', test_loss.item())
+
+            # loss.backward()
+            # posenetOptimizer.step()
+            # bp_time_inst = time.time()
+            # bp_time = bp_time_inst - infer_time_inst
+            total_time = time.time() - start_time
+            # if train_step_cnt in args.lr_decay_point:
+
+            with torch.no_grad():
+                test_tot_loss = test_loss.item()
+                test_trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+                test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
+                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                test_trans_err = np.mean(trans_errs)
+                test_rot_err = np.mean(rot_errs)
+
+            if not args.not_write_log:
+                writer.add_scalar('loss/test_loss', test_tot_loss, train_step_cnt)
+                
+                writer.add_scalar('loss/test_trans_loss', test_trans_loss, train_step_cnt)
+                writer.add_scalar('loss/test_rot_loss', test_rot_loss, train_step_cnt)
+
+                writer.add_scalar('error/test_trans_err', test_trans_err, train_step_cnt)
+                writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
+                
+                writer.add_scalar('time/test_infer_time', infer_time, train_step_cnt)
+                wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, "testing trans err": test_trans_err, "testing rot err": test_rot_err }, step= train_step_cnt)
+
+
+            print('TEST: step:{:07d}, loss:{:.4f}, test_trans_loss:{:.4f}, test_rot_loss:{:.4f}, test_trans_err:{:.4f}, test_rot_err:{:.4f},  time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
+                train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
+            # print()
+
+
+            if args.enable_pruning:
+                trial.report(test_trans_err, train_step_cnt)
+
+                # Handle pruning based on the intermediate value.
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
+
+
         if train_step_cnt % args.snapshot_interval == 0:
             if not isdir(trainroot+'/models/' + file_name):
                 makedirs(trainroot+'/models/'+ file_name)
@@ -409,7 +476,7 @@ def objective(trial, study_name):
     
     if not args.not_write_log:
         wandb.finish()
-    return trans_err
+    return test_trans_err
 
 
 if __name__ == "__main__":
@@ -417,7 +484,7 @@ if __name__ == "__main__":
     args = get_args()
     print('debug_flag: ', args.debug_flag)
 
-    # torch.cuda.set_device(0)
+    torch.cuda.set_device(1)
     
     start_time = time.time()
     
@@ -432,7 +499,7 @@ if __name__ == "__main__":
         print(' \nNew Study\nStudy Name: ')
     else:
         # study_name = 'multicamvo_batch_64_step_50000_optuna_lr_dev3090_Feb_18_2023_03_21_51'
-        study_name = args.load_model_name
+        study_name = args.study_name
         print(' \nResume Study \nStudy Name: ')
 
     print(study_name)
@@ -491,9 +558,9 @@ if __name__ == "__main__":
     storage_name = "sqlite:///{}.db".format(study_name)
 
     if args.load_study == False:
-        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name)
+        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name,sampler=optuna.samplers.RandomSampler())
     else:
-        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name, load_if_exists=True)
+        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name, load_if_exists=True,sampler=optuna.samplers.RandomSampler())
 
     study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
 

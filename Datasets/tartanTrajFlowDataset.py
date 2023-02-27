@@ -267,22 +267,34 @@ class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
 
 
 class MultiTrajFolderDataset(Dataset):
-    def __init__(self, DatasetType, root, transform = None):
+    def __init__(self, DatasetType, root, transform = None,mode = None):
         self.dataroot = root
         self.datasets = []
         self.accmulatedDataSize = [0]
-        self.mode = 'train'
+        self.mode = mode
 
-        scenedirs = '''
-        abandonedfactory        gascola        office         seasonsforest_winter
-        abandonedfactory_night  hospital       office2        soulcity
-        amusement               japanesealley  oldtown        westerndesert
-        carwelding              neighborhood   seasidetown
-        endofworld              ocean          seasonsforest
-        '''
-        scenedirs = scenedirs.replace('\n', '').split()
+        # scenedirs = '''
+        # abandonedfactory        gascola        office         seasonsforest_winter
+        # abandonedfactory_night  hospital       office2        soulcity
+        # amusement               japanesealley  oldtown        westerndesert
+        # carwelding              neighborhood   seasidetown
+        # endofworld              ocean          seasonsforest
+        # '''
+
+        scenedirs = \
+        ['abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
+        'gascola',              'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
+        'office',               'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
+         'soulcity',            'westerndesert',            'endofworld']
+        
+        # scenedirs = scenedirs.replace('\n', '').split()
         if self.mode == 'train':
-            scenedirs = scenedirs[0:10]
+            print('\nLoading Training dataset')
+            scenedirs = scenedirs[0:16]
+        elif self.mode == 'test':
+            scenedirs = scenedirs[16:18]
+            print('\nLoading Testing dataset')
+        
         # print(scenedirs)
         # print('Debugging!!!!')
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
@@ -291,7 +303,8 @@ class MultiTrajFolderDataset(Dataset):
         print('scenedirs = {}'.format(scenedirs))
         for scene in scenedirs:
             print('Loading dataset at {} ...'.format(scene))
-            for level in ['Easy']:
+            for level in ['Easy','Hard']:
+            # for level in ['Easy']:    
                 trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 # trajdirs = ['P000']
                 # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
