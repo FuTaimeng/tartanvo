@@ -13,6 +13,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=2, padding=1, dilation=1):
 def linear(in_planes, out_planes):
     return nn.Sequential(
         nn.Linear(in_planes, out_planes), 
+        # nn.Dropout(p=0.5),
         nn.ReLU(inplace=True)
     )
 
@@ -64,6 +65,16 @@ class VOFlowRes(nn.Module):
             fc4_trans = linear(128, 32)
             fc5_trans = nn.Linear(32, 3)
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
+        elif stereo==2.3:
+            self.fcAB_trans = linear(feat_dim + 10*2*6, 128)
+            self.fcAC_trans = linear(feat_dim, 128)
+            fc1_trans = linear(128*2 , 128)
+            fc2_trans = linear(128, 128)
+            fc3_trans = linear(128, 128)
+            fc4_trans = linear(128, 32)
+            fc5_trans = nn.Linear(32, 3)
+            self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
+       
         else:
             fc1_trans = linear(feat_dim, 128)
             fc2_trans = linear(128, 32)
@@ -198,10 +209,16 @@ class VOFlowRes(nn.Module):
         # x_trans = self.voflow_trans(x_trans)
         # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
         # # np.savetxt("train_multicamvo/temp/trans_out.txt", x_trans.detach().cpu().numpy())
-
-        x_AB_128 = self.fcAB_trans(x_AB)
-        x_AC_128 = self.fcAC_trans(x_AC)
-        x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
+        if self.stereo==2.3:
+            x_AB_ext = torch.cat((x_AB, x_ex), dim=1)
+            x_AB_128 = self.fcAB_trans(x_AB_ext)
+            x_AC_128 = self.fcAC_trans(x_AC)
+            x_trans = torch.cat((x_AC_128, x_AB_128), dim=1)
+        else:
+            x_AB_128 = self.fcAB_trans(x_AB)
+            x_AC_128 = self.fcAC_trans(x_AC)
+            x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
+        
         x_trans = self.voflow_trans(x_trans)
         # assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
 
