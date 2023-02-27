@@ -1,6 +1,5 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, plottraj
-from Datasets.TrajFolderDataset import TrajFolderDatasetPVGO
-from Datasets.transformation import ses2poses_quat, ses2pos_quat
+from Datasets.TrajFolderDataset import TrajFolderDataset, TrajFolderDatasetPVGO
 from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
 from TartanVO import TartanVO
@@ -75,7 +74,7 @@ def get_args():
                         help='use loop closure or not (default: False)')
     parser.add_argument('--use-stop-constraint', action='store_true', default=False,
                         help='use stop constraint or not (default: False)')
-    parser.add_argument('--use-stereo', type=int, default=0,
+    parser.add_argument('--use-stereo', type=float, default=0,
                         help='use stereo (default: 0)')
     parser.add_argument('--device', default='cuda', choices=['cuda', 'cpu'],
                         help='device: cuda cpu (default: cuda)')
@@ -95,27 +94,22 @@ if __name__ == '__main__':
     if args.use_stereo==1:
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=False), 
+        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
                                 DownscaleFlow(), 
                                 Normalize(mean=mean, std=std, keep_old=True), 
                                 ToTensor(),
                                 SqueezeBatchDim()
                             ])
     else:
-        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=False), 
+        transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
                                 DownscaleFlow(), 
                                 Normalize(), 
                                 ToTensor(),
                                 SqueezeBatchDim()
                             ])
 
-    dataset = TrajFolderDatasetPVGO(datadir=args.data_root, datatype=args.data_type,
-                                    transform=transform, start_frame=args.start_frame, end_frame=args.end_frame,
-                                    use_loop_closure=False, use_stop_constraint=False)
-
-    dataloader = DataLoader(dataset, batch_size=len(dataset), shuffle=False, num_workers=args.worker_num)
-
-    dataiter = iter(dataloader)
+    dataset = TrajFolderDataset(datadir=args.data_root, datatype=args.data_type,
+                                transform=transform, start_frame=args.start_frame, end_frame=args.end_frame)
 
     trainroot = args.result_dir
     print('Train root:', trainroot)
@@ -126,11 +120,6 @@ if __name__ == '__main__':
     with open(trainroot+'/args.txt', 'w') as f:
         f.write(str(args))
     np.savetxt(trainroot+'/gt_pose.txt', dataset.poses)
-    np.savetxt(trainroot+'/link.txt', np.array(dataset.links), fmt='%d')
-    try:
-        np.savetxt(trainroot+'/stop_frame.txt', np.array(dataset.stop_frames), fmt='%d')
-    except:
-        pass
 
     if args.use_imu:
         if dataset.has_imu:
@@ -175,8 +164,9 @@ if __name__ == '__main__':
             print("No IMU data! Turn use_imu to False.")
             args.use_imu = False
 
-    tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name, stereo_model_name=args.stereo_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), fix_parts=['flow'])
+    tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, 
+                        pose_model_name=args.pose_model_name, stereo_model_name=args.stereo_model_name,
+                        device=args.device, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), fix_parts=['flow'])
     lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -185,18 +175,33 @@ if __name__ == '__main__':
     elif args.vo_optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
+    frame_cnt = 0
+    current_pose = pp.SE3(np.concatenate([dataset.imu_init['pos'], dataset.imu_init['rot']])).to(args.device)
+
     for train_step_cnt in range(1, args.train_step+1):
-        print('Start {} step {} ...'.format(args.mode, train_step_cnt))
+        
+        st = frame_cnt
+        end = frame_cnt + args.batch_size
+        if end > dataset.num_img:
+            break
+        frame_cnt = end - 1
+        
+        print('Start {} step {}, frame {}-{}'.format(args.mode, train_step_cnt, st, end))
+
         timer.tic('step')
 
         timer.tic('load')
-        try:
-            sample = next(dataiter)
-        except StopIteration:
-            break
-        timer.toc('load')
+            
+        subdataset = TrajFolderDatasetPVGO(datadir=None, datatype=None, transform=transform, loader=dataset.loader, 
+                                            start_frame=st, end_frame=end)
+        dataloader = DataLoader(subdataset, batch_size=len(subdataset.links), shuffle=False, num_workers=args.worker_num)
+        sample = next(iter(dataloader))
 
-        N = dataset.num_img - 1
+        sub_imu_rots = imu_rots[st:end-1]
+        sub_imu_trans = imu_trans[st:end-1]
+        sub_imu_vels = imu_vels[st:end-1]
+
+        timer.toc('load')
 
         timer.tic('vo')
 
@@ -204,19 +209,26 @@ if __name__ == '__main__':
         res = tartanvo.run_batch(sample, is_train)
         motions = res['pose']
 
+        rgb2imu_pose = dataset.rgb2imu_pose.to(args.device)
+        motions = rgb2imu_pose @ pp.se3(motions).Exp() @ rgb2imu_pose.Inv()
+
         timer.toc('vo')
 
-        motions_np = motions.detach().cpu().numpy()
-        poses_np = ses2poses_quat(motions_np[:N])
+        N = subdataset.num_img - 1
+        poses = pp.randn_SE3(N+1).to(args.device)
+        poses[0] = current_pose
+        for i in range(0, N):
+            current_pose = current_pose @ motions[i]
+            poses[i+1] = current_pose
         
         timer.tic('pgo')
 
         if args.use_imu and args.use_pvgo:
-            loss, pgo_poses, pgo_vels = run_pvgo(poses_np, motions, dataset.links, 
-                imu_rots, imu_trans, imu_vels, dataset.imu_init, dataset.rgb_dts, 
-                device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames)
+            loss, pgo_poses, pgo_vels = run_pvgo(poses, motions, subdataset.links, 
+                sub_imu_rots, sub_imu_trans, sub_imu_vels, subdataset.rgb_dts, 
+                device=args.device, loss_weight=args.loss_weight, stop_frames=subdataset.stop_frames)
         else:
-            loss, pgo_poses = run_pgo(poses_np, motions, dataset.links, device=args.device)
+            loss, pgo_poses = run_pgo(poses, motions, subdataset.links, device=args.device)
             
         timer.toc('pgo')
         
@@ -237,8 +249,8 @@ if __name__ == '__main__':
         timer.tic('print')
 
         if train_step_cnt % args.print_interval == 0:
-            motions_gt = sample['motion'].cpu().numpy()
-            R_errs, t_errs = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
+            motions_gt = sample['motion'].numpy()
+            R_errs, t_errs = calc_motion_error(motions_gt, motions.detach().cpu().numpy(), allow_rescale=False)
             print("#%d - loss:%.6f - lr:%.6f - [time] step:%.2f, load:%.2f, vo:%.2f, pgo:%.2f, opt:%.2f" % 
                     (train_step_cnt, torch.mean(loss), lr, timer.last('step'), timer.last('load'), timer.last('vo'), timer.last('pgo'), timer.last('opt')))
             print("\tadj.\tloop\ttot.")
@@ -254,8 +266,8 @@ if __name__ == '__main__':
             if not isdir(traindir):
                 mkdir(traindir)
             
-            np.savetxt(traindir+'/pose.txt', poses_np)
-            np.savetxt(traindir+'/motion.txt', motions_np)
+            np.savetxt(traindir+'/pose.txt', poses.detach().cpu().numpy())
+            np.savetxt(traindir+'/motion.txt', motions.detach().cpu().numpy())
             np.savetxt(traindir+'/pgo_pose.txt', pgo_poses)
             if args.use_imu and args.use_pvgo:
                 np.savetxt(traindir+'/pgo_vel.txt', pgo_vels)

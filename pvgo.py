@@ -111,15 +111,15 @@ class PoseVelGraph(nn.Module):
         return loss
 
 
-def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
+def run_pvgo(nodes, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, dts, 
                 device='cuda:0', radius=1e4, loss_weight=(1,1,1,1), stop_frames=[]):
 
-    data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device)
+    data = PVGO_Dataset(nodes, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, dts, device)
     nodes, vels = data.nodes, data.vels
     edges, poses = data.edges, data.poses
     imu_drots, imu_dtrans, imu_dvels = data.imu_drots, data.imu_dtrans, data.imu_dvels
-    dts, node0, vel0 = data.dts, data.node0, data.vel0
-
+    dts = data.dts
+    
     graph = PoseVelGraph(nodes, vels, device, loss_weight, stop_frames).to(device)
     solver = ppos.Cholesky()
     strategy = ppost.TrustRegion(radius=radius)

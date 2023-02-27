@@ -82,7 +82,7 @@ class TartanVO:
         self.vonet.to(self.device)
 
     def load_model(self, model, modelname):
-        preTrainDict = torch.load(modelname)
+        preTrainDict = torch.load(modelname, map_location='cuda')
         model_dict = model.state_dict()
 
         preTrainDictTemp = {}

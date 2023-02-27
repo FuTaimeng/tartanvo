@@ -20,18 +20,19 @@ python train.py \
     --result-dir train_results/${train_name} \
     --train-name ${train_name} \
     --flow-model-name models/pwc_net.pth.tar \
-    --pose-model-name models/multicamvo_posenet_init_stereo=0.pkl \
-    --batch-size 64 \
+    --pose-model-name models/multicamvo_B32_St100000_optuna_lr_dev3090_Feb_21_2023_01_13_55_B32_lr3_843e-06_posenet_100000.pkl \
+    --batch-size 32 \
     --worker-num 4 \
     --start-frame 0 \
-    --end-frame 50 \
-    --train-step 1 \
+    --end-frame 500 \
+    --train-step 10 \
     --print-interval 1 \
-    --snapshot-interval 100 \
+    --snapshot-interval 1 \
     --lr ${lr} \
     --loss-weight ${loss_weight} \
     --mode train \
     --vo-optimizer ${optm} \
+    --use-stereo 2.2 \
 | tee train_results/${train_name}/log.txt
 
     # --only-backpropagate-loop-edge \jingtong0

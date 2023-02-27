@@ -38,7 +38,7 @@ class TartanAirTrajFolderLoader:
         ############################## load calibrations ######################################################################
         self.intrinsic = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
         self.intrinsic_right = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
-        self.right2left_pose = pp.SE3([0, 0.25, 0,   0, 0, 0, 1])
+        self.right2left_pose = pp.SE3([0, 0.25, 0,   0, 0, 0, 1]).to(dtype=torch.float32)
 
         ############################## load gt poses ######################################################################
         posefile = datadir + '/pose_left.txt'
@@ -68,7 +68,7 @@ class TartanAirTrajFolderLoader:
             # img_fps = 10
             self.rgb2imu_sync = np.arange(0, len(self.rgbfiles)) * 10
 
-            self.rgb2imu_pose = pp.SE3([0, 0, 0,   0, 0, 0, 1])
+            self.rgb2imu_pose = pp.SE3([0, 0, 0,   0, 0, 0, 1]).to(dtype=torch.float32)
 
             if self.poses is not None:
                 init_pos = self.poses[0, :3]
@@ -125,7 +125,7 @@ class EuRoCTrajFolderLoader:
 
         if self.rgbfiles_right is not None:
             T_LR = np.matmul(np.linalg.inv(T_BL), T_BR)
-            self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type)
+            self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type).to(dtype=torch.float32)
         else:
             self.right2left_pose = None
 
@@ -169,7 +169,7 @@ class EuRoCTrajFolderLoader:
                 res = yaml.load(f.read(), Loader=yaml.FullLoader)
                 T_BI = np.array(res['T_BS']['data']).reshape(4, 4)
                 T_IL = np.matmul(np.linalg.inv(T_BI), T_BL)
-                self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type)
+                self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
 
             if self.poses is not None:
                 init_pos = self.poses[0, :3]
@@ -236,11 +236,11 @@ class KITTITrajFolderLoader:
         T_LI = dataset.calib.T_cam2_imu
         T_RI = dataset.calib.T_cam3_imu
         T_LR = np.matmul(T_LI, np.linalg.inv(T_RI))
-        self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type)
+        self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type).to(dtype=torch.float32)
 
         ############################## load gt poses ######################################################################
         T_w_imu = np.array([oxts_frame.T_w_imu for oxts_frame in dataset.oxts])
-        self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type)
+        self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type).to(dtype=torch.float32)
         vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float64)
         self.vels = self.poses.rotation() @ vels_local
         self.poses = self.poses.numpy()
@@ -257,7 +257,7 @@ class KITTITrajFolderLoader:
         self.imu_dts = self.rgb_dts
 
         T_IL = np.linalg.inv(T_LI)
-        self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type)
+        self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
 
         if self.poses is not None:
             init_pos = self.poses[0, :3]
@@ -275,13 +275,14 @@ class KITTITrajFolderLoader:
 
 
 class TrajFolderDataset(Dataset):
-    def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1):
-        if datatype == 'tartanair':
-            loader = TartanAirTrajFolderLoader(datadir)
-        elif datatype == 'euroc':
-            loader = EuRoCTrajFolderLoader(datadir)
-        elif datatype == 'kitti':
-            loader = KITTITrajFolderLoader(datadir)
+    def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1, loader=None):
+        if loader is None:
+            if datatype == 'tartanair':
+                loader = TartanAirTrajFolderLoader(datadir)
+            elif datatype == 'euroc':
+                loader = EuRoCTrajFolderLoader(datadir)
+            elif datatype == 'kitti':
+                loader = KITTITrajFolderLoader(datadir)
 
         if end_frame <= 0:
             end_frame += len(loader.rgbfiles)
@@ -306,12 +307,12 @@ class TrajFolderDataset(Dataset):
         if loader.has_imu:
             self.rgb2imu_sync = loader.rgb2imu_sync[start_frame:end_frame]
             start_imu = self.rgb2imu_sync[0]
-            end_imu = self.rgb2imu_sync[-1]
+            end_imu = self.rgb2imu_sync[-1] + 1
             self.rgb2imu_sync -= start_imu
 
             self.accels = loader.accels[start_imu:end_imu]
             self.gyros = loader.gyros[start_imu:end_imu]
-            self.imu_dts = loader.imu_dts[start_imu:end_imu]
+            self.imu_dts = loader.imu_dts[start_imu:end_imu-1]
             
             self.rgb2imu_pose = loader.rgb2imu_pose
             self.imu_init = loader.imu_init
@@ -324,6 +325,7 @@ class TrajFolderDataset(Dataset):
             self.has_imu = False
 
         self.transform = transform
+        self.loader = loader
 
         self.links = None
         self.num_link = 0
@@ -333,7 +335,7 @@ class TrajFolderDataset(Dataset):
         matrix = pose2motion(SEs, links=self.links)
         self.imu_motions = SEs2ses(matrix).astype(np.float32)
 
-    def calc_motion_with_link(self, links):
+    def calc_motions_by_links(self, links):
         if self.poses is None:
             return None
 
@@ -344,6 +346,37 @@ class TrajFolderDataset(Dataset):
 
     def __len__(self):
         return self.num_link
+
+
+class TrajFolderDatasetPVGO(TrajFolderDataset):
+    def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1, loader=None,
+                    use_loop_closure=False, use_stop_constraint=False):
+
+        super(TrajFolderDatasetPVGO, self).__init__(datadir, datatype, transform, start_frame, end_frame, loader)
+
+        ############################## generate links ######################################################################
+        self.links = []
+        # # [loop closure] gt pose
+        if use_loop_closure and self.poses is not None:
+            loop_min_interval = 100
+            trans_th = np.average([np.linalg.norm(self.poses[i+1, :3] - self.poses[i, :3]) for i in range(len(self.poses)-1)]) * 5
+            self.links.extend(gt_pose_loop_detector(self.poses, loop_min_interval, trans_th, 5))
+        # # [loop closure] bag of word (to do)
+        # self.links = bow_orb_loop_detector(self.rgbfiles, loop_min_interval)
+        # [loop closure] adjancent
+        loop_range = 2
+        loop_interval = 1
+        self.links.extend(adj_loop_detector(self.num_img, loop_range, loop_interval))
+        
+        self.num_link = len(self.links)
+
+        ############################## calc motions ######################################################################
+        self.motions = self.calc_motions_by_links(self.links)
+
+        ############################## pick stop frames ######################################################################
+        self.stop_frames = []
+        if use_stop_constraint and self.vels_world is not None:
+            self.stop_frames = gt_vel_stop_detector(self.vels_world[::imu_mul], 0.02)
 
     def __getitem__(self, idx):
         res = {}
@@ -372,39 +405,11 @@ class TrajFolderDataset(Dataset):
 
         if self.has_imu and self.imu_motions is not None:
             res['imu_motion'] = self.imu_motions[idx]
+
+        if self.right2left_pose != None:
+            res['extrinsic'] = self.right2left_pose.Log()
         
         return res
-
-
-class TrajFolderDatasetPVGO(TrajFolderDataset):
-    def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1,
-                    use_loop_closure=False, use_stop_constraint=False):
-
-        super(TrajFolderDatasetPVGO, self).__init__(datadir, datatype, transform, start_frame, end_frame)
-
-        ############################## generate links ######################################################################
-        self.links = []
-        # # [loop closure] gt pose
-        if use_loop_closure and self.poses is not None:
-            loop_min_interval = 100
-            trans_th = np.average([np.linalg.norm(self.poses[i+1, :3] - self.poses[i, :3]) for i in range(len(self.poses)-1)]) * 5
-            self.links.extend(gt_pose_loop_detector(self.poses, loop_min_interval, trans_th, 5))
-        # # [loop closure] bag of word (to do)
-        # self.links = bow_orb_loop_detector(self.rgbfiles, loop_min_interval)
-        # [loop closure] adjancent
-        loop_range = 2
-        loop_interval = 1
-        self.links.extend(adj_loop_detector(self.num_img, loop_range, loop_interval))
-        
-        self.num_link = len(self.links)
-
-        ############################## calc motions ######################################################################
-        self.motions = self.calc_motion_with_link(self.links)
-
-        ############################## pick stop frames ######################################################################
-        self.stop_frames = []
-        if use_stop_constraint and self.vels_world is not None:
-            self.stop_frames = gt_vel_stop_detector(self.vels_world[::imu_mul], 0.02)
 
 
 class TrajFolderDatasetMultiCam(TrajFolderDataset):
@@ -420,8 +425,8 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         self.num_link = len(self.links)
 
         ############################## calc extrinsics & motions ######################################################################
-        self.motions = self.calc_motion_with_link(self.links[:, (0,2)])
-        self.extrinsics = self.calc_motion_with_link(self.links[:, (0,1)])
+        self.motions = self.calc_motions_by_links(self.links[:, (0,2)])
+        self.extrinsics = self.calc_motions_by_links(self.links[:, (0,1)])
 
     def __getitem__(self, idx):
         res = {}
