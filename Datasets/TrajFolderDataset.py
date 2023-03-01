@@ -43,6 +43,7 @@ class TartanAirTrajFolderLoader:
         ############################## load gt poses ######################################################################
         posefile = datadir + '/pose_left.txt'
         self.poses = np.loadtxt(posefile).astype(np.float32)
+        self.vels = None
 
         ############################## load imu data ######################################################################
         if isdir(datadir + '/imu'):
@@ -300,7 +301,7 @@ class TrajFolderDataset(Dataset):
         self.right2left_pose = loader.right2left_pose
 
         self.poses = loader.poses[start_frame:end_frame]
-        self.vels = loader.vels[start_frame:end_frame]
+        self.vels = loader.vels
         if self.vels is not None:
             self.vels = self.vels[start_frame:end_frame]
 
@@ -388,9 +389,7 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
 
         if self.rgbfiles_right is not None:
             img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_COLOR)
-            img1_r = cv2.imread(self.rgbfiles_right[self.links[idx][1]], cv2.IMREAD_COLOR)
             res['img0_r'] = [img0_r]
-            res['img1_r'] = [img1_r]
             # res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
 
         h, w, _ = img0.shape
@@ -439,7 +438,7 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         res['img0_r'] = [imgB]
 
         h, w, _ = imgA.shape
-        intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)
+        intrinsicLayer = make_intrinsics_layer(w, h, self.intrinsic[0], self.intrinsic[1], self.intrinsic[2], self.intrinsic[3])
         res['intrinsic'] = [intrinsicLayer]
 
         if self.transform:
@@ -469,9 +468,16 @@ class MultiTrajFolderDataset(Dataset):
         self.accmulatedDataSize = [0]
         for folder, datatype in folder_list:
             print('Loading dataset at {} ...'.format(folder))
-            dataset = DatasetType(datadir=folder, datatype=datatype, transform=transform)
-            self.datasets.append(dataset)
-            self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
+            if isinstance(DatasetType, list) or isinstance(DatasetType, tuple):
+                for DS in DatasetType:
+                    dataset = DS(datadir=folder, datatype=datatype, transform=transform)
+                    self.datasets.append(dataset)
+                    self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
+            else:
+                dataset = DatasetType(datadir=folder, datatype=datatype, transform=transform)
+                self.datasets.append(dataset)
+                self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
+
         
         print('Find {} datasets. Have {} frames in total.'.format(len(self.datasets), self.accmulatedDataSize[-1]))
 
