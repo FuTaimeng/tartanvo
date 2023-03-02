@@ -426,9 +426,12 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         super(TrajFolderDatasetMultiCam, self).__init__(datadir, datatype, transform, start_frame, end_frame)
 
         ############################## generate links ######################################################################
-        angle_range = (0, 0.01)
-        # trans_range = (0.1, 0.5)
-        trans_range = (0.0, 0.05)
+        angle_range = (0, 5)
+        trans_range = (0.1, 0.5)
+        
+        # debug
+        # angle_range = (0, 0.01)
+        # trans_range = (0.0, 0.05)
         self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
 
         self.num_link = len(self.links)
@@ -436,7 +439,6 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         ############################## calc extrinsics & motions ######################################################################
         self.motions = self.calc_motions_by_links(self.links[:, (0,2)])
         self.extrinsics = self.calc_motions_by_links(self.links[:, (0,1)])
-        print()
 
     def __getitem__(self, idx):
         res = {}
@@ -539,8 +541,8 @@ class MultiTrajFolderDataset(Dataset):
         # scenedirs = listdir(dataroot)
 
         for scene in scenedirs:
-            # for level in ['Easy','Hard']:
-            for level in ['Easy']:
+            for level in ['Easy','Hard']:
+            # for level in ['Easy']:
                 trajdirs = listdir('{}/{}/{}'.format(self.dataroot, scene, level))
                 # trajdirs = ['P000']
                 for traj in trajdirs:
