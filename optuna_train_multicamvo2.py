@@ -490,12 +490,13 @@ def objective(trial, study_name):
 
                 writer.add_scalar('error/test_trans_err', test_trans_err, train_step_cnt)
 
+
                 if train_step_cnt // args.test_interval % 2 == 0:
                     # sample = next(testdataiter_sext)   
                     writer.add_scalar('error/test_trans_err0', test_trans_err, train_step_cnt)
                     
                     wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
-                           "testing trans err0": test_trans_err, 
+                           "testing trans err": test_trans_err, "testing trans err static": test_trans_err, 
                            "testing rot err": test_rot_err }, step= train_step_cnt)
                     
                 else:
@@ -503,7 +504,7 @@ def objective(trial, study_name):
                     writer.add_scalar('error/test_trans_err1', test_trans_err, train_step_cnt)
 
                     wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
-                           "testing trans err1": test_trans_err, 
+                           "testing trans err": test_trans_err, "testing trans err dynamic": test_trans_err, 
                            "testing rot err": test_rot_err }, step= train_step_cnt)
                 
                 writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
