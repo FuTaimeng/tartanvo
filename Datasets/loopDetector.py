@@ -1,17 +1,34 @@
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
-
-
+import torch
+import pypose as pp
 def is_pose_approximate(pi, pj, trans_th, rot_th):
     Ri = Rotation.from_quat(pi[3:])
     Rj = Rotation.from_quat(pj[3:])
     ti = pi[:3]
     tj = pj[:3]
 
-    delta_angle = np.rad2deg((Ri.inv() * Rj).magnitude())
-    delta_trans = np.linalg.norm(ti - tj)
+    # delta_angle = np.rad2deg((Ri.inv() * Rj).magnitude())
+    # delta_trans = np.linalg.norm(ti - tj)
+    # tij =  tj -ti
 
+    pose_i = pp.SE3(pi)
+    pose_j = pp.SE3(pj)
+    trans = (pose_i.Inv() * pose_j).translation()
+
+    base_line = np.array([0.0000, 0.2500, 0.0000])
+    delta_trans = np.linalg.norm(trans - base_line)
+
+    delta_angle = (pose_i.Inv() * pose_j).rotation().Log().norm()
+
+    if (delta_angle > rot_th[0] and delta_angle < rot_th[1] and
+                delta_trans > trans_th[0] and delta_trans < trans_th[1]) :
+        
+        print('trans:', trans)
+        print('delta_angle:', delta_angle.item())
+        print('delta_trans:',delta_trans)
+        
     try:
         return delta_trans <= trans_th and delta_angle <= rot_th
     except:
@@ -149,10 +166,13 @@ def multicam_frame_selector(poses, trans_range, angle_range):
             pi = poses[i]
             pj = poses[j]
             if is_pose_approximate(pi, pj, trans_range, angle_range):
-                groups.append([i, j, i-1])
+                # print('pi:', pi)
+                # print('pj:', pj)
+                # groups.append([i, j, i-1])
                 groups.append([i, j, i+1])
-                groups.append([j, i, j-1])
-                groups.append([j, i, j+1])
+                # groups.append([j, i, j-1])
+                # groups.append([j, i, j+1])
+                print()
 
     groups = np.array(groups, dtype=int)
     # np.random.shuffle(groups)

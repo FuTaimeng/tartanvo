@@ -22,6 +22,7 @@ import random
 import numpy as np
 import numbers
 import cv2
+import matplotlib.pyplot as plt
 
 # ===== general functions =====
 
@@ -954,6 +955,30 @@ def visrgb(img, mean=None, std=None):
             img[...,k] = img[...,k] * std[k] + mean[k]
     return (img*255).astype(np.uint8)
 
+
+def dataset_intrinsics(dataset='tartanair'):
+    if dataset == 'kitti':
+        focalx, focaly, centerx, centery = 707.0912, 707.0912, 601.8873, 183.1104
+    elif dataset == 'euroc':
+        focalx, focaly, centerx, centery = 458.6539916992, 457.2959899902, 367.2149963379, 248.3750000000
+    elif dataset == 'tartanair':
+        focalx, focaly, centerx, centery = 320.0, 320.0, 320.0, 240.0
+    else:
+        return None
+    return focalx, focaly, centerx, centery
+
+def load_kiiti_intrinsics(filename):
+    '''
+    load intrinsics from kitti intrinsics file
+    '''
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+    cam_intrinsics = lines[2].strip().split(' ')[1:]
+    focalx, focaly, centerx, centery = float(cam_intrinsics[0]), float(cam_intrinsics[5]), float(cam_intrinsics[2]), float(cam_intrinsics[6])
+
+    return focalx, focaly, centerx, centery
+
+
 def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0): 
     """
     Show a optical flow field as the KITTI dataset does.
@@ -1021,6 +1046,22 @@ def save_images(dir, data, prefix='', suffix='', mean=None, std=None):
 
     for i in range(data.shape[0]):
         cv2.imwrite('{}/{}{}{}.png'.format(dir, prefix, i, suffix), data[i])
+
+def plottraj(fname, poses, color):
+    fig = plt.figure(fname)
+    if len(fig.axes) == 0:
+        fig.add_subplot()
+    ax = fig.axes[0]
+    try:
+        for i in range(len(poses)):
+            x = poses[i][:, 0]
+            y = poses[i][:, 1]
+            ax.plot(x, y, '.-', c=color[i])
+    except:
+        x = poses[:, 0]
+        y = poses[:, 1]
+        ax.plot(x, y, '.-', c=color)
+    return fig
 
 # ========= ADJUST CAMERA INTRINSICS =======
 
@@ -1231,6 +1272,55 @@ def per_frame_scale_alignment(gt_motions, est_motions):
     motions_scale[:,:3] = est_motions[:,:3] * scale_gt.reshape(-1,1)
 
     return motions_scale
+
+def plot_traj(gtposes, estposes, vis=False, savefigname=None, title=''):
+    fig = plt.figure(figsize=(4,4))
+    cm = plt.cm.get_cmap('Spectral')
+
+    plt.subplot(111)
+    plt.plot(gtposes[:,0],gtposes[:,1], linestyle='dashed',c='k')
+    if type(estposes) == list:
+        estposes = np.array(estposes)
+    plt.plot(estposes[:, 0], estposes[:, 1],c='#ff7f0e')
+    plt.xlabel('x (m)')
+    plt.ylabel('y (m)')
+    plt.legend(['Ground Truth','TartanVO'])
+    plt.title(title)
+    if savefigname is not None:
+        plt.savefig(savefigname)
+    if vis:
+        plt.show()
+    plt.close(fig)
+
+def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0): 
+    """
+    Show a optical flow field as the KITTI dataset does.
+    Some parts of this function is the transform of the original MATLAB code flow_to_color.m.
+    """
+
+    ang, mag, _ = calculate_angle_distance_from_du_dv( flownp[:, :, 0], flownp[:, :, 1], flagDegree=False )
+
+    # Use Hue, Saturation, Value colour model 
+    hsv = np.zeros( ( ang.shape[0], ang.shape[1], 3 ) , dtype=np.float32)
+
+    am = ang < 0
+    ang[am] = ang[am] + np.pi * 2
+
+    hsv[ :, :, 0 ] = np.remainder( ( ang + angShift ) / (2*np.pi), 1 )
+    hsv[ :, :, 1 ] = mag / maxF * n
+    hsv[ :, :, 2 ] = (n - hsv[:, :, 1])/n
+
+    hsv[:, :, 0] = np.clip( hsv[:, :, 0], 0, 1 ) * hueMax
+    hsv[:, :, 1:3] = np.clip( hsv[:, :, 1:3], 0, 1 ) * 255
+    hsv = hsv.astype(np.uint8)
+
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+    if ( mask is not None ):
+        mask = mask != 255
+        bgr[mask] = np.array([0, 0 ,0], dtype=np.uint8)
+
+    return bgr
 
 if __name__ == '__main__':
     # testflow = np.random.rand(50,30,4).astype(np.float32) * 5
