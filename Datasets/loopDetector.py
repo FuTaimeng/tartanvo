@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 from scipy.spatial.transform import Rotation
-
+# import torch
+# import pypose as pp
 
 def is_pose_approximate(pi, pj, trans_th, rot_th):
     Ri = Rotation.from_quat(pi[3:])
@@ -12,6 +13,22 @@ def is_pose_approximate(pi, pj, trans_th, rot_th):
     delta_angle = np.rad2deg((Ri.inv() * Rj).magnitude())
     delta_trans = np.linalg.norm(ti - tj)
 
+    # pose_i = pp.SE3(pi)
+    # pose_j = pp.SE3(pj)
+    # trans = (pose_i.Inv() * pose_j).translation()
+
+    # base_line = np.array([0.0000, 0.2500, 0.0000])
+    # delta_trans = np.linalg.norm(trans - base_line)
+
+    # delta_angle = (pose_i.Inv() * pose_j).rotation().Log().norm()
+
+    # if (delta_angle > rot_th[0] and delta_angle < rot_th[1] and
+    #             delta_trans > trans_th[0] and delta_trans < trans_th[1]) :
+        
+    #     print('trans:', trans)
+    #     print('delta_angle:', delta_angle.item())
+    #     print('delta_trans:',delta_trans)
+        
     try:
         return delta_trans <= trans_th and delta_angle <= rot_th
     except:
