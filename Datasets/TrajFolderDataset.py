@@ -406,7 +406,7 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
             res['imu_motion'] = self.imu_motions[idx]
 
         if self.right2left_pose != None:
-            res['extrinsic'] = self.right2left_pose.Log()
+            res['extrinsic'] = self.right2left_pose.Log().numpy()
         
         return res
 
@@ -495,7 +495,7 @@ class MultiTrajFolderDataset(Dataset):
         if self.mode == 'train':
             scenedirs = scenedirs[0:10]
 
-        # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
+        # scenedirs = ['abandonedfactory']
         # scenedirs = listdir(dataroot)
 
         for scene in scenedirs:
