@@ -21,3 +21,5 @@ ORBvoc*
 /wandb
 test*
 *.out
+*.png
+*.npy

@@ -14,6 +14,64 @@ from .stopDetector import gt_vel_stop_detector
 from .loopDetector import multicam_frame_selector
 
 
+class TrajFolderDataset(Dataset):
+    """scene flow synthetic dataset. """
+
+    def __init__(self, imgfolder , posefile = None, transform = None, 
+                    focalx = 320.0, focaly = 320.0, centerx = 320.0, centery = 240.0, verbose = True):
+        
+        files = listdir(imgfolder)
+        self.rgbfiles = [(imgfolder +'/'+ ff) for ff in files if (ff.endswith('.png') or ff.endswith('.jpg'))]
+        self.rgbfiles.sort()
+        self.imgfolder = imgfolder
+        if verbose:
+            print('Find {} image files in {}'.format(len(self.rgbfiles), imgfolder))
+
+        if posefile is not None and posefile!="":
+            poselist = np.loadtxt(posefile).astype(np.float32)
+            assert(poselist.shape[1]==7) # position + quaternion
+            poses = pos_quats2SEs(poselist)
+            self.matrix = pose2motion(poses)
+            self.motions     = SEs2ses(self.matrix).astype(np.float32)
+            # self.motions = self.motions / self.pose_std
+            assert(len(self.motions) == len(self.rgbfiles)) - 1
+        else:
+            self.motions = None
+
+        self.N = len(self.rgbfiles) - 1
+
+        # self.N = len(self.lines)
+        self.transform = transform
+        self.focalx = focalx
+        self.focaly = focaly
+        self.centerx = centerx
+        self.centery = centery
+
+    def __len__(self):
+        return self.N
+
+    def __getitem__(self, idx):
+        imgfile1 = self.rgbfiles[idx].strip()
+        imgfile2 = self.rgbfiles[idx+1].strip()
+        img1 = cv2.imread(imgfile1)
+        img2 = cv2.imread(imgfile2)
+
+        res = {'img1': img1, 'img2': img2 }
+
+        h, w, _ = img1.shape
+        intrinsicLayer = make_intrinsics_layer(w, h, self.focalx, self.focaly, self.centerx, self.centery)
+        res['intrinsic'] = intrinsicLayer
+
+        if self.transform:
+            res = self.transform(res)
+
+        if self.motions is None:
+            return res
+        else:
+            res['motion'] = self.motions[idx]
+            return res
+
+
 class TrajFolderDatasetBase(Dataset):
     """scene flow synthetic dataset. """
 
@@ -209,16 +267,20 @@ class TrajFolderDatasetPVGO(TrajFolderDatasetBase):
 class TrajFolderDatasetMultiCam(TrajFolderDatasetBase):
     def __init__(self, imgfolder, imgfolder_right = None, posefile = None, transform = None, 
                     sample_step = 1, start_frame=0, end_frame=-1,
-                    imudir = None, img_fps = 10.0, imu_mul = 10):
+                    imudir = None, img_fps = 10.0, imu_mul = 10,
+                    use_fix_intervel_links = False):
 
         super(TrajFolderDatasetMultiCam, self).__init__(imgfolder, imgfolder_right, posefile, transform,
                                                         sample_step, start_frame, end_frame,
                                                         imudir, img_fps, imu_mul)
 
         ############################## generate links ######################################################################
-        angle_range = (0, 5)
-        trans_range = (0.1, 0.5)
-        self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
+        if use_fix_intervel_links:
+            self.links = np.array([[i, i+2, i+1] for i in range(len(self.rgbfiles)-5)])
+        else:
+            angle_range = (0, 5)
+            trans_range = (0.1, 0.5)
+            self.links = multicam_frame_selector(self.poses, trans_range, angle_range)
 
         self.num_link = len(self.links)
 
@@ -306,6 +368,7 @@ class MultiTrajFolderDataset(Dataset):
             for level in ['Easy','Hard']:
             # for level in ['Easy']:    
                 trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
+                trajdirs.sort()
                 # trajdirs = ['P000']
                 # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 for traj in trajdirs:

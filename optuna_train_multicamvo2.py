@@ -277,7 +277,7 @@ def objective(trial, study_name):
     trainDataloader_sext = DataLoader(trainDataset_sext, batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
     trainDataloader_dext  = DataLoader(trainDataset_dext,  batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
 
-    print('test batch size:', 1)
+    print('test batch size:', args.batch_size)
     testDataloader_sext  = DataLoader(testDataset_sext,  batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
     testDataloader_dext   = DataLoader(testDataset_dext,   batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
 
@@ -543,7 +543,7 @@ if __name__ == "__main__":
     args = get_args()
     print('debug_flag: ', args.debug_flag)
 
-    torch.cuda.set_device(1)
+    torch.cuda.set_device(0)
     
     start_time = time.time()
     
