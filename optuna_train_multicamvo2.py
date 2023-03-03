@@ -160,7 +160,16 @@ def get_args():
     return args
 
 
-
+# define a dataloader iterator
+def get_iterator(args, mode='train', DatasetType=None,transform = None,batch_size = None):
+    if batch_size is None:
+        batch_size = args.batch_size
+    
+    Dataset  = MultiTrajFolderDataset(DatasetType=DatasetType,
+                                        dataroot=args.data_root, transform=transform, mode = mode)
+    Dataloader   = DataLoader(Dataset,   batch_size=batch_size, shuffle=True,num_workers=args.worker_num)
+    dataiter  = iter(Dataloader)
+    return dataiter
 
 
 def objective(trial, study_name):
@@ -194,7 +203,18 @@ def objective(trial, study_name):
     lr_rate =  "{:.3e}".format(lr).replace(".","_")
     batchsz_num = str(args.batch_size)
 
-    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate
+    # optimizer
+    
+    if "optimizer" in args.tuning_val:
+        print("optimizer tuning")
+        args.vo_optimizer = trial.suggest_categorical("optimizer", ["adam", "rmsprop", "sgd"])
+    else:
+        print("optimizer not tuning")
+        # args.vo_optimizer = "adam"
+
+    print("optimizer:", args.vo_optimizer)
+
+    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate + "_opt_"+args.vo_optimizer
 
     print(' \n\n\nExp Name: ')
     print(file_name)
@@ -251,47 +271,14 @@ def objective(trial, study_name):
     transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    # dataset = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetMultiCam, TrajFolderDatasetPVGO),
-    #                                         dataroot=args.data_root, transform=transform, mode=args.mode)
+
+    # traindataiter_mix = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
+    traindataiter_sext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
+    traindataiter_dext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
     
-    trainDataset_sext = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetPVGO),
-                                            dataroot=args.data_root, transform=transform, mode = 'train')
-    
-    testDataset_sext  = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetPVGO),
-                                            dataroot=args.data_root, transform=transform, mode = 'test')
-  
-    
-  
-    trainDataset_dext = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetMultiCam ),
-                                            dataroot=args.data_root, transform=transform, mode = 'train')
-    
-    testDataset_dext  = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetMultiCam ),
-                                            dataroot=args.data_root, transform=transform, mode = 'test')
-
-
-    # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
-    
-    # trainDataloader = DataLoader(trainDataset, batch_size=2, shuffle=False,num_workers=1)
-    # testDataloader  = DataLoader(testDataset,  batch_size=2, shuffle=False,num_workers=1)
-
-    trainDataloader_sext = DataLoader(trainDataset_sext, batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
-    trainDataloader_dext  = DataLoader(trainDataset_dext,  batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
-
-    print('test batch size:', args.batch_size)
-    testDataloader_sext  = DataLoader(testDataset_sext,  batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
-    testDataloader_dext   = DataLoader(testDataset_dext,   batch_size=args.batch_size, shuffle=True,num_workers=args.worker_num)
-
-
-    # debug dataset
-    # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
-    # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
-    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
-    # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
-
-    traindataiter_sext = iter(trainDataloader_sext)
-    traindataiter_dext = iter(trainDataloader_dext)
-    testdataiter_sext  = iter(testDataloader_sext)
-    testdataiter_dext  = iter(testDataloader_dext)
+    # testdataiter_mix = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
+    testdataiter_sext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
+    testdataiter_dext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
 
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
@@ -319,6 +306,10 @@ def objective(trial, study_name):
         start_time = time.time()
         timer.tic('load')
         try:
+
+            '''
+            sample = next(traindataiter_mix)
+            '''
             if train_step_cnt % 2 == 0:
                 # large and failed dataset
                 sample = next(traindataiter_sext)
@@ -336,8 +327,13 @@ def objective(trial, study_name):
 
         except StopIteration:
             print('Finish {} step {} ...'.format(args.mode, train_step_cnt))
-            traindataiter = iter(trainDataloader_sext)
-            sample = next(traindataiter)
+
+            traindataiter_sext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
+            traindataiter_dext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
+
+            # traindataiter = iter(trainDataloader_sext)
+            sample = next(traindataiter_sext)
+
         timer.toc('load')
 
         is_train = args.mode.startswith('train')
@@ -386,9 +382,10 @@ def objective(trial, study_name):
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
                 wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, "training trans err": trans_err, "training rot err": rot_err }, step= train_step_cnt)
 
-            print('step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
-                train_step_cnt, tot_loss,trans_loss,        rot_loss,        trans_err,          rot_err,         lr,        timer.last('step'),timer.last('load'),infer_time, bp_time)  )
-            
+
+            formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print('[{}] TRAIN: step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
+                formatted_date, train_step_cnt, tot_loss,trans_loss,        rot_loss,        trans_err,          rot_err,         lr,        timer.last('step'),timer.last('load'),infer_time, bp_time)  )
             
             # sample_last = sample
             # res_last = res
@@ -443,8 +440,10 @@ def objective(trial, study_name):
                 load_time =  load_time_inst - start_time
 
             except StopIteration:
-                testdataiter = iter(testDataloader_sext)
-                sample = next(testdataiter)
+                print('Testing Set Finish {} step {} ...'.format(args.mode, train_step_cnt))
+                testdataiter_sext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
+                testdataiter_dext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
+                sample = next(testdataiter_sext)
 
             res = tartanvo.run_batch(sample, is_train = True)
             motion = res['pose']
@@ -488,6 +487,15 @@ def objective(trial, study_name):
                            "testing trans err": test_trans_err, "testing trans err static": test_trans_err, 
                            "testing rot err": test_rot_err }, step= train_step_cnt)
                     
+                    test_trans_static_err = test_trans_err
+                    return_value_list.append(test_trans_static_err)
+                    if args.enable_pruning:
+                        trial.report(test_trans_static_err, train_step_cnt)
+
+                        # Handle pruning based on the intermediate value.
+                        if trial.should_prune():
+                            raise optuna.exceptions.TrialPruned()
+                        
                 else:
                     # sample = next(testdataiter_dext)
                     writer.add_scalar('error/test_trans_err1', test_trans_err, train_step_cnt)
@@ -497,23 +505,18 @@ def objective(trial, study_name):
                            "testing rot err": test_rot_err }, step= train_step_cnt)
                 
                 writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
-                
                 writer.add_scalar('time/test_infer_time', infer_time, train_step_cnt)
                 
 
-
-            print('TEST: step:{:07d}, loss:{:.4f}, test_trans_loss:{:.4f}, test_rot_loss:{:.4f}, test_trans_err:{:.4f}, test_rot_err:{:.4f},  time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
-                train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
+            formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # print('[{}] TEST : step:{:07d}, loss:{:.4f}, test_trans_loss:{:.4f}, test_rot_loss:{:.4f}, test_trans_err:{:.4f}, test_rot_err:{:.4f},  time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
+            #     train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
+            print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
+                formatted_date,train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
+            
             # print()
 
-            return_value_list.append(test_trans_err)
 
-            if args.enable_pruning:
-                trial.report(test_trans_err, train_step_cnt)
-
-                # Handle pruning based on the intermediate value.
-                if trial.should_prune():
-                    raise optuna.exceptions.TrialPruned()
 
         # if train_step_cnt % args.val_interval == 0:
         #     tartanvo.validate_model_result(  train_step_cnt=train_step_cnt, writer = writer)

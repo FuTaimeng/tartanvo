@@ -39,6 +39,8 @@ class TartanAirTrajFolderLoader:
         self.intrinsic = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
         self.intrinsic_right = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
         self.right2left_pose = pp.SE3([0, 0.25, 0,   0, 0, 0, 1]).to(dtype=torch.float32)
+        # self.right2left_pose = np.array([0, 0.25, 0,   0, 0, 0, 1], dtype=np.float32)
+
 
         ############################## load gt poses ######################################################################
         posefile = datadir + '/pose_left.txt'
@@ -415,8 +417,9 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
             res['imu_motion'] = self.imu_motions[idx]
 
         if self.right2left_pose != None:
-            res['extrinsic'] = self.right2left_pose.Log()
-        
+            # res['extrinsic'] = self.right2left_pose.Log()
+            res['extrinsic'] = self.right2left_pose.Log().numpy()
+            # res['extrinsic'] = self.right2left_pose.Log().tensor()
         return res
 
 
@@ -474,7 +477,8 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
 
         if self.extrinsics is not None:
             res['extrinsic'] = self.extrinsics[idx]
-        
+            # transform to tensor
+            # res['extrinsic'] = torch.from_numpy(self.extrinsics[idx])
         return res
 
 
@@ -526,22 +530,27 @@ class MultiTrajFolderDataset(Dataset):
         'gascola',              'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
         'office',               'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
          'soulcity',            'westerndesert',            'endofworld']
-        
+        set_level = ['Easy', 'Hard']
+
         if self.mode == 'train':
             print('\nLoading Training dataset')
             scenedirs = scenedirs[0:16]
         elif self.mode == 'test':
             scenedirs = scenedirs[16:18]
             print('\nLoading Testing dataset')
-
+        
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
-        # print('\n===============================')
-        # print('      Debugging!!!!!!')
-        # scenedirs = ['abandonedfactory']
-        # scenedirs = listdir(dataroot)
-
+        
+        print('===============================')
+        print('      Debugging!!!!!!')
+        scenedirs = ['abandonedfactory']
+        level_set  = ['Easy']
+        print('scenedirs: ', scenedirs)
+        print('level_set: ', level_set)
+        print('===============================\n')
+        
         for scene in scenedirs:
-            for level in ['Easy','Hard']:
+            for level in level_set:
             # for level in ['Easy']:
                 trajdirs = listdir('{}/{}/{}'.format(self.dataroot, scene, level))
                 # trajdirs = ['P000']
