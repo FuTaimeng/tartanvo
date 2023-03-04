@@ -18,6 +18,7 @@ import torch
 # import torch
 import math
 import random
+import matplotlib.pyplot as plt
 # from PIL import Image, ImageOps
 import numpy as np
 import numbers
@@ -1021,6 +1022,22 @@ def save_images(dir, data, prefix='', suffix='', mean=None, std=None):
 
     for i in range(data.shape[0]):
         cv2.imwrite('{}/{}{}{}.png'.format(dir, prefix, i, suffix), data[i])
+
+def plottraj(fname, poses, color):
+    fig = plt.figure(fname)
+    if len(fig.axes) == 0:
+        fig.add_subplot()
+    ax = fig.axes[0]
+    try:
+        for i in range(len(poses)):
+            x = poses[i][:, 0]
+            y = poses[i][:, 1]
+            ax.plot(x, y, '.-', c=color[i])
+    except:
+        x = poses[:, 0]
+        y = poses[:, 1]
+        ax.plot(x, y, '.-', c=color)
+    return fig
 
 # ========= ADJUST CAMERA INTRINSICS =======
 

@@ -1,5 +1,5 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
-from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
+from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset, TrajFolderDatasetPVGO
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
@@ -45,8 +45,6 @@ def get_args():
                         help='name of pretrained pose model (default: "")')
     parser.add_argument('--vo-model-name', default='',
                         help='name of pretrained vo model. if provided, this will override the other seperated models (default: "")')
-    parser.add_argument('--save-flow', action='store_true', default=False,
-                        help='save optical flow (default: False)')
     parser.add_argument('--train-step', type=int, default=1000000,
                     help='number of interactions in total (default: 1000000)')
     parser.add_argument('--lr', type=float, default=1e-4,
@@ -63,10 +61,8 @@ def get_args():
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
                         help='root directory of results (default: "")')
-    parser.add_argument('--device', default='cuda',
-                        help='device (default: "cuda")')
-    parser.add_argument('--mode', default='train-all', choices=['test', 'train-all'],
-                        help='running mode: test, train-all (default: train-all)')
+    parser.add_argument('--mode', default='train', choices=['test', 'train'],
+                        help='running mode: test, train (default: train)')
     parser.add_argument('--vo-optimizer', default='adam', choices=['adam', 'rmsprop', 'sgd'],
                         help='VO optimizer: adam, rmsprop, sgd (default: adam)')
     parser.add_argument('--debug-flag', default='0',
@@ -88,6 +84,8 @@ def get_args():
                                 [2.2] multicam sep feat encoder')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
+    parser.add_argument('--device', default='cuda', choices=['cuda', 'cpu'],
+                        help='device: cuda cpu (default: cuda)')
 
     args = parser.parse_args()
 
@@ -136,24 +134,24 @@ if __name__ == '__main__':
     transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    trainDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                            root=args.data_root, transform=transform)
-    trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=True)
+    dataset = MultiTrajFolderDataset(DatasetType=(TrajFolderDatasetMultiCam, TrajFolderDatasetPVGO),
+                                            dataroot=args.data_root, transform=transform, mode=args.mode)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
 
     # debug dataset
     # data_dir = args.data_root + '/abandonedfactory/Easy/P000'
-    # trainDataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
-    #                                             sample_step = 1, start_frame=0, end_frame=50, use_fixed_intervel_links=True)
-    # trainDataloader = DataLoader(trainDataset, batch_size=args.batch_size, shuffle=False)
+    # dataset = TrajFolderDatasetMultiCam(data_dir+'/image_left', posefile=data_dir+'/pose_left.txt', transform = transform, 
+    #                                             sample_step = 1, start_frame=0, end_frame=-1)
+    # dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.worker_num)
 
-    dataiter = iter(trainDataloader)
+    dataiter = iter(dataloader)
 
-    # all_frames = trainDataset.list_all_frames()
+    # all_frames = dataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
+                        device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
     lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -168,11 +166,13 @@ if __name__ == '__main__':
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
 
+        timer.tic('load')
         try:
             sample = next(dataiter)
         except StopIteration:
-            dataiter = iter(trainDataloader)
+            dataiter = iter(dataloader)
             sample = next(dataiter)
+        timer.toc('load')
 
         is_train = args.mode.startswith('train')
         res = tartanvo.run_batch(sample, is_train)
@@ -204,8 +204,9 @@ if __name__ == '__main__':
             writer.add_scalar('trans_err', trans_err, train_step_cnt)
             writer.add_scalar('rot_err', rot_err, train_step_cnt)
             writer.add_scalar('time', timer.last('step'), train_step_cnt)
-            print('step:{}, loss:{}, trans_err:{}, rot_err:{}, scale_err:{}, time:{}'.format(
-                train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')))
+            writer.add_scalar('load_time', timer.last('load'), train_step_cnt)
+            print('step:{}, loss:{}, trans_err:{}, rot_err:{}, time:{}, data_time:{}'.format(
+                train_step_cnt, tot_loss, trans_err, rot_err, timer.last('step'), timer.last('load')))
             
             if args.debug_flag != '':
                 if not isdir(trainroot+'/debug'):
@@ -214,7 +215,7 @@ if __name__ == '__main__':
                 mkdir(debugdir)
 
             if '0' in args.debug_flag:
-                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
+                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step'), timer.last('load')])
                 np.savetxt(debugdir+'/info.txt', info)
 
             if '1' in args.debug_flag:
