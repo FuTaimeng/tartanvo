@@ -2,6 +2,9 @@ import numpy as np
 #import cv2
 #import pyrr
 from scipy.spatial.transform import Rotation as R
+import torch 
+from torch.nn.functional import normalize
+import pypose as pp
 
 def line2mat(line_data):
     mat = np.eye(4)
@@ -227,3 +230,20 @@ def tartan2kitti(traj):
         new_traj.append(ttt[:3,:].reshape(12))
         
     return np.array(new_traj)
+
+
+def SE32ws(pose_output):
+
+    
+    pose_output = pp.SE3(pose_output)
+    # trans
+    output_trans = pose_output.translation()
+    output_trans = normalize(output_trans)
+
+    # rot
+    # get so3
+    output_so3 =  pose_output.rotation().Log() 
+    
+    pose_ws = torch.cat((output_trans.data, output_so3.data),dim = 1)
+
+    return pose_ws.data.cpu().detach().numpy() ,output_trans.data.cpu().detach().numpy(), pose_ws.data.cpu().detach().numpy()

@@ -348,7 +348,8 @@ class MultiTrajFolderDataset(Dataset):
         'gascola',              'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
         'office',               'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
          'soulcity',            'westerndesert',            'endofworld']
-        
+        level_set  = ['Easy', 'Hard']
+
         # scenedirs = scenedirs.replace('\n', '').split()
         if self.mode == 'train':
             print('\nLoading Training dataset')
@@ -361,16 +362,14 @@ class MultiTrajFolderDataset(Dataset):
         # print('Debugging!!!!')
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         # scenedirs = ['abandonedfactory']
-        # scenedirs = listdir(root)
+        # level_set  = ['Easy']
         print('scenedirs = {}'.format(scenedirs))
         for scene in scenedirs:
             print('Loading dataset at {} ...'.format(scene))
-            for level in ['Easy','Hard']:
-            # for level in ['Easy']:    
+            for level in level_set:    
                 trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 trajdirs.sort()
                 # trajdirs = ['P000']
-                # trajdirs = listdir('{}/{}/{}'.format(root, scene, level))
                 for traj in trajdirs:
                     if len(traj)==4 and traj.startswith('P0'):
                         folder = '{}/{}/{}/{}'.format(root, scene, level, traj)
