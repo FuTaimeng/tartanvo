@@ -252,6 +252,14 @@ def objective(trial, study_name):
     else:
         writer = None
 
+    print('\n\n\n====================================================================================================================================================================================')
+    print('             Sript Content: ')
+
+    with open('optuna_strain_multicamvo.sh', 'r') as file:
+        print(file.read())
+    print('====================================================================================================================================================================================')
+    print('\n\n\n')
+
     # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
     #                         DownscaleFlow(), 
     #                         Normalize(), 
