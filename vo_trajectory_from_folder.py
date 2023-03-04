@@ -3,13 +3,15 @@ from Datasets.utils import ToTensor, Compose, CropCenter, dataset_intrinsics, Do
 from Datasets.tartanTrajFlowDataset import TrajFolderDataset
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 from evaluator.tartanair_evaluator import TartanAirEvaluator
-from TartanVO import TartanVO
+
+# from TartanVO import TartanVO
 
 import argparse
 import numpy as np
 import cv2
 from os import mkdir
 from os.path import isdir
+import pickle
 
 def get_args():
     parser = argparse.ArgumentParser(description='HRL')
@@ -47,6 +49,14 @@ def get_args():
 
     return args
 
+
+def save_args(filename, *args):
+    with open(filename, 'wb') as f:
+        pickle.dump(args, f)
+        
+def load_args(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
 
 if __name__ == '__main__':
     args = get_args()
