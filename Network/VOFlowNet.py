@@ -39,7 +39,7 @@ class BasicBlock(nn.Module):
         return F.relu(out, inplace=True)
 
 class VOFlowRes(nn.Module):
-    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=()):
+    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=(), sep_feat=True,trunk_value = 1e-1):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
@@ -47,22 +47,26 @@ class VOFlowRes(nn.Module):
         self.config = config
         self.stereo = stereo
         self.uncertainty = uncertainty
+        self.sep_feat = sep_feat
+        # set a cut value
+        self.trunk_value = trunk_value
 
         self.feat_net, feat_dim = self.__feature_embedding()
-        if stereo==2.2:
+        if sep_feat:
             self.feat_net2, _ = self.__feature_embedding()
-
-        # if stereo==2.4:
-        #     scale = self.feat_net2* 1/self.feat_net
-
+        # translation with scale prediction
         if stereo==2.1 or stereo==2.2:
-            feat_dim_trans = feat_dim*2 + 10*2*6
-            # fc1_trans = linear(feat_dim_trans, 256)
-            # fc2_trans = linear(256, 32)
-            # fc3_trans = nn.Linear(32, 3)
             self.fcAB_trans = linear(feat_dim, 128)
             self.fcAC_trans = linear(feat_dim, 128)
-            fc1_trans = linear(128*2 + 10*2*6, 128)
+            # # nerf encoding
+            # fc1_trans = linear(128*2 + 10*2*6, 128)
+            # nerf encoding with only trans scale and rotation information
+            fc1_trans = linear(128*2 + 10*2*4, 128)
+            # nerf encoding with only trans scale information
+            # fc1_trans = linear(128*2 + 10*2, 128)
+            
+            # mlp encoding
+            # fc1_trans = linear(128*2 + 64, 128)
             fc2_trans = linear(128, 128)
             fc3_trans = linear(128, 128)
             fc4_trans = linear(128, 32)
@@ -77,9 +81,17 @@ class VOFlowRes(nn.Module):
             # nn.init.kaiming_normal_(fc4_trans[0].weight)
             # nn.init.kaiming_normal_(fc5_trans.weight)
 
-            
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
+            # mlp encoding
+            fc1_ext = linear(6 , 128)
+            fc2_ext = linear(128, 64)
+            # self.extrinsic_encode = nn.Sequential(fc1_ext, fc2_ext)
+
+            # nerf encoding
+            fc3_ext = linear(128, 10*2*6)
+            self.extrinsic_encode = nn.Sequential(fc1_ext, fc2_ext, fc3_ext)
         elif stereo==2.3:
+            # combine extrinsic before feature network
             self.fcAB_trans = linear(feat_dim + 10*2*6, 128)
             self.fcAC_trans = linear(feat_dim, 128)
             fc1_trans = linear(128*2 , 128)
@@ -88,12 +100,34 @@ class VOFlowRes(nn.Module):
             fc4_trans = linear(128, 32)
             fc5_trans = nn.Linear(32, 3)
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
-       
+       # scale prediction
+        elif stereo==3:
+            feat_dim_scale = feat_dim*2 + 10*2*6
+            self.fcAB_scale = linear(feat_dim, 128)
+            self.fcAC_scale = linear(feat_dim, 128)
+            fc1_scale = linear(128*2 + 10*2*6, 128)
+            fc2_scale = linear(128, 128)
+            fc3_scale = linear(128, 128)
+            fc4_scale = linear(128, 32)
+            fc5_scale = nn.Linear(32, 1)
+            self.voflow_scale = nn.Sequential(fc1_scale, fc2_scale, fc3_scale, fc4_scale, fc5_scale)
+
         else:
             fc1_trans = linear(feat_dim, 128)
             fc2_trans = linear(128, 32)
             fc3_trans = nn.Linear(32, 3)
             self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans)
+
+        # if stereo==3.2:
+        #     self.fcAB_scale = linear(feat_dim, 128)
+        #     self.fcAC_scale = linear(feat_dim, 128)
+        #     fc1_scale = linear(128*2 + 10*2*6, 128)
+        #     fc2_scale = linear(128, 128)
+        #     fc3_scale = linear(128, 128)
+        #     fc4_scale = linear(128, 32)
+        #     fc5_scale = nn.Linear(32, 1)
+        #     self.voflow_scale = nn.Sequential(fc1_scale, fc2_scale, fc3_scale, fc4_scale, fc5_scale)
+
 
         fc1_rot = linear(feat_dim, 128)
         fc2_rot = linear(128, 32)
@@ -102,12 +136,20 @@ class VOFlowRes(nn.Module):
 
         if "feat" in fix_parts:
             self.fix_param(self.feat_net)
-        if "feat2" in fix_parts and stereo==2.2:
+        if "feat2" in fix_parts and sep_feat:
             self.fix_param(self.feat_net2)
         if "rot" in fix_parts:
             self.fix_param(self.voflow_rot)
         if "trans" in fix_parts:
+            # if stereo==2:
+            if self.stereo==2.1 or self.stereo==2.2:
+                self.fix_parts(self.fcAB_trans)
+                self.fix_parts(self.fcAC_trans)
             self.fix_param(self.voflow_trans)
+        if "scale" in fix_parts and stereo==3:
+            self.fix_parts(self.fcAB_scale)
+            self.fix_parts(self.fcAC_scale)
+            self.fix_param(self.voflow_scale)
 
 
     def fix_param(self, model):
@@ -184,10 +226,17 @@ class VOFlowRes(nn.Module):
         y = c.view(1, -1, 1) * x.unsqueeze(1)
         z = torch.cat([torch.sin(y), torch.cos(y)], dim=1).view(x.shape[0], -1)
         return z
+    
+    def __encode_pose_mlp(self, x):
+        return self.extrinsic_encode(x)
 
     def forward(self, x, extrinsic=None):
         if self.stereo==2.1 or self.stereo==2.2:
             return self.forward_multicam(x, extrinsic)
+        elif self.stereo==3:
+            return self.forward_3(x, extrinsic)
+        elif self.stereo==3.2:
+            return self.forward_3_2(x, extrinsic)
         else:
             return self.forward_(x)
 
@@ -215,7 +264,15 @@ class VOFlowRes(nn.Module):
         x_AB = x_AB.view(x_AB.shape[0], -1)
         x_AC = x_AC.view(x_AC.shape[0], -1)
 
-        x_ex = self.__encode_pose(extrinsic, L=10)
+        # assume tensor is a 32x6 tensor
+        trans = extrinsic[:, :3]  # extract the first 3 elements of each row
+        scale = torch.linalg.norm(trans, dim=1, keepdim=True)  # calculate the norms of the extracted vectors
+        # nerf encoding with only trans scale and rotation information
+        extrinsic_compress = torch.cat((scale, extrinsic[:, 3:]), dim=1)  # concatenate the normalized vectors with the last 3 elements of each row
+        # nerf encoding with only trans scale information
+        # extrinsic_compress = scale
+        x_ex = self.__encode_pose(extrinsic_compress, L=10)
+        # x_ex = self.__encode_pose_mlp(extrinsic)
 
         # x_trans = torch.cat((x_AC, x_AB, x_ex), dim=1)
         # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
@@ -239,3 +296,60 @@ class VOFlowRes(nn.Module):
         x_rot = self.voflow_rot(x_AC)
 
         return torch.cat((x_trans, x_rot), dim=1)
+
+    def forward_3(self, x, extrinsic):
+        x_AB = x[:, (0,1, 4,5), ...]
+        x_AC = x[:, (2,3, 4,5), ...]
+
+        if self.sep_feat:
+            x_AB = self.feat_net2(x_AB)
+        else:
+            x_AB = self.feat_net(x_AB)
+        x_AC = self.feat_net(x_AC)
+
+        x_AB = x_AB.view(x_AB.shape[0], -1)
+        x_AC = x_AC.view(x_AC.shape[0], -1)
+
+        x_ex = self.__encode_pose(extrinsic, L=10)
+
+        x_AB_128 = self.fcAB_scale(x_AB)
+        x_AC_128 = self.fcAC_scale(x_AC)
+        x_scale = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
+        x_scale = self.voflow_scale(x_scale).view(-1, 1)
+
+        x_trans = self.voflow_trans(x_AC)
+        x_rot = self.voflow_rot(x_AC)
+
+        return torch.cat((x_trans, x_rot, x_scale), dim=1)
+    
+    # mathmatical model to predict the scale
+    def forward_3_2(self, x, extrinsic):
+        # L to R
+        x_AB = x[:, (0,1, 4,5), ...]
+        x_AB_flow = x[:, (0,1), ...]
+
+        # L_t to L_t+1
+        x_AC = x[:, (2,3, 4,5), ...]
+        x_AC_flow = x[:, (2,3), ...]
+
+        if self.sep_feat:
+            x_AB = self.feat_net2(x_AB)
+        else:
+            x_AB = self.feat_net(x_AB)
+        x_AC = self.feat_net(x_AC)
+
+        x_AB = x_AB.view(x_AB.shape[0], -1)
+        x_AC = x_AC.view(x_AC.shape[0], -1)
+        x_trans = self.voflow_trans(x_AC)
+        x_rot = self.voflow_rot(x_AC)
+
+
+        flow_scale = torch.abs( x_AC_flow/torch.max(x_AB_flow, torch.tensor(self.trunk_value)) )
+        flow_scale_factor = flow_scale.norm(dim=1).mean(dim=(1,2)).view(-1, 1)  
+        # flow_scale_factor = torch.mean(flow_scale.norm(dim=1), dim=(1,2)).view(-1, 1)
+
+        ABscale = torch.norm(extrinsic[:,0:3], dim=1).view(-1, 1) 
+        motion_scale = torch.mul(flow_scale_factor, ABscale)
+        
+
+        return torch.cat((x_trans, x_rot, motion_scale), dim=1)

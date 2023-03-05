@@ -112,12 +112,12 @@ def get_args():
                         help='similar with random-crop but cover contineous intrinsic values (default: 0.0)')
     parser.add_argument('--hsv-rand', type=float, default=0.0,
                         help='augment rand-hsv by adding different hsv to a set of images (default: 0.0)')
-    parser.add_argument('--use-stereo', type=float, default=0, 
-                        help='stereo mode (default: 0) \
-                                [0] monocular \
+    parser.add_argument('--use-stereo', type=float, default=2.2, 
+                        help='stereo mode (default: 2.2) \
                                 [1] stereo disp \
                                 [2.1] multicam single feat endocer \
-                                [2.2] multicam sep feat encoder')
+                                [2.2] multicam sep feat encoder \
+                                [3] multicam standalone scale')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
 
@@ -152,7 +152,12 @@ def get_args():
                         help='lower bound of learning rate')
     parser.add_argument('--lr-ub', type=float, default=1e-6,
                         help='upper bound of learning rate')
-
+    #gpu id
+    parser.add_argument('--gpu-id', type=int, default=0,
+                        help='gpu id (default: 0)')
+    # trunk_value
+    parser.add_argument('--trunk-value', type=float, default=1.0,
+                        help='trunk value (default: 0.0)')
     args = parser.parse_args()
 
     args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
@@ -168,6 +173,7 @@ def get_iterator(args, mode='train', DatasetType=None,transform = None,batch_siz
     Dataset  = MultiTrajFolderDataset(DatasetType=DatasetType,
                                         dataroot=args.data_root, transform=transform, mode = mode)
     Dataloader   = DataLoader(Dataset,   batch_size=batch_size, shuffle=True,num_workers=args.worker_num)
+    # Dataloader   = DataLoader(Dataset,   batch_size=batch_size, shuffle=True)
     dataiter  = iter(Dataloader)
     return dataiter
 
@@ -185,7 +191,14 @@ def objective(trial, study_name):
         lr = trial.suggest_float("lr", args.lr_lb, args.lr_ub, log=True)
     else:
         lr = args.lr
+    
+    if "trunk_value" in args.tuning_val:
+        trunk_value = trial.suggest_float("trunk_value", 1e-5, 1, log=True)
+    else:
+        trunk_value = args.trunk_value
 
+    print("trunk_value:", trunk_value)
+    
     if args.enable_decay:
         print('\nEnable lr decay\n')
     else:
@@ -201,6 +214,8 @@ def objective(trial, study_name):
     # study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
 
     lr_rate =  "{:.3e}".format(lr).replace(".","_")
+    trunk_value_str =  "{:.3e}".format(trunk_value).replace(".","_")
+
     batchsz_num = str(args.batch_size)
 
     # optimizer
@@ -214,7 +229,7 @@ def objective(trial, study_name):
 
     print("optimizer:", args.vo_optimizer)
 
-    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate + "_opt_"+args.vo_optimizer
+    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate + "_opt_"+args.vo_optimizer+"_trunk_"+trunk_value_str
 
     print(' \n\n\nExp Name: ')
     print(file_name)
@@ -280,7 +295,7 @@ def objective(trial, study_name):
     transform = Compose(transformlist)
 
 
-    # traindataiter_mix = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
+    traindataiter_mix = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
     traindataiter_sext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
     traindataiter_dext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
     
@@ -293,7 +308,7 @@ def objective(trial, study_name):
     # quit()
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,trunk_value= trunk_value)
     # lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -351,9 +366,37 @@ def objective(trial, study_name):
         infer_time_inst = time.time()
         infer_time = infer_time_inst - load_time_inst
         gt_motion = sample['motion'].to(args.device)
-        loss = criterion(motion, gt_motion)
+        '''
+        # loss = criterion(motion, gt_motion)
         # print('motion: ', motion[0,:] , 'gt_motion: ', gt_motion[0,:], 'loss: ', loss.item())
+        '''
         
+        # loss calculation
+        if args.use_stereo==3 or args.use_stereo==3.2:
+            # rotation loss
+            rot = motion[..., 3:]
+            gt_rot = gt_motion[..., 3:]
+            rot_loss = criterion(rot, gt_rot)
+            # translation loss
+            trans = motion[..., :3]
+            gt_trans = gt_motion[..., :3]
+            scale = torch.linalg.norm(trans, dim=1)
+            gt_scale = torch.linalg.norm(gt_trans, dim=1)
+            trans_norm = trans / scale.view(-1, 1)
+            gt_trans_norm = gt_trans / gt_scale.view(-1, 1)
+            trans_loss = criterion(trans_norm, gt_trans_norm)
+
+            # scale loss
+            # use predicted scale
+            scale = res['scale']
+            scale_loss = criterion(scale, gt_scale)
+
+            loss = rot_loss + trans_loss + scale_loss
+        else:
+            loss = criterion(motion, gt_motion)
+            trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+            rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
+
         loss.backward()
         posenetOptimizer.step()
 
@@ -372,32 +415,38 @@ def objective(trial, study_name):
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
-                trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
-                rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
-                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                
+                '''
+                # rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                '''
+                # calculate rotation trasnlation scale error
+                if args.use_stereo==3 or args.use_stereo==3.2:
+                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=True)
+                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
+                else:
+                    rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                    scale = torch.linalg.norm(motion[..., :3], dim=1)
+                    gt_scale = torch.linalg.norm(gt_motion[..., :3], dim=1)
+                    scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
-
+                scale_err = np.mean(scale_errs)
             if not args.not_write_log:
                 writer.add_scalar('loss/train_loss', tot_loss, train_step_cnt)
-                
                 writer.add_scalar('loss/train_trans_loss', trans_loss, train_step_cnt)
                 writer.add_scalar('loss/train_rot_loss', rot_loss, train_step_cnt)
 
                 writer.add_scalar('error/train_trans_err', trans_err, train_step_cnt)
                 writer.add_scalar('error/train_rot_err', rot_err, train_step_cnt)
-                
+                writer.add_scalar('error/train_scale_err', scale_err, train_step_cnt)
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
-                wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, "training trans err": trans_err, "training rot err": rot_err }, step= train_step_cnt)
 
+                wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, 
+                        "training trans err": trans_err, "training rot err": rot_err, "training scale err": scale_err  }, step= train_step_cnt)
 
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print('[{}] TRAIN: step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
-                formatted_date, train_step_cnt, tot_loss,trans_loss,        rot_loss,        trans_err,          rot_err,         lr,        timer.last('step'),timer.last('load'),infer_time, bp_time)  )
-            
-            # sample_last = sample
-            # res_last = res
-            # trans_err_list.append(trans_err)
+            print('[{}] TRAIN: step:{:07d}|loss:{:.4f}|trans_loss:{:.4f}|rot_loss:{:.4f}|trans_err:{:.4f}|rot_err:{:.4f}|scale_err:{:.4f}|lr:{:.10f}|time: total:{:.4f}|ld:{:.4f}|ife:{:.4f}|bp:{:.4f}'.format(
+                formatted_date, train_step_cnt, tot_loss,trans_loss,        rot_loss,        trans_err,        rot_err,        scale_err,           lr,        timer.last('step'),timer.last('load'),infer_time, bp_time)  )
             
             if args.debug_flag != '':
                 if not isdir(trainroot+'/debug'):
@@ -409,7 +458,7 @@ def objective(trial, study_name):
                     makedirs(debugdir)
 
             if '0' in args.debug_flag:
-                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
+                info = np.array([train_step_cnt, tot_loss, trans_err, rot_err, scale_err, timer.last('step')])
                 np.savetxt(debugdir+'/info.txt', info)
 
             if '1' in args.debug_flag:
@@ -428,20 +477,17 @@ def objective(trial, study_name):
                 save_images(debugdir, sample['img0'], suffix='_A')
                 save_images(debugdir, sample['img0_r'], suffix='_B')
                 save_images(debugdir, sample['img1'], suffix='_C')
-                
-        else:
-
-            if not args.not_write_log:
-                writer.add_scalar('loss/loss', loss.item(), train_step_cnt)
-                wandb.log({"training loss": loss.item() }, step= train_step_cnt)
-                # print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.test_interval == 0:
             start_time = time.time()
             try:
+                '''
+                sample = next(testdataiter_sext)
+                '''
                 if train_step_cnt // args.test_interval % 2 == 0:
                     sample = next(testdataiter_sext)   
                 else:
+                    # sample = next(testdataiter_sext)
                     sample = next(testdataiter_dext)
 
                 load_time_inst = time.time()
@@ -470,13 +516,32 @@ def objective(trial, study_name):
             total_time = time.time() - start_time
             # if train_step_cnt in args.lr_decay_point:
 
+            # with torch.no_grad():
+            #     test_tot_loss = test_loss.item()
+            #     test_trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+            #     test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
+                
+            #     rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+            #     test_trans_err = np.mean(trans_errs)
+            #     test_rot_err = np.mean(rot_errs)
+
             with torch.no_grad():
                 test_tot_loss = test_loss.item()
                 test_trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
                 test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
-                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
-                test_trans_err = np.mean(trans_errs)
-                test_rot_err = np.mean(rot_errs)
+
+                if args.use_stereo==3  or args.use_stereo==3.2:
+                    test_rot_errs, test_trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=True)
+                    test_scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
+                else:
+                    test_rot_errs, test_trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                    scale = torch.linalg.norm(motion[..., :3], dim=1)
+                    gt_scale = torch.linalg.norm(gt_motion[..., :3], dim=1)
+                    test_scale_errs = torch.abs(scale - gt_scale).cpu().numpy() 
+
+                test_trans_err = np.mean(test_trans_errs)
+                test_rot_err = np.mean(test_rot_errs)
+                test_scale_err = np.mean(test_scale_errs)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/test_loss', test_tot_loss, train_step_cnt)
@@ -493,12 +558,17 @@ def objective(trial, study_name):
                     
                     wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
                            "testing trans err": test_trans_err, "testing trans err static": test_trans_err, 
-                           "testing rot err": test_rot_err }, step= train_step_cnt)
+                           "testing rot err": test_rot_err, "testing scale err": test_scale_err  }, step= train_step_cnt)
                     
-                    test_trans_static_err = test_trans_err
-                    return_value_list.append(test_trans_static_err)
+                    # here might need to be changed
+                    if args.use_stereo==2.1 or args.use_stereo==2.2:
+                        obj_value = test_trans_err
+                    elif args.use_stereo==3  or args.use_stereo==3.2:     
+                        obj_value = test_scale_err
+                    
+                    return_value_list.append(obj_value)
                     if args.enable_pruning:
-                        trial.report(test_trans_static_err, train_step_cnt)
+                        trial.report(obj_value, train_step_cnt)
 
                         # Handle pruning based on the intermediate value.
                         if trial.should_prune():
@@ -510,17 +580,15 @@ def objective(trial, study_name):
 
                     wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
                            "testing trans err": test_trans_err, "testing trans err dynamic": test_trans_err, 
-                           "testing rot err": test_rot_err }, step= train_step_cnt)
+                           "testing rot err": test_rot_err, "testing scale err": test_scale_err }, step= train_step_cnt)
                 
                 writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
                 writer.add_scalar('time/test_infer_time', infer_time, train_step_cnt)
                 
 
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # print('[{}] TEST : step:{:07d}, loss:{:.4f}, test_trans_loss:{:.4f}, test_rot_loss:{:.4f}, test_trans_err:{:.4f}, test_rot_err:{:.4f},  time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
-            #     train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
-            print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
-                formatted_date,train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
+            print('[{}] TEST:  step:{:07d}|loss:{:.4f}|trans_loss:{:.4f}|rot_loss:{:.4f}|trans_err:{:.4f}|rot_err:{:.4f}|scale_err:{:.4f}|               |time: total:{:.4f}|ld:{:.4f}|ife:{:.4f}'.format(
+                formatted_date,train_step_cnt, test_tot_loss,test_trans_loss,test_rot_loss,  test_trans_err,   test_rot_err,   test_scale_err,            total_time,       load_time, infer_time)  )
             
             # print()
 
@@ -552,9 +620,17 @@ def objective(trial, study_name):
 if __name__ == "__main__":
     
     args = get_args()
+    if args.use_stereo==3 or args.use_stereo==3.2:
+        print('Predict Scale')
+        print('use_stereo: ', args.use_stereo)
+    elif args.use_stereo==2.1 or args.use_stereo==2.2:
+        print('Predict Translation with Scale')
+        print('use_stereo: ', args.use_stereo)
+
     print('debug_flag: ', args.debug_flag)
 
-    torch.cuda.set_device(0)
+    # torch.cuda.set_device(0)
+    torch.cuda.set_device(args.gpu_id)
     
     start_time = time.time()
     

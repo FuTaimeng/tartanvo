@@ -59,18 +59,25 @@ import wandb
 
 class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
-                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=()):
+                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=(),trunk_value=1e-1):
         
         # import ipdb;ipdb.set_trace()
         self.device = device
+        print('\n=============================================')
+        print('             use device: ', self.device)
+        print('=============================================')
         if use_stereo==0:
             self.vonet = VONet()
         elif use_stereo==1:
             stereonorm = 0.02 # the norm factor for the stereonet
             self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
                                         down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
-        elif use_stereo==2.1 or use_stereo==2.2:
-            self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fix_parts=fix_parts)
+        elif use_stereo==2.1:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=2.1, fix_parts=fix_parts, sep_feat=False)
+        elif use_stereo==2.2:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=2.2, fix_parts=fix_parts, sep_feat=True)
+        elif use_stereo==3.2:
+            self.vonet = MultiCamVONet(flowNormFactor=1.0, stereo=3.2, fix_parts=fix_parts, sep_feat=True,trunk_value=trunk_value)
 
         # load the whole model
         if vo_model_name is not None and vo_model_name != "":
@@ -171,21 +178,15 @@ class TartanVO:
 
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        # img0   = sample['img0'].to(self.device)
-        # img1   = sample['img1'].to(self.device)
-        # intrinsic = sample['intrinsic'].to(self.device)
-
-        img0   = sample['img0'].cuda()
-        img1   = sample['img1'].cuda()
-        intrinsic = sample['intrinsic'].squeeze(1).cuda()
-
-
+        img0   = sample['img0'].to(self.device)
+        img1   = sample['img1'].to(self.device)
+        intrinsic = sample['intrinsic'].to(self.device)
 
         if self.use_stereo==1:
             img0_norm = sample['img0_norm'].to(self.device)
             img0_r_norm = sample['img0_r_norm'].to(self.device)
             blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
-        elif self.use_stereo==2.1 or self.use_stereo==2.2:
+        elif self.use_stereo==2.1 or self.use_stereo==2.2 or self.use_stereo==3.2:
             extrinsic = sample['extrinsic'].to(self.device)
             img0_r = sample['img0_r'].to(self.device)
 
@@ -223,6 +224,15 @@ class TartanVO:
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
+        elif self.use_stereo==3 or self.use_stereo==3.2:
+            flowAB, flowAC, pose_scale = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
+            pose = pose_scale[:, :-1]
+            scale = pose_scale[:, -1]
+            pose = pose * self.pose_std # The output is normalized during training, now scale it back
+            res['pose'] = pose
+            res['flowAB'] = flowAB
+            res['flowAC'] = flowAC
+            res['scale'] = scale
             
         # inferencetime = time.time()-starttime
         # print("Pose inference using {}s".format(inferencetime))

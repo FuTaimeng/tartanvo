@@ -391,13 +391,13 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
         img1 = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_COLOR)
         res['img0'] = [img0]
         res['img1'] = [img1]
-        res['path_img0'] = self.rgbfiles[self.links[idx][0]]
-        res['path_img1'] = self.rgbfiles[self.links[idx][1]]
+        # res['path_img0'] = self.rgbfiles[self.links[idx][0]]
+        # res['path_img1'] = self.rgbfiles[self.links[idx][1]]
 
         if self.rgbfiles_right is not None:
             img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_COLOR)
             res['img0_r'] = [img0_r]
-            res['path_img0_r'] = self.rgbfiles_right[self.links[idx][0]]
+            # res['path_img0_r'] = self.rgbfiles_right[self.links[idx][0]]
             # print("res['img0_r'] = [img0_r]")
             # res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
         else:
@@ -454,9 +454,9 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         # print("res['img0_r'] = [imgB]")
         res['img0_r'] = [imgB]
 
-        res['path_img0'] = self.rgbfiles[self.links[idx][0]]
-        res['path_img1'] = self.rgbfiles[self.links[idx][2]]
-        res['path_img0_r'] = self.rgbfiles[self.links[idx][1]]
+        # res['path_img0'] = self.rgbfiles[self.links[idx][0]]
+        # res['path_img1'] = self.rgbfiles[self.links[idx][2]]
+        # res['path_img0_r'] = self.rgbfiles[self.links[idx][1]]
 
         # if 'right' in self.rgbfiles[self.links[idx][1]]:
         #     print('right')
