@@ -224,14 +224,14 @@ def objective(trial, study_name):
 
     if not args.not_write_log:
         wandb.init(
-        # set the wandb project where this run will be logged
-        project=study_name,
-        name=file_name,
-        # # track hyperparameters and run metadata
-        config={
-        "learning_rate": lr,
-        "batchsize": batch_size,
-        }
+            # set the wandb project where this run will be logged
+            project=study_name,
+            name=file_name,
+            # # track hyperparameters and run metadata
+            config={
+                "learning_rate": lr,
+                "batchsize": batch_size,
+            }
         )
     # trainroot = args.result_dir
     trainroot = args.result_dir + '/' +study_name
@@ -430,7 +430,6 @@ def objective(trial, study_name):
                 save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
-
             if not args.not_write_log:
                 writer.add_scalar('loss/loss', loss.item(), train_step_cnt)
                 wandb.log({"training loss": loss.item() }, step= train_step_cnt)
