@@ -24,3 +24,4 @@ test*
 *.out
 *.png
 *.npy
+slurm-*

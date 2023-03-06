@@ -10,12 +10,12 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 
-#SBATCH --gres=gpu:1
-###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
+###SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
 ###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
 ###SBATCH --gres=gpu:nvidia_a16:12
 
-#SBATCH --mem=16000
+#SBATCH --mem=32000
 
 #SBATCH --job-name="train_multicamvo"
 
