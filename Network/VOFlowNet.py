@@ -39,55 +39,47 @@ class BasicBlock(nn.Module):
         return F.relu(out, inplace=True)
 
 class VOFlowRes(nn.Module):
-    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, uncertainty=0, fix_parts=()):
+    def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, fix_parts=(),
+                    extrinsic_encoder_layers=2, trans_head_layers=3):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
         self.down_scale = down_scale
         self.config = config
         self.stereo = stereo
-        self.uncertainty = uncertainty
+        self.fix_parts = fix_parts
+        self.extrinsic_encoder_layers = extrinsic_encoder_layers
+        self.trans_head_layers = trans_head_layers
 
         self.feat_net, feat_dim = self.__feature_embedding()
         if stereo==2.2:
             self.feat_net2, _ = self.__feature_embedding()
 
-        # if stereo==2.4:
-        #     scale = self.feat_net2* 1/self.feat_net
-
         if stereo==2.1 or stereo==2.2:
-            feat_dim_trans = feat_dim*2 + 10*2*6
+            if extrinsic_encoder_layers == 1:
+                self.extrinsic_encoder = nn.Linear(6, 128)
+                extrinsic_encoder_dim = 128
+            elif extrinsic_encoder_layers == 2:
+                self.extrinsic_encoder = nn.Sequential(linear(6, 64), nn.Linear(64, 128))
+                extrinsic_encoder_dim = 128
+            else:   # use sin/cos encoder
+                self.extrinsic_encoder = self.__encode_pose
+                extrinsic_encoder_dim = 120
+
+            feat_dim_trans = feat_dim*2 + extrinsic_encoder_dim
             # fc1_trans = linear(feat_dim_trans, 256)
             # fc2_trans = linear(256, 32)
             # fc3_trans = nn.Linear(32, 3)
             self.fcAB_trans = linear(feat_dim, 128)
             self.fcAC_trans = linear(feat_dim, 128)
-            fc1_trans = linear(128*2 + 10*2*6, 128)
-            fc2_trans = linear(128, 128)
-            fc3_trans = linear(128, 128)
-            fc4_trans = linear(128, 32)
-            fc5_trans = nn.Linear(32, 3)
-
-            # Apply Kaiming initialization to the weights of the linear layers
-            # nn.init.kaiming_normal_(self.fcAB_trans[0].weight)
-            # nn.init.kaiming_normal_(self.fcAC_trans[0].weight)
-            # nn.init.kaiming_normal_(fc1_trans[0].weight)
-            # nn.init.kaiming_normal_(fc2_trans[0].weight)
-            # nn.init.kaiming_normal_(fc3_trans[0].weight)
-            # nn.init.kaiming_normal_(fc4_trans[0].weight)
-            # nn.init.kaiming_normal_(fc5_trans.weight)
-
             
-            self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
-        elif stereo==2.3:
-            self.fcAB_trans = linear(feat_dim + 10*2*6, 128)
-            self.fcAC_trans = linear(feat_dim, 128)
-            fc1_trans = linear(128*2 , 128)
-            fc2_trans = linear(128, 128)
-            fc3_trans = linear(128, 128)
-            fc4_trans = linear(128, 32)
-            fc5_trans = nn.Linear(32, 3)
-            self.voflow_trans = nn.Sequential(fc1_trans, fc2_trans, fc3_trans, fc4_trans, fc5_trans)
+            layers = []
+            layers.append(linear(128*2 + extrinsic_encoder_dim, 128))
+            for i in range(trans_head_layers-3):
+                layers.append(linear(128, 128))
+            layers.append(linear(128, 32))
+            layers.append(nn.Linear(32, 3))
+            self.voflow_trans = nn.Sequential(*layers)
        
         else:
             fc1_trans = linear(feat_dim, 128)
@@ -122,7 +114,6 @@ class VOFlowRes(nn.Module):
             inputnum = 2
         if self.stereo==1:
             inputnum += 1
-        inputnum += self.uncertainty
 
         if self.config==0:
             blocknums = [2,2,3,3,3,3,3]
@@ -179,7 +170,7 @@ class VOFlowRes(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def __encode_pose(self, x, L):
+    def __encode_pose(self, x, L=10):
         c = (torch.pow(2, torch.arange(L)) * torch.pi).to(x.device)
         y = c.view(1, -1, 1) * x.unsqueeze(1)
         z = torch.cat([torch.sin(y), torch.cos(y)], dim=1).view(x.shape[0], -1)
@@ -215,24 +206,10 @@ class VOFlowRes(nn.Module):
         x_AB = x_AB.view(x_AB.shape[0], -1)
         x_AC = x_AC.view(x_AC.shape[0], -1)
 
-        x_ex = self.__encode_pose(extrinsic, L=10)
-
-        # x_trans = torch.cat((x_AC, x_AB, x_ex), dim=1)
-        # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
-        # # np.savetxt("train_multicamvo/temp/trans_in.txt", x_trans.detach().cpu().numpy())
-        # x_trans = self.voflow_trans(x_trans)
-        # # print(torch.linalg.norm(x_trans[0] - x_trans[1]))
-        # # np.savetxt("train_multicamvo/temp/trans_out.txt", x_trans.detach().cpu().numpy())
-        if self.stereo==2.3:
-            x_AB_ext = torch.cat((x_AB, x_ex), dim=1)
-            x_AB_128 = self.fcAB_trans(x_AB_ext)
-            x_AC_128 = self.fcAC_trans(x_AC)
-            x_trans = torch.cat((x_AC_128, x_AB_128), dim=1)
-        else:
-            x_AB_128 = self.fcAB_trans(x_AB)
-            x_AC_128 = self.fcAC_trans(x_AC)
-            x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
-        
+        x_ex = self.extrinsic_encoder(extrinsic)
+        x_AB_128 = self.fcAB_trans(x_AB)
+        x_AC_128 = self.fcAC_trans(x_AC)
+        x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
         x_trans = self.voflow_trans(x_trans)
         # assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
 

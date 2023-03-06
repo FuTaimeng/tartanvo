@@ -185,6 +185,14 @@ def objective(trial, study_name):
         lr = trial.suggest_float("lr", args.lr_lb, args.lr_ub, log=True)
     else:
         lr = args.lr
+    if "extrinsic_encoder_layers" in args.tuning_val:
+        extrinsic_encoder_layers = trial.suggest_int("extrinsic_encoder_layers", 1, 2)
+    else:
+        extrinsic_encoder_layers = 2
+    if "trans_head_layers" in args.tuning_val:
+        trans_head_layers = trial.suggest_int("trans_head_layers", 3, 6)
+    else:
+        trans_head_layers = 3
 
     if args.enable_decay:
         print('\nEnable lr decay\n')
@@ -200,11 +208,7 @@ def objective(trial, study_name):
     # study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name)
     # study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
 
-    lr_rate =  "{:.3e}".format(lr).replace(".","_")
-    batchsz_num = str(args.batch_size)
-
     # optimizer
-    
     if "optimizer" in args.tuning_val:
         print("optimizer tuning")
         args.vo_optimizer = trial.suggest_categorical("optimizer", ["adam", "rmsprop", "sgd"])
@@ -214,7 +218,8 @@ def objective(trial, study_name):
 
     print("optimizer:", args.vo_optimizer)
 
-    file_name = study_name + "_B"+batchsz_num + "_lr"+ lr_rate + "_opt_"+args.vo_optimizer
+    file_name = study_name  + "_B"+str(args.batch_size) + "_lr"+"{:.3e}".format(lr) + "_O"+args.vo_optimizer \
+                            + "_nel"+str(extrinsic_encoder_layers) + "_ntl"+str(trans_head_layers)
 
     print(' \n\n\nExp Name: ')
     print(file_name)
@@ -293,7 +298,8 @@ def objective(trial, study_name):
     # quit()
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
+                            extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
     # lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -534,7 +540,7 @@ def objective(trial, study_name):
                 makedirs(trainroot+'/models/'+ file_name)
             
             print('save model to: ', '{}/models/{}/{}_posenet_{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
-            torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/{}/{}_posenet_{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
+            torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/{}/{}_st{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
             print()
         # print('total time: ', time.time() - start_time)
     

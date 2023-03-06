@@ -19,6 +19,7 @@ ORBvoc*
 /data/*.txt
 /data/*.npy
 /wandb
+/database
 test*
 *.out
 *.png
