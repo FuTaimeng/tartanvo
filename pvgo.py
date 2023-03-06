@@ -46,7 +46,7 @@ class PoseVelGraph(nn.Module):
         return torch.cat([self.vel0.to(self.device).view(1, -1), self.para_vels], dim=0)
 
 
-    def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dt):
+    def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dts):
         nodes = self.nodes()
         vels = self.vels()
         
@@ -71,7 +71,7 @@ class PoseVelGraph(nn.Module):
         imuroterr = error.Log().tensor()
 
         # trans vel constraint
-        transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dt + imu_dtrans)
+        transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dts.view(-1, 1) + imu_dtrans)
 
         # stop constraint
         stopvelerr = vels[self.stop_frames]
