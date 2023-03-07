@@ -1,5 +1,5 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
-from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset, TrajFolderDatasetPVGO
+from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset, TrajFolderDatasetPVGO, LoopDataSampler
 # from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset as TrajFolderDatasetMultiCam0, MultiTrajFolderDataset0
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
 # from evaluator.tartanair_evaluator import TartanAirEvaluator
@@ -160,16 +160,29 @@ def get_args():
     return args
 
 
-# define a dataloader iterator
-def get_iterator(args, mode='train', DatasetType=None,transform = None,batch_size = None):
-    if batch_size is None:
-        batch_size = args.batch_size
-    
-    Dataset  = MultiTrajFolderDataset(DatasetType=DatasetType,
-                                        dataroot=args.data_root, transform=transform, mode = mode)
-    Dataloader   = DataLoader(Dataset,   batch_size=batch_size, shuffle=True,num_workers=args.worker_num)
-    dataiter  = iter(Dataloader)
-    return dataiter
+def create_dataset(args, DatasetType, mode='train'):
+    # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
+    #                         DownscaleFlow(), 
+    #                         Normalize(), 
+    #                         ToTensor(),
+    #                         SqueezeBatchDim()
+    #                     ])
+
+    if args.random_intrinsic>0:
+        transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
+                                            max_scale=args.random_intrinsic/320.0, 
+                                            keep_center=False, fix_ratio=False) ]
+    else:
+        transformlist = [ CropCenter( size=(args.image_height, args.image_width), 
+                                      fix_ratio=False, scale_w=1.0, scale_disp=False)]
+    transformlist.append(DownscaleFlow())
+    transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
+    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
+    transform = Compose(transformlist)
+
+    dataset  = MultiTrajFolderDataset(DatasetType=DatasetType, dataroot=args.data_root, 
+                                        transform=transform, mode=mode)
+    return dataset
 
 
 def objective(trial, study_name):
@@ -214,7 +227,6 @@ def objective(trial, study_name):
         args.vo_optimizer = trial.suggest_categorical("optimizer", ["adam", "rmsprop", "sgd"])
     else:
         print("optimizer not tuning")
-        # args.vo_optimizer = "adam"
 
     print("optimizer:", args.vo_optimizer)
 
@@ -238,9 +250,8 @@ def objective(trial, study_name):
                 "batchsize": batch_size,
             }
         )
-    # trainroot = args.result_dir
-    trainroot = args.result_dir + '/' +study_name
 
+    trainroot = args.result_dir + '/' +study_name
     print('\nTrain root:', trainroot)
 
     if not isdir(trainroot):
@@ -265,34 +276,6 @@ def objective(trial, study_name):
     print('====================================================================================================================================================================================')
     print('\n\n\n')
 
-    # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
-    #                         DownscaleFlow(), 
-    #                         Normalize(), 
-    #                         ToTensor(),
-    #                         SqueezeBatchDim()
-    #                     ])
-
-    if args.random_intrinsic>0:
-        transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
-                                            max_scale=args.random_intrinsic/320.0, 
-                                            keep_center=False, fix_ratio=False) ]
-    else:
-        transformlist = [ CropCenter( size=(args.image_height, args.image_width), 
-                                      fix_ratio=False, scale_w=1.0, scale_disp=False)]
-    transformlist.append(DownscaleFlow())
-    transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
-    transform = Compose(transformlist)
-
-
-    # traindataiter_mix = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
-    traindataiter_sext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
-    traindataiter_dext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
-    
-    # testdataiter_mix = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO, TrajFolderDatasetMultiCam ),transform = transform)
-    testdataiter_sext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
-    testdataiter_dext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
-
     # all_frames = trainDataset.list_all_frames()
     # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
     # quit()
@@ -300,7 +283,7 @@ def objective(trial, study_name):
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                             device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
                             extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
-    # lr = args.lr
+
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
     elif args.vo_optimizer == 'rmsprop':
@@ -309,64 +292,39 @@ def objective(trial, study_name):
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
     criterion = torch.nn.L1Loss()
-    start_iter = args.start_iter
-    
+
     return_value_list = []
-    # base_line = torch.tensor([0.0000, 0.2500, 0.0000, 0.0000, 0.0000, 0.0000])
-    # trans_err_list = []
-    for train_step_cnt in range(start_iter, args.train_step+1):
+
+    for train_step_cnt in range(args.start_iter, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
-        start_time = time.time()
+
         timer.tic('load')
-        try:
-
-            '''
-            sample = next(traindataiter_mix)
-            '''
-            if train_step_cnt % 2 == 0:
-                # large and failed dataset
-                sample = next(traindataiter_sext)
-
-            else:
-                # large and failed dataset
-                # sample = next(traindataiter_sext)
-                
-                # # small and success dataset
-                sample = next(traindataiter_dext)
-            
-            # print()      
-            load_time_inst = time.time()
-            load_time =  load_time_inst - start_time
-
-        except StopIteration:
-            print('Finish {} step {} ...'.format(args.mode, train_step_cnt))
-
-            traindataiter_sext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
-            traindataiter_dext = get_iterator(args, mode='train', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
-
-            # traindataiter = iter(trainDataloader_sext)
-            sample = next(traindataiter_sext)
-
+        if train_step_cnt % 2 == 0:
+            # large and failed dataset
+            sample = trainsampler_sext.next()
+        else:
+            # # small and success dataset
+            sample = trainsampler_dext.next()
         timer.toc('load')
+
+        timer.tic('infer')
 
         is_train = args.mode.startswith('train')
         res = tartanvo.run_batch(sample, is_train)
         motion = res['pose']
 
-        infer_time_inst = time.time()
-        infer_time = infer_time_inst - load_time_inst
+        timer.toc('infer')
+
+        timer.tic('bp')
+
         gt_motion = sample['motion'].to(args.device)
         loss = criterion(motion, gt_motion)
-        # print('motion: ', motion[0,:] , 'gt_motion: ', gt_motion[0,:], 'loss: ', loss.item())
-        
         loss.backward()
         posenetOptimizer.step()
 
-        bp_time_inst = time.time()
-        bp_time = bp_time_inst - infer_time_inst
+        timer.toc('bp')
 
-        # if train_step_cnt in args.lr_decay_point:
         if train_step_cnt in LrDecrease and args.enable_decay:
             lr *= args.lr_decay_rate
             for param_group in posenetOptimizer.param_groups: 
@@ -394,12 +352,20 @@ def objective(trial, study_name):
                 writer.add_scalar('error/train_rot_err', rot_err, train_step_cnt)
                 
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
-                wandb.log({"training loss": loss.item(), "training trans loss": trans_loss, "training rot loss": rot_loss, "training trans err": trans_err, "training rot err": rot_err }, step= train_step_cnt)
 
+                wandb.log({ 
+                        "training loss": loss.item(), 
+                        "training trans loss": trans_loss, 
+                        "training rot loss": rot_loss, 
+                        "training trans err": trans_err, 
+                        "training rot err": rot_err 
+                    }, 
+                    step=train_step_cnt
+                )
 
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('[{}] TRAIN: step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
-                formatted_date, train_step_cnt, tot_loss,trans_loss,        rot_loss,        trans_err,          rot_err,         lr,        timer.last('step'),timer.last('load'),infer_time, bp_time)  )
+                formatted_date, train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, lr, timer.last('step'), timer.last('load'), timer.last('infer'), timer.last('bp')))
             
             # sample_last = sample
             # res_last = res
@@ -442,38 +408,20 @@ def objective(trial, study_name):
                 # print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.test_interval == 0:
-            start_time = time.time()
-            try:
-                if train_step_cnt // args.test_interval % 2 == 0:
-                    sample = next(testdataiter_sext)   
-                else:
-                    sample = next(testdataiter_dext)
+            timer.tic('test')
 
-                load_time_inst = time.time()
-                load_time =  load_time_inst - start_time
+            if train_step_cnt // args.test_interval % 2 == 0:
+                sample = testsampler_sext.next()
+            else:
+                sample = testsampler_dext.next()
 
-            except StopIteration:
-                print('Testing Set Finish {} step {} ...'.format(args.mode, train_step_cnt))
-                testdataiter_sext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetPVGO),transform = transform)
-                testdataiter_dext = get_iterator(args, mode='test', DatasetType=(TrajFolderDatasetMultiCam),transform = transform)
-                sample = next(testdataiter_sext)
-
-            res = tartanvo.run_batch(sample, is_train = True)
+            res = tartanvo.run_batch(sample, is_train=False)
             motion = res['pose']
-
-            infer_time_inst = time.time()
-            infer_time = infer_time_inst - load_time_inst
 
             gt_motion = sample['motion'].to(args.device)
             test_loss = criterion(motion, gt_motion)
-            # print('motion: ', motion[0,:] , 'gt_motion: ', gt_motion[0,:], 'test_loss: ', test_loss.item())
 
-            # loss.backward()
-            # posenetOptimizer.step()
-            # bp_time_inst = time.time()
-            # bp_time = bp_time_inst - infer_time_inst
-            total_time = time.time() - start_time
-            # if train_step_cnt in args.lr_decay_point:
+            timer.toc('test')
 
             with torch.no_grad():
                 test_tot_loss = test_loss.item()
@@ -490,59 +438,49 @@ def objective(trial, study_name):
                 writer.add_scalar('loss/test_rot_loss', test_rot_loss, train_step_cnt)
 
                 writer.add_scalar('error/test_trans_err', test_trans_err, train_step_cnt)
-
-
-                if train_step_cnt // args.test_interval % 2 == 0:
-                    # sample = next(testdataiter_sext)   
-                    writer.add_scalar('error/test_trans_err0', test_trans_err, train_step_cnt)
-                    
-                    wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
-                           "testing trans err": test_trans_err, "testing trans err static": test_trans_err, 
-                           "testing rot err": test_rot_err }, step= train_step_cnt)
-                    
-                    test_trans_static_err = test_trans_err
-                    return_value_list.append(test_trans_static_err)
-                    if args.enable_pruning:
-                        trial.report(test_trans_static_err, train_step_cnt)
-
-                        # Handle pruning based on the intermediate value.
-                        if trial.should_prune():
-                            raise optuna.exceptions.TrialPruned()
-                        
-                else:
-                    # sample = next(testdataiter_dext)
-                    writer.add_scalar('error/test_trans_err1', test_trans_err, train_step_cnt)
-
-                    wandb.log({"testing loss": test_loss.item(), "testing trans loss": test_trans_loss, "testing rot loss": test_rot_loss, 
-                           "testing trans err": test_trans_err, "testing trans err dynamic": test_trans_err, 
-                           "testing rot err": test_rot_err }, step= train_step_cnt)
-                
                 writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
-                writer.add_scalar('time/test_infer_time', infer_time, train_step_cnt)
-                
+                if train_step_cnt // args.test_interval % 2 == 0:
+                    writer.add_scalar('error/test_trans_err_sext', test_trans_err, train_step_cnt)
+                else:
+                    writer.add_scalar('error/test_trans_err_dext', test_trans_err, train_step_cnt)
+
+                writer.add_scalar('time/test_time', timer.last('test'), train_step_cnt)
+
+                wandb.log({
+                        "testing loss": test_loss.item(), 
+                        "testing trans loss": test_trans_loss, 
+                        "testing rot loss": test_rot_loss, 
+                        "testing trans err": test_trans_err, 
+                        "testing trans err static": test_trans_err, 
+                        "testing rot err": test_rot_err 
+                    }, 
+                    step = train_step_cnt
+                )
+
+            if train_step_cnt // args.test_interval % 2 == 0:
+                test_trans_static_err = test_trans_err
+                return_value_list.append(test_trans_static_err)
+
+                if args.enable_pruning:
+                    trial.report(test_trans_static_err, train_step_cnt)
+                    # Handle pruning based on the intermediate value.
+                    if trial.should_prune():
+                        raise optuna.exceptions.TrialPruned()
 
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # print('[{}] TEST : step:{:07d}, loss:{:.4f}, test_trans_loss:{:.4f}, test_rot_loss:{:.4f}, test_trans_err:{:.4f}, test_rot_err:{:.4f},  time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
-            #     train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
-            print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f} ld:{:.4f} ife:{:.4f}'.format(
-                formatted_date,train_step_cnt, test_tot_loss,test_trans_loss,        test_rot_loss,        test_trans_err,          test_rot_err,            total_time, load_time,infer_time)  )
-            
-            # print()
-
-
+            print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f}'.format(
+                formatted_date, train_step_cnt, test_tot_loss, test_trans_loss, test_rot_loss, test_trans_err, test_rot_err,                            timer.last('test')))
 
         # if train_step_cnt % args.val_interval == 0:
         #     tartanvo.validate_model_result(  train_step_cnt=train_step_cnt, writer = writer)
-
 
         if train_step_cnt % args.snapshot_interval == 0:
             if not isdir(trainroot+'/models/' + file_name):
                 makedirs(trainroot+'/models/'+ file_name)
             
-            print('save model to: ', '{}/models/{}/{}_posenet_{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
-            torch.save(tartanvo.vonet.flowPoseNet.state_dict(), '{}/models/{}/{}_st{}.pkl'.format(trainroot,file_name, file_name, train_step_cnt))
-            print()
-        # print('total time: ', time.time() - start_time)
+            save_model_name = '{}/models/{}/{}_st{}.pkl'.format(trainroot, file_name, file_name, train_step_cnt)
+            print('save model to:', save_model_name, end='\n\n')
+            torch.save(tartanvo.vonet.flowPoseNet.state_dict(), save_model_name)
     
     if not args.not_write_log:
         wandb.finish()
@@ -625,6 +563,20 @@ if __name__ == "__main__":
     print(' \nDevice Name: ')
     print(device_name)
     print('==========================================')
+
+    # create datasets
+    traindataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='train')
+    traindataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='train')
+    
+    testdataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='test')
+    testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
+
+    # create data samplers
+    trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
+    trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
+
+    testsampler_sext = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
+    testsampler_dext = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
     
     # Add stream handler of stdout to show the messages
     # optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))

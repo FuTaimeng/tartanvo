@@ -11,8 +11,8 @@
 #SBATCH --ntasks-per-node=4
 
 ###SBATCH --gres=gpu:1
-#SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
-###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
+###SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
+#SBATCH --gres=gpu:tesla_v100-pcie-16gb:1
 ###SBATCH --gres=gpu:nvidia_a16:12
 
 #SBATCH --mem=32000
@@ -36,7 +36,7 @@ batch=32
 step=2000
 
 nick_name=tryExtrinsicMLP
-train_name=${nick_name}_optuna[lr,extrinsic_encoder_layers,trans_head_layers]
+train_name=${nick_name}_optuna[lr,nel,ntl]
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
@@ -63,6 +63,8 @@ python optuna_train_multicamvo2.py \
     --enable-pruning \
     --trail-num 50 \
     --out-to-cml \
+    --load-study \
+    --study-name tryExtrinsicMLP_optuna[lr,extrinsic_encoder_layers,trans_head_layers]_dev32_Mar_06_2023_09_37_43 \
 
     # --tuning-val 'lr' \
     # --lr-lb  1e-7 \

@@ -579,3 +579,21 @@ class MultiTrajFolderDataset(Dataset):
             rgb = np.array([fname.replace(self.dataroot, '') for fname in ds.rgbfiles])
             all_frames.extend(rgb[ds.links].tolist())
         return all_frames
+
+
+class LoopDataSampler:
+    def __init__(self, dataset, batch_size=32, shuffle=True, num_workers=4):
+        self.dataset = dataset
+        self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        self.dataiter = iter(self.dataloader)
+        self.load_time = 0
+    
+    def next(self):
+        try:
+            sample = next(self.dataiter)
+        except StopIteration:
+            self.dataiter = iter(self.dataloader)
+            sample = next(self.dataiter)
+
+        return sample
+        
