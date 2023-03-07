@@ -10,10 +10,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 
-###SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:1
 ###SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
-#SBATCH --gres=gpu:tesla_v100-pcie-16gb:1
-###SBATCH --gres=gpu:nvidia_a16:12
+###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
+###SBATCH --gres=gpu:nvidia_a16:1
 
 #SBATCH --mem=32000
 
@@ -26,6 +26,8 @@
 
 ###SBATCH --requeue
 
+#SBATCH --array=1-4
+
 
 source ~/.bashrc
 conda activate impe-learning
@@ -33,12 +35,12 @@ conda activate impe-learning
 data_dir=/user/taimengf/projects/tartanair/TartanAir
 
 batch=32
-step=2000
+step=5000
 
 nick_name=ExMLP-ExNorm
 train_name=${nick_name}_optuna[nel,ntl]
 
-CUDA_VISIBLE_DEVICES=0
+# CUDA_VISIBLE_DEVICES=0
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
@@ -61,9 +63,10 @@ python optuna_train_multicamvo2.py \
     --test-interval 50 \
     --tuning-val 'extrinsic_encoder_layers' 'trans_head_layers' \
     --enable-pruning \
-    --trail-num 5 \
+    --trail-num 2 \
     --out-to-cml \
-    --lr 1e-5 \
+    --lr 6e-6 \
+    --load-study \
 
     # --tuning-val 'lr' \
     # --lr-lb  1e-7 \

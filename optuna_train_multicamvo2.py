@@ -508,19 +508,18 @@ if __name__ == "__main__":
     torch.cuda.set_device(0)
     
     start_time = time.time()
-    
-    args.exp_prefix = args.train_name
 
     device_name = torch.cuda.get_device_name(0)
-    device_name_num = str(re.findall(r'\d+', device_name)[-1]) +'_'
+    device_name_num = str(re.findall(r'\d+', device_name)[-1])
     current_time = datetime.now().strftime('%b_%d_%Y_%H_%M_%S')
 
     if args.load_study == False:
-        study_name = args.exp_prefix+"_dev"+  device_name_num+current_time
+        # study_name = args.train_name + "_dev"+device_name_num + "_"+current_time
+        study_name = args.train_name
         print(' \nNew Study\nStudy Name: ')
     else:
-        # study_name = 'multicamvo_batch_64_step_50000_optuna_lr_dev3090_Feb_18_2023_03_21_51'
-        study_name = args.study_name
+        # study_name = args.study_name
+        study_name = args.train_name
         print(' \nResume Study \nStudy Name: ')
 
     print(study_name)
@@ -544,8 +543,8 @@ if __name__ == "__main__":
     with open('optuna_strain_multicamvo.sh','r') as firstfile, open("./record/"+record_file_name+".txt", "w") as secondfile:
         # read content from first file
         for line in firstfile:
-                # write content to second file
-                secondfile.write(line)
+            # write content to second file
+            secondfile.write(line)
     # save to file or output to command line
     if not args.out_to_cml:
         print('\n=====================')
