@@ -35,8 +35,10 @@ data_dir=/user/taimengf/projects/tartanair/TartanAir
 batch=32
 step=2000
 
-nick_name=tryExtrinsicMLP
-train_name=${nick_name}_optuna[lr,nel,ntl]
+nick_name=ExMLP-ExNorm
+train_name=${nick_name}_optuna[nel,ntl]
+
+CUDA_VISIBLE_DEVICES=0
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
@@ -54,17 +56,14 @@ python optuna_train_multicamvo2.py \
     --result-dir ./train_multicamvo \
     --train-name ${train_name} \
     --debug-flag '' \
-    --pose-model-name ./models/multicamvo_B32_St100000_optuna_fix_lr_dev3090_Feb_28_2023_14_39_24_B32_lr6_103e-06_posenet_47000.pkl \
+    --pose-model-name ./models/multicamvo_posenet_init_stereo=2.2.pkl \
     --train-step ${step} \
     --test-interval 50 \
-    --tuning-val 'lr' 'extrinsic_encoder_layers' 'trans_head_layers' \
-    --lr-lb  1e-6 \
-    --lr-ub  1e-4 \
+    --tuning-val 'extrinsic_encoder_layers' 'trans_head_layers' \
     --enable-pruning \
-    --trail-num 50 \
+    --trail-num 5 \
     --out-to-cml \
-    --load-study \
-    --study-name tryExtrinsicMLP_optuna[lr,extrinsic_encoder_layers,trans_head_layers]_dev32_Mar_06_2023_09_37_43 \
+    --lr 1e-5 \
 
     # --tuning-val 'lr' \
     # --lr-lb  1e-7 \

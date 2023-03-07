@@ -281,8 +281,8 @@ def objective(trial, study_name):
     # quit()
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
-                            extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
+                        device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
+                        extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers, normalize_extrinsic=True)
 
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
@@ -410,21 +410,29 @@ def objective(trial, study_name):
         if train_step_cnt % args.test_interval == 0:
             timer.tic('test')
 
-            if train_step_cnt // args.test_interval % 2 == 0:
-                sample = testsampler_sext.next()
-            else:
-                sample = testsampler_dext.next()
+            motion_list = []
+            gt_motion_list = []
+            for i in range(10):
+                if train_step_cnt // args.test_interval % 2 == 0:
+                    sample = testsampler_sext.next()
+                else:
+                    sample = testsampler_dext.next()
 
-            res = tartanvo.run_batch(sample, is_train=False)
-            motion = res['pose']
+                res = tartanvo.run_batch(sample, is_train=False)
+                motion = res['pose']
 
-            gt_motion = sample['motion'].to(args.device)
-            test_loss = criterion(motion, gt_motion)
+                gt_motion = sample['motion'].to(args.device)
+
+                motion_list.append(motion)
+                gt_motion_list.append(gt_motion)
 
             timer.toc('test')
 
+            motion = torch.cat(motion_list, dim=0)
+            gt_motion = torch.cat(gt_motion_list, dim=0)
+
             with torch.no_grad():
-                test_tot_loss = test_loss.item()
+                test_tot_loss = criterion(motion, gt_motion).item()
                 test_trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
                 test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
                 rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
@@ -447,7 +455,7 @@ def objective(trial, study_name):
                 writer.add_scalar('time/test_time', timer.last('test'), train_step_cnt)
 
                 wandb.log({
-                        "testing loss": test_loss.item(), 
+                        "testing loss": test_tot_loss, 
                         "testing trans loss": test_trans_loss, 
                         "testing rot loss": test_rot_loss, 
                         "testing trans err": test_trans_err, 
@@ -486,7 +494,7 @@ def objective(trial, study_name):
         wandb.finish()
     
     # calcuatle average value of return_value_list with numpy
-    return_value = np.array(return_value_list).mean()
+    return_value = np.array(return_value_list[-10:]).mean()
     # np.save('trans_err_list.npy', trans_err_list)
     # print('return_value: ', return_value)
     return return_value
@@ -585,9 +593,9 @@ if __name__ == "__main__":
     storage_name = "sqlite:///./database/{}.db".format(study_name)
 
     if args.load_study == False:
-        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name,sampler=optuna.samplers.RandomSampler())
+        study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, sampler=optuna.samplers.RandomSampler())
     else:
-        study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name, load_if_exists=True,sampler=optuna.samplers.RandomSampler())
+        study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, load_if_exists=True, sampler=optuna.samplers.RandomSampler())
 
     study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
 

@@ -45,7 +45,6 @@ from Network.StereoVONet import StereoVONet
 from vo_trajectory_from_folder import save_args, load_args
 from Datasets.transformation import SE32ws
 
-
 import pypose as pp
 from Datasets.transformation import ses2poses_quat
 from evaluator.tartanair_evaluator_val import TartanAirEvaluator
@@ -57,13 +56,15 @@ from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajF
 from tqdm import tqdm
 import wandb
 
+
 class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
                     use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=(),
-                    extrinsic_encoder_layers=2, trans_head_layers=3):
+                    extrinsic_encoder_layers=2, trans_head_layers=3, normalize_extrinsic=False):
         
         # import ipdb;ipdb.set_trace()
         self.device = device
+        
         if use_stereo==0:
             self.vonet = VONet()
         elif use_stereo==1:
@@ -94,12 +95,13 @@ class TartanVO:
         self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
         self.flow_norm = 20 # scale factor for flow
 
-        
         self.use_imu = use_imu
         self.use_stereo = use_stereo
         self.correct_scale = correct_scale
+        self.normalize_extrinsic = normalize_extrinsic
         
         self.vonet.to(self.device)
+
 
     def load_model(self, model, modelname):
         preTrainDict = torch.load(modelname, map_location=self.device)
@@ -109,13 +111,6 @@ class TartanVO:
         for k, v in preTrainDict.items():
             if k in model_dict and v.size() == model_dict[k].size():
                 preTrainDictTemp[k] = v
-
-        # if 0 == len(preTrainDictTemp):
-        #     print("Does not find any module to load. Try DataParallel version.")
-        #     for k, v in preTrainDict.items():
-        #         kk = k[7:]
-        #         if kk in model_dict:
-        #             preTrainDictTemp[kk] = v
 
         if 0 == len(preTrainDictTemp):
             raise Exception("Could not load model from %s." % (modelname), "load_model")
@@ -137,51 +132,11 @@ class TartanVO:
         return model
 
 
-    # def forward_vo(self, sample, use_mask=False):
-    #     # use_gtflow = random.random()<self.args.vo_gt_flow # use gt flow as the input of the posenet
-    #     use_gtflow = False
-
-    #     # import ipdb;ipdb.set_trace()
-    #     # load the variables
-        
-    #     fix_flow = True
-    #     if use_gtflow and fix_flow: # flownet is not trained, neither forward nor backward
-    #         # img0, img1 = None, None
-    #         imgs = None
-    #         compute_flowloss = False
-    #     else: 
-    #         b,s,c,h,w = sample['img0'].shape
-    #         imgs   = sample['img0'].reshape(b,6,h,w).cuda()
-    #         # img1   = sample['img0'][:,1,:,:,:].cuda()
-    #         compute_flowloss = True
-
-    #     # if self.args.intrinsic_layer:
-    #     intrinsic = sample['intrinsic'].squeeze(1).cuda()
-    #     # else: 
-    #     #     intrinsic = None
-
-    #     flow, mask = None, None
-    #     if 'flow' in sample:
-    #         flow = sample['flow'].squeeze(1).cuda()
-    #         if use_mask:
-    #             mask = sample['fmask'].squeeze(1).cuda()
-
-    #     if use_gtflow: # the gt flow will be input to the posenet
-    #         flow_output, pose_output = self.vonet([imgs, intrinsic, flow], only_pose= fix_flow, gt_flow=True)
-    #     else: # use GT flow as the input
-    #         flow_output, pose_output = self.vonet([imgs, intrinsic])
-
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        # img0   = sample['img0'].to(self.device)
-        # img1   = sample['img1'].to(self.device)
-        # intrinsic = sample['intrinsic'].to(self.device)
-
-        img0   = sample['img0'].cuda()
-        img1   = sample['img1'].cuda()
-        intrinsic = sample['intrinsic'].squeeze(1).cuda()
-
-
+        img0   = sample['img0'].to(self.device)
+        img1   = sample['img1'].to(self.device)
+        intrinsic = sample['intrinsic'].to(self.device)
 
         if self.use_stereo==1:
             img0_norm = sample['img0_norm'].to(self.device)
@@ -189,6 +144,9 @@ class TartanVO:
             blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].to(self.device)
+            if self.normalize_extrinsic:
+                extrinsic_scale = torch.linalg.norm(extrinsic[:, :3], dim=1).view(-1, 1)
+                extrinsic[:, :3] /= extrinsic_scale
             img0_r = sample['img0_r'].to(self.device)
 
         if is_train:
@@ -198,14 +156,10 @@ class TartanVO:
 
         res = {}
 
-        # start_time = time.time()
         _ = torch.set_grad_enabled(is_train)
-        
 
         if self.use_stereo==0:
             inputs = [torch.cat([img0, img1], axis=1), intrinsic]
-            # starttime = time.time()
-            # flow_output, pose_output = self.vonet([imgs, intrinsic])
             flow, pose = self.vonet(inputs)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
@@ -222,18 +176,19 @@ class TartanVO:
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
+            if self.normalize_extrinsic:
+                pose[:, :3] *= extrinsic_scale
             res['pose'] = pose
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
             
-        # inferencetime = time.time()-starttime
-        # print("Pose inference using {}s".format(inferencetime))
 
         if self.correct_scale:
             pose = self.handle_scale(sample, pose)
             res['pose'] = pose
 
         return res
+
 
     def handle_scale(self, sample, pose):
         motion_tar = None
@@ -252,6 +207,7 @@ class TartanVO:
             print('    scale is not given, using 1 as the default scale value.')
         
         return pose
+
 
     def validate_model_result(self, train_step_cnt=None,writer =None):
         kitti_ate, kitti_trans, kitti_rot = self.validate_model(count=train_step_cnt, writer=writer,verbose = False, datastr = 'kitti')
@@ -273,7 +229,6 @@ class TartanVO:
         self.count = count
 
         result_dict = {}
-
 
         for i in range(11):
             # args.test_dir = '/data/azcopy/kitti/10/image_left'
@@ -303,13 +258,10 @@ class TartanVO:
             testDataset = TrajFolderDataset(args.test_dir,  posefile = args.pose_file, transform=transform, 
                                                 focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,verbose = False)
             
-            
-            
             testDataset  = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
                                                 root=args.data_root, transform=transform, mode = 'test')
             
             testDataloader  = DataLoader(testDataset,  batch_size=args.batch_size, shuffle=False,num_workers=args.worker_num)
-            
             
             args.batch_size = 64
             args.worker_num = 4
@@ -323,7 +275,7 @@ class TartanVO:
 
             motionlist_array = np.zeros((len(testDataset), 6))
             batch_size = args.batch_size
-            # 
+            
             for idx in tqdm(range(len(testDataiter))):    
                 try:
                     sample = next(testDataiter)
@@ -347,7 +299,6 @@ class TartanVO:
             evaluator = TartanAirEvaluator()
             results = evaluator.evaluate_one_trajectory(args.pose_file, poselist, scale=True, kittitype=(datastr=='kitti'))
             
-
             if datastr=='kitti':
                 result_dict['kitti_ate'].append(results['ate_score'])
                 result_dict['kitti_trans'].append( results['kitti_score'][1]* 100  )
@@ -357,7 +308,6 @@ class TartanVO:
             elif datastr=='euroc':
                 result_dict['euroc_ate'].append(results['ate_score'])
                 print("==> EuRoc: %s ATE: %.4f" %(euroc_dataset[i], results['ate_score']))
-
         
         # print average result
         if datastr=='euroc':
@@ -378,7 +328,6 @@ class TartanVO:
             print("==> KITTI: ATE: %.4f" %(ate_score))
             print("==> KITTI: Trans: %.4f" %(trans_score))
             print("==> KITTI: Rot: %.4f" %(rot_score))
-
 
             if not self.args.not_write_log:
                 writer.add_scalar('Error/KITTI_ATE', results['ate_score'], self.count)
@@ -402,8 +351,6 @@ class TartanVO:
 
         with torch.no_grad():
             starttime = time.time()
-            
-            
 
             imgs = torch.cat((inputs[0], inputs[1]), 1)
             intrinsic = inputs[2]
@@ -426,7 +373,6 @@ class TartanVO:
             else:
                 posenp = pose.data.cpu().numpy()
 
-
             inferencetime = time.time()-starttime
             # import ipdb;ipdb.set_trace()
             
@@ -435,7 +381,6 @@ class TartanVO:
             flownp = flow.data.cpu().numpy()
             # flownp = flownp * self.flow_norm
 
-        
         # calculate scale from GT posefile
         if 'motion' in sample:
             motions_gt = sample['motion']
