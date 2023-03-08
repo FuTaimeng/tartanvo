@@ -466,9 +466,9 @@ def objective(trial, study_name):
                     step = train_step_cnt
                 )
                 if test_on_sext:
-                    wandb.log({"testing trans err static": test_trans_err}, step=train_step)
+                    wandb.log({"testing trans err static": test_trans_err}, step=train_step_cnt)
                 else:
-                    wandb.log({"testing trans err dynamic": test_trans_err}, step=train_step)
+                    wandb.log({"testing trans err dynamic": test_trans_err}, step=train_step_cnt)
 
             if test_on_sext:
                 return_value_list.append(test_trans_err)
@@ -600,7 +600,7 @@ if __name__ == "__main__":
     else:
         study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, load_if_exists=True, sampler=optuna.samplers.RandomSampler())
 
-    study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
+    study.optimize(lambda trial: objective(trial, study_name), n_trials=args.trail_num)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
