@@ -410,10 +410,12 @@ def objective(trial, study_name):
         if train_step_cnt % args.test_interval == 0:
             timer.tic('test')
 
+            test_on_sext = (train_step_cnt // args.test_interval % 2 == 0)
+
             motion_list = []
             gt_motion_list = []
             for i in range(10):
-                if train_step_cnt // args.test_interval % 2 == 0:
+                if test_on_sext:
                     sample = testsampler_sext.next()
                 else:
                     sample = testsampler_dext.next()
@@ -447,7 +449,7 @@ def objective(trial, study_name):
 
                 writer.add_scalar('error/test_trans_err', test_trans_err, train_step_cnt)
                 writer.add_scalar('error/test_rot_err', test_rot_err, train_step_cnt)
-                if train_step_cnt // args.test_interval % 2 == 0:
+                if test_on_sext:
                     writer.add_scalar('error/test_trans_err_sext', test_trans_err, train_step_cnt)
                 else:
                     writer.add_scalar('error/test_trans_err_dext', test_trans_err, train_step_cnt)
@@ -459,18 +461,20 @@ def objective(trial, study_name):
                         "testing trans loss": test_trans_loss, 
                         "testing rot loss": test_rot_loss, 
                         "testing trans err": test_trans_err, 
-                        "testing trans err static": test_trans_err, 
                         "testing rot err": test_rot_err 
                     }, 
                     step = train_step_cnt
                 )
+                if test_on_sext:
+                    wandb.log({"testing trans err static": test_trans_err}, step=train_step)
+                else:
+                    wandb.log({"testing trans err dynamic": test_trans_err}, step=train_step)
 
-            if train_step_cnt // args.test_interval % 2 == 0:
-                test_trans_static_err = test_trans_err
-                return_value_list.append(test_trans_static_err)
+            if test_on_sext:
+                return_value_list.append(test_trans_err)
 
                 if args.enable_pruning:
-                    trial.report(test_trans_static_err, train_step_cnt)
+                    trial.report(test_trans_err, train_step_cnt)
                     # Handle pruning based on the intermediate value.
                     if trial.should_prune():
                         raise optuna.exceptions.TrialPruned()
