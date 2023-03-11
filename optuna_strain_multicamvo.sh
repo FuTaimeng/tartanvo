@@ -10,9 +10,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 
+###SBATCH --gpus=nvidia_a100-pcie-40gb:2
 #SBATCH --gres=gpu:1
 ###SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
-###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
+###SBATCH --gres=gpu:tesla_v100-pcie-16gb:1
 ###SBATCH --gres=gpu:nvidia_a16:1
 
 #SBATCH --mem=32000
@@ -26,7 +27,7 @@
 
 ###SBATCH --requeue
 
-#SBATCH --array=1-4
+###SBATCH --array=1-4
 
 
 source ~/.bashrc
@@ -34,22 +35,22 @@ conda activate impe-learning
 
 data_dir=/user/taimengf/projects/tartanair/TartanAir
 
-batch=32
-step=5000
+batch=16
+step=100
 
-nick_name=ExMLP-ExNorm
-train_name=${nick_name}_optuna[nel,ntl]
+nick_name=Dist-2A16-block
+train_name=${nick_name}
 
-# CUDA_VISIBLE_DEVICES=0
+# export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+export CUDA_VISIBLE_DEVICES=4,5
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
     --batch-size ${batch} \
-    --worker-num 4 \
+    --worker-num 2 \
     --data-root ${data_dir} \
     --print-interval 5 \
     --snapshot-interval 500 \
-    --device cuda \
     --mode train-all \
     --random-intrinsic 800 \
     --hsv-rand 0.2 \
@@ -58,15 +59,11 @@ python optuna_train_multicamvo2.py \
     --result-dir ./train_multicamvo \
     --train-name ${train_name} \
     --debug-flag '' \
-    --pose-model-name ./models/multicamvo_posenet_init_stereo=2.2.pkl \
+    --pose-model-name ./models/multicamvo_posenet_init_stereo=0.pkl \
     --train-step ${step} \
     --test-interval 50 \
-    --tuning-val 'extrinsic_encoder_layers' 'trans_head_layers' \
-    --enable-pruning \
-    --trail-num 2 \
-    --out-to-cml \
     --lr 6e-6 \
-    --load-study \
+    --world-size 2
 
     # --tuning-val 'lr' \
     # --lr-lb  1e-7 \

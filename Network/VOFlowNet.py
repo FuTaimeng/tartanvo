@@ -56,11 +56,11 @@ class VOFlowRes(nn.Module):
             self.feat_net2, _ = self.__feature_embedding()
 
         if stereo==2.1 or stereo==2.2:
-            if extrinsic_encoder_layers == 1:
-                self.extrinsic_encoder = nn.Linear(6, 128)
-                extrinsic_encoder_dim = 128
-            elif extrinsic_encoder_layers == 2:
-                self.extrinsic_encoder = nn.Sequential(linear(6, 64), nn.Linear(64, 128))
+            if extrinsic_encoder_layers >= 1:
+                layers = [linear(6, 128)]
+                for i in range(extrinsic_encoder_layers-1):
+                    layers.append(linear(128, 128))
+                self.extrinsic_encoder = nn.Sequential(*layers)
                 extrinsic_encoder_dim = 128
             else:   # use sin/cos encoder
                 self.extrinsic_encoder = self.__encode_pose

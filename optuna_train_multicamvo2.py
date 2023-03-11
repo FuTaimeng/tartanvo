@@ -1,57 +1,37 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
 from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset, TrajFolderDatasetPVGO, LoopDataSampler
-# from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset as TrajFolderDatasetMultiCam0, MultiTrajFolderDataset0
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
-# from evaluator.tartanair_evaluator import TartanAirEvaluator
 from evaluator.evaluate_rpe import calc_motion_error
 
 from TartanVO import TartanVO
 
-from pgo import run_pgo
-from pvgo import run_pvgo
-from imu_integrator import run_imu_preintegrator
-from os.path import isfile
-
 import torch
 import torch.optim as optim
+import torch.distributed as dist
+import torch.multiprocessing as mp
 from torch.utils.data import Dataset, DataLoader
 
-import pypose as pp
-import numpy as np
 import cv2
+import numpy as np
+import pypose as pp
 from scipy.spatial.transform import Rotation
 
+import re
+import sys
 import argparse
-from os import mkdir,makedirs
-from os.path import isdir
-from timer import Timer
+from os import mkdir, makedirs
+from os.path import isdir, isfile
 
-from torch.utils.tensorboard import SummaryWriter
+import time
+from timer import Timer
+from datetime import datetime
+
 import optuna
 from optuna.trial import TrialState
 
-import time
-from datetime import datetime
-import re
-import sys
 import wandb
+from torch.utils.tensorboard import SummaryWriter
 
-
-# from vo_trajectory_from_folder import save_args, load_args
-# from Datasets.transformation import SE32ws
-
-# import pypose as pp
-# from Datasets.transformation import ses2poses_quat
-# from evaluator.tartanair_evaluator_val import TartanAirEvaluator
-
-# # from vo_trajectory_from_folder import validate_model
-# from Datasets.utils_val import ToTensor, Compose, CropCenter, DownscaleFlow, plot_traj, visflow, dataset_intrinsics,load_kiiti_intrinsics
-# from Datasets.tartanTrajFlowDataset import TrajFolderDataset
-
-
-from tqdm import tqdm
-
-# from Datasets.MultiDatasets import EndToEndMultiDatasets, FlowMultiDatasets
 
 def get_args():
     parser = argparse.ArgumentParser(description='HRL')
@@ -89,8 +69,7 @@ def get_args():
     parser.add_argument('--test-interval', type=int, default=100,
                         help='the interval for test results (default: 100)')
     parser.add_argument('--val-interval', type=int, default=1,
-                        help='the interval for test results (default: 100)')
-    
+                        help='the interval for validate results (default: 100)')
     parser.add_argument('--train-name', default='',
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
@@ -120,39 +99,30 @@ def get_args():
                                 [2.2] multicam sep feat encoder')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
-
     parser.add_argument('--out-to-cml',action='store_true', default=False,
-                        help='Save output to a File')
-
+                        help='output to command line')
     parser.add_argument('--trail-num', type=int, default=10,
-                    help='The number of trails for optuna.')
-
+                        help='number of trails for optuna.')
     parser.add_argument('--enable-pruning',action='store_true', default=False,
                         help='Enable pruning for optuna.')
-
     parser.add_argument('--load-study',action='store_true', default=False,
-                        help='Load optuna study from a file.')
-    
+                        help='load optuna study from a file')
     parser.add_argument('--study-name', default='',
-                    help='The name of the load study.')
-
+                        help='the name of load study.')
     parser.add_argument('--not-write-log',action='store_true', default=False,
                         help='write log file')
     parser.add_argument('--enable-decay',action='store_true', default=False,
                         help='write log file')
-
-    # parser.add_argument('--enable-lr',action='store_true', default=False,
-    #                     help='write log file')
-
     parser.add_argument('--tuning-val', default=[], nargs='+',
                         help='tuning variables for optuna (default: [])')
     parser.add_argument('--start-iter', type=int, default=1,
-                        help='The number of trails for optuna.')
+                        help='number of trails for optuna.')
     parser.add_argument('--lr-lb', type=float, default=1e-7,
                         help='lower bound of learning rate')
     parser.add_argument('--lr-ub', type=float, default=1e-6,
                         help='upper bound of learning rate')
-
+    parser.add_argument('--world-size', type=int, default=1,
+                        help='number of processes')
     args = parser.parse_args()
 
     args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
@@ -185,61 +155,65 @@ def create_dataset(args, DatasetType, mode='train'):
     return dataset
 
 
-def objective(trial, study_name):
-
+def objective(trial, study_name, args, local_rank, datasets):
     timer = Timer()
-    args = get_args()
 
-    if args.device.startswith('cuda:'):
-        torch.cuda.set_device(args.device)
+    trainsampler_sext, trainsampler_dext, testsampler_sext, testsampler_dext = datasets
     
-    print("tuning_val:", args.tuning_val)
+    print(" \nOptuna tuning val:", args.tuning_val, end='\n\n')
+
     if "lr" in args.tuning_val:
         lr = trial.suggest_float("lr", args.lr_lb, args.lr_ub, log=True)
     else:
         lr = args.lr
+
     if "extrinsic_encoder_layers" in args.tuning_val:
         extrinsic_encoder_layers = trial.suggest_int("extrinsic_encoder_layers", 1, 2)
     else:
         extrinsic_encoder_layers = 2
+
     if "trans_head_layers" in args.tuning_val:
         trans_head_layers = trial.suggest_int("trans_head_layers", 3, 6)
     else:
         trans_head_layers = 3
-
-    if args.enable_decay:
-        print('\nEnable lr decay\n')
-    else:
-        print('\nDisable lr decay\n')
-    
-    LrDecrease = [int(args.train_step/2), int(args.train_step*3/4), int(args.train_step*7/8)]
-
-    batch_size = args.batch_size 
-
-    # study_name = args.train_name # Unique identifier of the study.
-    # storage_name = "sqlite:///{}.db".format(study_name)
-    # study = optuna.create_study(study_name= study_name, direction="minimize", storage=storage_name)
-    # study.optimize(lambda trial: objective(trial, study_name),  n_trials=args.trail_num)
-
-    # optimizer
+        
     if "optimizer" in args.tuning_val:
-        print("optimizer tuning")
-        args.vo_optimizer = trial.suggest_categorical("optimizer", ["adam", "rmsprop", "sgd"])
+        optimizer = trial.suggest_categorical("optimizer", ["adam", "rmsprop", "sgd"])
     else:
-        print("optimizer not tuning")
-
-    print("optimizer:", args.vo_optimizer)
-
+        optimizer = args.vo_optimizer
+        
+    batch_size = args.batch_size
+    
     file_name = study_name  + "_B"+str(args.batch_size) + "_lr"+"{:.3e}".format(lr) + "_O"+args.vo_optimizer \
                             + "_nel"+str(extrinsic_encoder_layers) + "_ntl"+str(trans_head_layers)
 
-    print(' \n\n\nExp Name: ')
-    print(file_name)
-    print('lr:{} batch size : {}'.format(lr, batch_size))
-    print()
-    print(args)
+    print('==========================================')
+    print('Local rank:', local_rank)
+    print('Trial name:', file_name)
+    print('Trial start at [{}]'.format(time.ctime()))
+    print('')
+    print('lr=', lr)
+    print('batch_size=', batch_size)
+    print('optimizer=', optimizer)
+    print('extrinsic_encoder_layers=', extrinsic_encoder_layers)
+    print('trans_head_layers=', trans_head_layers)
+    print('==========================================')
+    
+    if args.enable_decay:
+        LrDecrease = [int(args.train_step/2), int(args.train_step*3/4), int(args.train_step*7/8)]
+        print('\nEnable lr decay')
+        print('\tlr decay point:', LrDecrease)
+        print('\tlr decay rate: ', args.lr_decay_rate)
+        print('')
+    else:
+        print('\nDisable lr decay\n')
 
-    if not args.not_write_log:
+    if not args.not_write_log and local_rank==0:
+        tb_dir = './tensorboard/' + study_name + '/' + file_name
+        if not isdir(tb_dir):
+            makedirs(tb_dir)
+        writer = SummaryWriter(tb_dir)
+
         wandb.init(
             # set the wandb project where this run will be logged
             project=study_name,
@@ -247,48 +221,24 @@ def objective(trial, study_name):
             # # track hyperparameters and run metadata
             config={
                 "learning_rate": lr,
-                "batchsize": batch_size,
+                "batch_size": batch_size,
+                'optimizer': optimizer,
+                'extrinsic_encoder_layers': extrinsic_encoder_layers,
+                'trans_head_layers': trans_head_layers,
             }
         )
 
-    trainroot = args.result_dir + '/' +study_name
-    print('\nTrain root:', trainroot)
-
-    if not isdir(trainroot):
-        makedirs(trainroot)
-    with open(trainroot+'/args.txt', 'w') as f:
-        f.write(str(args))
-
-    if not args.not_write_log:
-        tb_dir = './tensorboard/' + study_name +'/' + file_name
-        print('\nTensorboard dir:', tb_dir)
-        if not isdir(tb_dir):
-            makedirs(tb_dir)
-        writer = SummaryWriter(tb_dir)
-    else:
-        writer = None
-
-    print('\n\n\n====================================================================================================================================================================================')
-    print('             Sript Content: ')
-
-    with open('optuna_strain_multicamvo.sh', 'r') as file:
-        print(file.read())
-    print('====================================================================================================================================================================================')
-    print('\n\n\n')
-
-    # all_frames = trainDataset.list_all_frames()
-    # np.savetxt(trainroot+'/all_frames.txt', all_frames, fmt="%s")
-    # quit()
+    trainroot = args.result_dir + '/' + study_name
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                        device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
+                        device_id=local_rank, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
                         extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers, normalize_extrinsic=True)
 
-    if args.vo_optimizer == 'adam':
+    if optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
-    elif args.vo_optimizer == 'rmsprop':
+    elif optimizer == 'rmsprop':
         posenetOptimizer = optim.RMSprop(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
-    elif args.vo_optimizer == 'sgd':
+    elif optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)
 
     criterion = torch.nn.L1Loss()
@@ -306,6 +256,7 @@ def objective(trial, study_name):
         else:
             # # small and success dataset
             sample = trainsampler_dext.next()
+        print('abs:', sample['img0'].shape)
         timer.toc('load')
 
         timer.tic('infer')
@@ -325,13 +276,17 @@ def objective(trial, study_name):
 
         timer.toc('bp')
 
-        if train_step_cnt in LrDecrease and args.enable_decay:
+        if args.enable_decay and train_step_cnt in LrDecrease:
             lr *= args.lr_decay_rate
             for param_group in posenetOptimizer.param_groups: 
                 param_group['lr'] = lr
             print('[!] lr decay to {} at step {}!'.format(lr, train_step_cnt))
 
         timer.toc('step')
+
+        if local_rank != 0:
+            continue
+        # below section (print, test, snapshot) only runs on process 0
 
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
@@ -366,46 +321,11 @@ def objective(trial, study_name):
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('[{}] TRAIN: step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},  lr:{:.10f}   time: total:{:.4f} ld:{:.4f} ife:{:.4f} bp:{:.4f}'.format(
                 formatted_date, train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, lr, timer.last('step'), timer.last('load'), timer.last('infer'), timer.last('bp')))
-            
-            # sample_last = sample
-            # res_last = res
-            # trans_err_list.append(trans_err)
-            
-            if args.debug_flag != '':
-                if not isdir(trainroot+'/debug'):
-                    makedirs(trainroot+'/debug')
-                debugdir = trainroot+'/debug/'+str(train_step_cnt)
-
-                debugdir = args.result_dir + '/' +study_name + '/' + file_name + '/debug/' + str(train_step_cnt)
-                if not isdir(debugdir):
-                    makedirs(debugdir)
-
-            if '0' in args.debug_flag:
-                info = np.array([train_step_cnt, tot_loss, trans_loss, rot_loss, trans_err, rot_err, timer.last('step')])
-                np.savetxt(debugdir+'/info.txt', info)
-
-            if '1' in args.debug_flag:
-                pass
-            
-            if '2' in args.debug_flag:
-                np.savetxt(debugdir+'/motion.txt', motion.detach().cpu().numpy())
-                np.savetxt(debugdir+'/gt_motion.txt', gt_motion.detach().cpu().numpy())
-
-            verbose_debug = True
-            if '3' in args.debug_flag:
-                save_images(debugdir, res['flowAB']*20, suffix='_flowAB')
-                save_images(debugdir, res['flowAC']*20, suffix='_flowAC')
-
-            if '4' in args.debug_flag:
-                save_images(debugdir, sample['img0'], suffix='_A')
-                save_images(debugdir, sample['img0_r'], suffix='_B')
-                save_images(debugdir, sample['img1'], suffix='_C')
                 
         else:
             if not args.not_write_log:
                 writer.add_scalar('loss/loss', loss.item(), train_step_cnt)
                 wandb.log({"training loss": loss.item() }, step= train_step_cnt)
-                # print('step:{}, loss:{}'.format(train_step_cnt, loss.item()))
 
         if train_step_cnt % args.test_interval == 0:
             timer.tic('test')
@@ -483,96 +403,57 @@ def objective(trial, study_name):
             print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f}'.format(
                 formatted_date, train_step_cnt, test_tot_loss, test_trans_loss, test_rot_loss, test_trans_err, test_rot_err,                            timer.last('test')))
 
-        # if train_step_cnt % args.val_interval == 0:
-        #     tartanvo.validate_model_result(  train_step_cnt=train_step_cnt, writer = writer)
-
         if train_step_cnt % args.snapshot_interval == 0:
-            if not isdir(trainroot+'/models/' + file_name):
-                makedirs(trainroot+'/models/'+ file_name)
+            if not isdir(trainroot+'/models/'+file_name):
+                makedirs(trainroot+'/models/'+file_name)
             
             save_model_name = '{}/models/{}/{}_st{}.pkl'.format(trainroot, file_name, file_name, train_step_cnt)
-            print('save model to:', save_model_name, end='\n\n')
+            print(' \nSave model to:', save_model_name, end='\n\n')
             torch.save(tartanvo.vonet.flowPoseNet.state_dict(), save_model_name)
     
-    if not args.not_write_log:
+    if not args.not_write_log and local_rank==0:
         wandb.finish()
     
     # calcuatle average value of return_value_list with numpy
     return_value = np.array(return_value_list[-10:]).mean()
-    # np.save('trans_err_list.npy', trans_err_list)
-    # print('return_value: ', return_value)
     return return_value
 
 
-if __name__ == "__main__":
+def process(local_rank, args):
+    torch.distributed.init_process_group(backend='nccl', init_method='tcp://127.0.0.1:65533',
+                                         rank=local_rank, world_size=args.world_size)
+
+    print('local_rank=', local_rank)
+    ngpu = torch.cuda.device_count()
+    print('ngpu=', ngpu)
+    infos = [torch.cuda.get_device_properties(i) for i in range(ngpu)]
+    print('infos=', infos)
+
+    torch.cuda.set_device(local_rank)
+    device_name = torch.cuda.get_device_name(local_rank)
+
+    study_name = args.train_name
+    trainroot = args.result_dir + '/' + study_name
+    record_file_name = study_name + "_P"+str(local_rank)
+
+    if local_rank == 0:
+        if not isdir(trainroot):
+            makedirs(trainroot)
+
+        with open(trainroot+'/args.txt', 'w') as f:
+            f.write(str(args))
+
+    dist.barrier()
+
+    sys.stdout = open(trainroot + "/log_P"+str(local_rank)+".txt", "w")
     
-    args = get_args()
-    print('debug_flag: ', args.debug_flag)
-
-    torch.cuda.set_device(0)
-    
-    start_time = time.time()
-
-    device_name = torch.cuda.get_device_name(0)
-    device_name_num = str(re.findall(r'\d+', device_name)[-1])
-    current_time = datetime.now().strftime('%b_%d_%Y_%H_%M_%S')
-
-    if args.load_study == False:
-        # study_name = args.train_name + "_dev"+device_name_num + "_"+current_time
-        study_name = args.train_name
-        print(' \nNew Study\nStudy Name: ')
-    else:
-        # study_name = args.study_name
-        study_name = args.train_name
-        print(' \nResume Study \nStudy Name: ')
-
-    print(study_name)
-
-    # open both files
-    file_exit = True
-    i = 0
-
-    while file_exit:
-        record_file_name = study_name + '_' + str(i)
-        if not isfile("./record/"+record_file_name+".txt"):
-            file_exit = False
-        else:
-            i += 1
-    print(' \n\nRecord File Name: ')
-    print("./record/"+record_file_name+".txt")
-
-    if not isdir("./record/"):
-        makedirs("./record/")
-
-    with open('optuna_strain_multicamvo.sh','r') as firstfile, open("./record/"+record_file_name+".txt", "w") as secondfile:
-        # read content from first file
-        for line in firstfile:
-            # write content to second file
-            secondfile.write(line)
-    # save to file or output to command line
-    if not args.out_to_cml:
-        print('\n=====================')
-        print('Saving to txt Files')
-        print('=====================\n')
-        print('\n============')
-        print("Record Start")
-        print('============\n')
-        stdoutOrigin=sys.stdout  
-        sys.stdout = open("./record/"+record_file_name+".txt", "a")
-        print(' \n\n\nStudy Name: ')
-        print(study_name)
-    else:
-        print('\n========================')
-        print(' PRINT TO COMMAND LINE')
-        print('========================\n')     
-    
-    now_date = time.ctime()
     print('==========================================')
-    print('Traning Start at [{}]'.format(now_date) )
-    print(' \ntorch.cuda.is_available() ')
-    print(torch.cuda.is_available())
-    print(' \nDevice Name: ')
-    print(device_name)
+    print('Local rank:', local_rank)
+    print('Training name:', study_name)
+    print('Traning start at [{}]'.format(time.ctime()))
+    print('')
+    print('torch.cuda.is_available():', torch.cuda.is_available())
+    print('Device name:', device_name)
     print('==========================================')
 
     # create datasets
@@ -583,65 +464,57 @@ if __name__ == "__main__":
     testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
 
     # create data samplers
-    trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
-    trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
+    trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, 
+                                        num_workers=args.worker_num, distributed=True)
+    trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, 
+                                        num_workers=args.worker_num, distributed=True)
 
-    testsampler_sext = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
-    testsampler_dext = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, num_workers=args.worker_num)
-    
-    # Add stream handler of stdout to show the messages
-    # optuna.logging.get_logger("optuna").addHandler(logging.StreamHandler(sys.stdout))
-    
-    # study_name = file_name # Unique identifier of the study.
-    storage_name = "sqlite:///./database/{}.db".format(study_name)
+    testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, 
+                                        num_workers=args.worker_num, distributed=True)
+    testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, 
+                                        num_workers=args.worker_num, distributed=True)
 
-    if args.load_study == False:
-        study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, sampler=optuna.samplers.RandomSampler())
+    datasets = (trainsampler_sext, trainsampler_dext, testsampler_sext, testsampler_dext)
+    
+    if args.world_size == 1 and len(args.tuning_val) > 0:
+        storage_name = "sqlite:///./database/{}.db".format(study_name)
+        study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, 
+                                    load_if_exists=args.load_study, sampler=optuna.samplers.RandomSampler())
+
+        study.optimize(lambda trial: objective(trial, study_name, args, local_rank, datasets), n_trials=args.trail_num)
+
+        pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+        complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+        print('==========================================')
+        print("Study statistics: ")
+        print("\tNumber of finished trials:", len(study.trials))
+        print("\tNumber of pruned trials:", len(pruned_trials))
+        print("\tNumber of complete trials:", len(complete_trials))
+        print('')
+        print('\tBest trial:')
+        trial = study.best_trial
+        print("\tValue:", trial.value)
+        print("\tParams:")
+        for key, value in trial.params.items():
+            print("\t\t{}: {}".format(key, value))
+        print('==========================================')
+    
     else:
-        study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, load_if_exists=True, sampler=optuna.samplers.RandomSampler())
+        start_time = time.time()
 
-    study.optimize(lambda trial: objective(trial, study_name), n_trials=args.trail_num)
+        objective(None, study_name, args, local_rank, datasets)
 
-    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
-    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+        end_time = time.time()
+        print('\nTotal time consume:', end_time-start_time)
 
-    print("Study statistics: ")
-    print("  Number of finished trials: ", len(study.trials))
-    print("  Number of pruned trials: ", len(pruned_trials))
-    print("  Number of complete trials: ", len(complete_trials))
+    sys.stdout.close()
 
-    print("Best trial:")
-    trial = study.best_trial
 
-    print("  Value: ", trial.value)
+if __name__ == "__main__":
+    args = get_args()
 
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print("    {}: {}".format(key, value))
-
-    best_trial = study.best_trial
-
-    print('\n\n========================')
-    print('      FINAL RESULT')
-    print('========================\n')  
-
-    for trial in study.trials:
-        print("\nTrial number: {}".format(trial.number))
-        print("Value: {}".format(trial.value))
-        print("Params: {}".format(trial.params))
-        print("Trial {} finished with value: {} and parameters: {}".format(trial.number, trial.value, trial.params))
-        print(" Best is trial {} with value: {}.".format(best_trial.number, best_trial.value))
-        print("\n")
-
-    print("Done.")
-    
-    end_time = time.time()
-    time_difference = int(end_time - start_time)
-    end_date = time.ctime()
-
-    print('Finished at [{}]'.format(end_date) )
-    print('Total use [{}]s'.format(time_difference) )
-
-    if not args.out_to_cml:
-        sys.stdout.close()
-        sys.stdout=stdoutOrigin
+    if args.world_size > 1:
+        mp.spawn(process, nprocs=args.world_size, args=(args,))
+    else:
+        process(0, args)

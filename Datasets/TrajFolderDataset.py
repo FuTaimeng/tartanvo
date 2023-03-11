@@ -9,6 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from os import listdir, path
 from os.path import isdir, isfile
+from torch.utils.data.distributed import DistributedSampler
 
 from .transformation import pos_quats2SEs, pose2motion, SEs2ses
 from .utils import make_intrinsics_layer
@@ -490,11 +491,11 @@ class MultiTrajFolderDataset(Dataset):
         folder_list = []
         folder_list.extend(self.list_tartanair_folders())
         folder_list.sort()
+
         self.datasets = []
         self.accmulatedDataSize = [0]
 
-        print('Loading dataset for {} dirs'.format(len(folder_list)))
-        # print()
+        print('Loading dataset for {} dirs ...'.format(len(folder_list)))
 
         from tqdm import tqdm
         for folder, datatype in tqdm(folder_list):
@@ -508,7 +509,6 @@ class MultiTrajFolderDataset(Dataset):
                 self.datasets.append(dataset)
                 self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
 
-        
         print('Find {} datasets. Have {} frames in total.'.format(len(self.datasets), self.accmulatedDataSize[-1]))
 
     def list_tartanair_folders(self):
@@ -527,10 +527,10 @@ class MultiTrajFolderDataset(Dataset):
 
         scenedirs = \
         ['abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
-        'gascola',              'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
-        'office',               'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
+         'gascola',             'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
+         'office',              'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
          'soulcity',            'westerndesert',            'endofworld']
-        set_level = ['Easy', 'Hard']
+        level_set = ['Easy', 'Hard']
 
         if self.mode == 'train':
             print('\nLoading Training dataset')
@@ -542,12 +542,12 @@ class MultiTrajFolderDataset(Dataset):
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         
         print('===============================')
-        print('      Debugging!!!!!!')
+        print('Debugging!!!!!!')
         scenedirs = ['abandonedfactory']
         level_set  = ['Easy']
         print('scenedirs: ', scenedirs)
         print('level_set: ', level_set)
-        print('===============================\n')
+        print('===============================')
         
         for scene in scenedirs:
             for level in level_set:
@@ -582,16 +582,26 @@ class MultiTrajFolderDataset(Dataset):
 
 
 class LoopDataSampler:
-    def __init__(self, dataset, batch_size=32, shuffle=True, num_workers=4):
+    def __init__(self, dataset, batch_size=4, shuffle=True, num_workers=4, distributed=True):
         self.dataset = dataset
-        self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        if distributed:
+            self.dist_sampler = DistributedSampler(dataset, shuffle=shuffle)
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=self.dist_sampler, pin_memory=False)
+        else:
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=False)
         self.dataiter = iter(self.dataloader)
-        self.load_time = 0
+        self.epoch_cnt = 0
+        self.distributed = distributed
     
     def next(self):
         try:
             sample = next(self.dataiter)
+
         except StopIteration:
+            self.epoch_cnt += 1
+            if self.distributed:
+                self.dist_sampler.set_epoch(self.epoch_cnt)
+
             self.dataiter = iter(self.dataloader)
             sample = next(self.dataiter)
 

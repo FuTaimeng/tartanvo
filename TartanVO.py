@@ -32,38 +32,26 @@
 
 import torch
 import torch.nn as nn
-import numpy as np
+from torch.nn.parallel import DistributedDataParallel
+
 import time
 import random
-from torch.utils.data import DataLoader
-
-np.set_printoptions(precision=4, suppress=True, threshold=10000)
+import numpy as np
+import pypose as pp
 
 from Network.VONet import VONet, MultiCamVONet
 from Network.StereoVONet import StereoVONet
 
-from vo_trajectory_from_folder import save_args, load_args
-from Datasets.transformation import SE32ws
-
-import pypose as pp
-from Datasets.transformation import ses2poses_quat
-from evaluator.tartanair_evaluator_val import TartanAirEvaluator
-
-# from vo_trajectory_from_folder import validate_model
-from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, plot_traj, visflow, dataset_intrinsics,load_kiiti_intrinsics
-from Datasets.tartanTrajFlowDataset import TrajFolderDataset
-from Datasets.tartanTrajFlowDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset
-from tqdm import tqdm
-import wandb
+np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
 
 class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
-                    use_imu=False, use_stereo=0, device='cuda', correct_scale=True, fix_parts=(),
+                    use_imu=False, use_stereo=0, device_id=0, correct_scale=True, fix_parts=(),
                     extrinsic_encoder_layers=2, trans_head_layers=3, normalize_extrinsic=False):
         
         # import ipdb;ipdb.set_trace()
-        self.device = device
+        self.device_id = device_id
         
         if use_stereo==0:
             self.vonet = VONet()
@@ -92,7 +80,7 @@ class TartanVO:
                 print('load stereo network...')
                 self.load_model(self.vonet.stereoNet, stereo_model_name)
             
-        self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).to(device) # the output scale factor
+        self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).cuda() # the output scale factor
         self.flow_norm = 20 # scale factor for flow
 
         self.use_imu = use_imu
@@ -100,11 +88,14 @@ class TartanVO:
         self.correct_scale = correct_scale
         self.normalize_extrinsic = normalize_extrinsic
         
-        self.vonet.to(self.device)
+        # self.vonet = self.vonet.cuda(device_id)
+        # self.vonet = DistributedDataParallel(self.vonet, device_ids=[device_id])
+        self.vonet.flowNet = self.vonet.flowNet.cuda(device_id)
+        self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet.cuda(device_id), device_ids=[device_id])
 
 
     def load_model(self, model, modelname):
-        preTrainDict = torch.load(modelname, map_location=self.device)
+        preTrainDict = torch.load(modelname, map_location='cpu')
         model_dict = model.state_dict()
 
         preTrainDictTemp = {}
@@ -134,20 +125,21 @@ class TartanVO:
 
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        img0   = sample['img0'].to(self.device)
-        img1   = sample['img1'].to(self.device)
-        intrinsic = sample['intrinsic'].to(self.device)
+        nb = False
+        img0   = sample['img0'].cuda(non_blocking=nb)
+        img1   = sample['img1'].cuda(non_blocking=nb)
+        intrinsic = sample['intrinsic'].cuda(non_blocking=nb)
 
         if self.use_stereo==1:
-            img0_norm = sample['img0_norm'].to(self.device)
-            img0_r_norm = sample['img0_r_norm'].to(self.device)
-            blxfx = sample['blxfx'].view(1, 1, 1, 1).to(self.device)
+            img0_norm = sample['img0_norm'].cuda(non_blocking=nb)
+            img0_r_norm = sample['img0_r_norm'].cuda(non_blocking=nb)
+            blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(non_blocking=nb)
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
-            extrinsic = sample['extrinsic'].to(self.device)
+            extrinsic = sample['extrinsic'].cuda(non_blocking=nb)
             if self.normalize_extrinsic:
                 extrinsic_scale = torch.linalg.norm(extrinsic[:, :3], dim=1).view(-1, 1)
                 extrinsic[:, :3] /= extrinsic_scale
-            img0_r = sample['img0_r'].to(self.device)
+            img0_r = sample['img0_r'].cuda(non_blocking=nb)
 
         if is_train:
             self.vonet.train()
@@ -199,7 +191,7 @@ class TartanVO:
 
         # calculate scale
         if motion_tar is not None:
-            scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).to(self.device)
+            scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).cuda()
             trans_est = pose[:,:3]
             trans_est = trans_est/torch.linalg.norm(trans_est,dim=1).view(-1,1)*scale.view(-1,1)
             pose = torch.cat((trans_est, pose[:,3:]), dim=1)
@@ -209,196 +201,196 @@ class TartanVO:
         return pose
 
 
-    def validate_model_result(self, train_step_cnt=None,writer =None):
-        kitti_ate, kitti_trans, kitti_rot = self.validate_model(count=train_step_cnt, writer=writer,verbose = False, datastr = 'kitti')
-        euroc_ate = self.validate_model(count=train_step_cnt, writer = writer,verbose = False, datastr = 'euroc')
+    # def validate_model_result(self, train_step_cnt=None,writer =None):
+    #     kitti_ate, kitti_trans, kitti_rot = self.validate_model(count=train_step_cnt, writer=writer,verbose = False, datastr = 'kitti')
+    #     euroc_ate = self.validate_model(count=train_step_cnt, writer = writer,verbose = False, datastr = 'euroc')
 
-        print("  VAL %s #%d - KITTI-ATE/T/R/EuRoc-ATE: %.4f  %.4f  %.4f %.4f"  % (self.args.exp_prefix[:-1], 
-        self.val_count, kitti_ate, kitti_trans, kitti_rot, euroc_ate))
-        score = kitti_ate/ self.kitti_ate_bs/self.kitti_trans_bs + kitti_trans + kitti_rot/self.kitti_rot_bs   + euroc_ate/self.euroc_ate_bs
-        print('score: ', score)
+    #     print("  VAL %s #%d - KITTI-ATE/T/R/EuRoc-ATE: %.4f  %.4f  %.4f %.4f"  % (self.args.exp_prefix[:-1], 
+    #     self.val_count, kitti_ate, kitti_trans, kitti_rot, euroc_ate))
+    #     score = kitti_ate/ self.kitti_ate_bs/self.kitti_trans_bs + kitti_trans + kitti_rot/self.kitti_rot_bs   + euroc_ate/self.euroc_ate_bs
+    #     print('score: ', score)
 
 
-    def validate_model(self,writer,count = None, verbose = False, datastr =None,source_dir = '/home/data2'):
-        euroc_dataset = ['MH_01', 'MH_02', 'MH_03', 'MH_04', 'MH_05', 'V1_01', 'V1_02', 'V1_03', 'V2_01', 'V2_02', 'V2_03']
-        if datastr == None:
-            print('Here is a bug!!!')
+    # def validate_model(self,writer,count = None, verbose = False, datastr =None,source_dir = '/home/data2'):
+    #     euroc_dataset = ['MH_01', 'MH_02', 'MH_03', 'MH_04', 'MH_05', 'V1_01', 'V1_02', 'V1_03', 'V2_01', 'V2_02', 'V2_03']
+    #     if datastr == None:
+    #         print('Here is a bug!!!')
 
-        args = load_args('args/args_'+datastr+'.pkl')[0]
-        # read testdir adn posefile from kitti from tarjectory 1 to 10
-        self.count = count
+    #     args = load_args('args/args_'+datastr+'.pkl')[0]
+    #     # read testdir adn posefile from kitti from tarjectory 1 to 10
+    #     self.count = count
 
-        result_dict = {}
+    #     result_dict = {}
 
-        for i in range(11):
-            # args.test_dir = '/data/azcopy/kitti/10/image_left'
-            # args.pose_file = '/data/azcopy/kitti/10/pose_left.txt'
-            if datastr == 'kitti':
-                args.test_dir = source_dir + '/kitti/'+str(i).zfill(2)+'/image_left'
-                args.pose_file = source_dir + '/kitti/'+str(i).zfill(2)+'/pose_left.txt'
+    #     for i in range(11):
+    #         # args.test_dir = '/data/azcopy/kitti/10/image_left'
+    #         # args.pose_file = '/data/azcopy/kitti/10/pose_left.txt'
+    #         if datastr == 'kitti':
+    #             args.test_dir = source_dir + '/kitti/'+str(i).zfill(2)+'/image_left'
+    #             args.pose_file = source_dir + '/kitti/'+str(i).zfill(2)+'/pose_left.txt'
                 
-                # Specify the path to the KITTI calib.txt file
-                args.kitti_intrinsics_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
-                calib_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
-                focalx, focaly, centerx, centery = load_kiiti_intrinsics(args.kitti_intrinsics_file)
+    #             # Specify the path to the KITTI calib.txt file
+    #             args.kitti_intrinsics_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
+    #             calib_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
+    #             focalx, focaly, centerx, centery = load_kiiti_intrinsics(args.kitti_intrinsics_file)
 
-                result_dict['kitti_ate'] = []
-                result_dict['kitti_trans'] = []
-                result_dict['kitti_rot'] = []
+    #             result_dict['kitti_ate'] = []
+    #             result_dict['kitti_trans'] = []
+    #             result_dict['kitti_rot'] = []
 
-            elif datastr == 'euroc':
-                args.test_dir = source_dir + '/euroc/'+euroc_dataset[i]+ '/cam0' + '/data2'
-                args.pose_file = source_dir + '/euroc/'+euroc_dataset[i] + '/cam0' +'/pose_left.txt'
-                focalx, focaly, centerx, centery = dataset_intrinsics(datastr) 
+    #         elif datastr == 'euroc':
+    #             args.test_dir = source_dir + '/euroc/'+euroc_dataset[i]+ '/cam0' + '/data2'
+    #             args.pose_file = source_dir + '/euroc/'+euroc_dataset[i] + '/cam0' +'/pose_left.txt'
+    #             focalx, focaly, centerx, centery = dataset_intrinsics(datastr) 
                 
-                result_dict['euroc_ate'] = []
+    #             result_dict['euroc_ate'] = []
 
-            transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
+    #         transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
 
-            testDataset = TrajFolderDataset(args.test_dir,  posefile = args.pose_file, transform=transform, 
-                                                focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,verbose = False)
+    #         testDataset = TrajFolderDataset(args.test_dir,  posefile = args.pose_file, transform=transform, 
+    #                                             focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,verbose = False)
             
-            testDataset  = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-                                                root=args.data_root, transform=transform, mode = 'test')
+    #         testDataset  = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
+    #                                             root=args.data_root, transform=transform, mode = 'test')
             
-            testDataloader  = DataLoader(testDataset,  batch_size=args.batch_size, shuffle=False,num_workers=args.worker_num)
+    #         testDataloader  = DataLoader(testDataset,  batch_size=args.batch_size, shuffle=False,num_workers=args.worker_num)
             
-            args.batch_size = 64
-            args.worker_num = 4
-            testDataloader = DataLoader(testDataset, batch_size=args.batch_size, 
-                                                shuffle=False, num_workers=args.worker_num)
-            testDataiter = iter(testDataloader)
+    #         args.batch_size = 64
+    #         args.worker_num = 4
+    #         testDataloader = DataLoader(testDataset, batch_size=args.batch_size, 
+    #                                             shuffle=False, num_workers=args.worker_num)
+    #         testDataiter = iter(testDataloader)
 
-            motionlist = []
-            testname = datastr + '_' + args.model_name.split('.')[0]
-            # length = len(testDataiter)
+    #         motionlist = []
+    #         testname = datastr + '_' + args.model_name.split('.')[0]
+    #         # length = len(testDataiter)
 
-            motionlist_array = np.zeros((len(testDataset), 6))
-            batch_size = args.batch_size
+    #         motionlist_array = np.zeros((len(testDataset), 6))
+    #         batch_size = args.batch_size
             
-            for idx in tqdm(range(len(testDataiter))):    
-                try:
-                    sample = next(testDataiter)
-                except StopIteration:
-                    break
+    #         for idx in tqdm(range(len(testDataiter))):    
+    #             try:
+    #                 sample = next(testDataiter)
+    #             except StopIteration:
+    #                 break
                 
-                # motions, flow = self.validate_test_batch(sample)
-                res =  self.run_batch(sample)
-                motions = res['pose']
+    #             # motions, flow = self.validate_test_batch(sample)
+    #             res =  self.run_batch(sample)
+    #             motions = res['pose']
 
-                try:
-                    motionlist_array[batch_size*idx:batch_size*idx+batch_size,:] = motions
-                except:
-                    motionlist_array[batch_size*idx:,:] = motions
+    #             try:
+    #                 motionlist_array[batch_size*idx:batch_size*idx+batch_size,:] = motions
+    #             except:
+    #                 motionlist_array[batch_size*idx:,:] = motions
 
-            # poselist = ses2poses_quat(np.array(motionlist))
-            poselist = ses2poses_quat( motionlist_array)
+    #         # poselist = ses2poses_quat(np.array(motionlist))
+    #         poselist = ses2poses_quat( motionlist_array)
             
-            # calculate ATE, RPE, KITTI-RPE
-            # if args.pose_file.endswith('.txt'):
-            evaluator = TartanAirEvaluator()
-            results = evaluator.evaluate_one_trajectory(args.pose_file, poselist, scale=True, kittitype=(datastr=='kitti'))
+    #         # calculate ATE, RPE, KITTI-RPE
+    #         # if args.pose_file.endswith('.txt'):
+    #         evaluator = TartanAirEvaluator()
+    #         results = evaluator.evaluate_one_trajectory(args.pose_file, poselist, scale=True, kittitype=(datastr=='kitti'))
             
-            if datastr=='kitti':
-                result_dict['kitti_ate'].append(results['ate_score'])
-                result_dict['kitti_trans'].append( results['kitti_score'][1]* 100  )
-                result_dict['kitti_rot'].append( results['kitti_score'][0] * 100)
-                print("==> KITTI: %d ATE: %.4f,\t KITTI-T/R: %.4f, %.4f" %(i, results['ate_score'], results['kitti_score'][1]* 100, results['kitti_score'][0]* 100 ))
+    #         if datastr=='kitti':
+    #             result_dict['kitti_ate'].append(results['ate_score'])
+    #             result_dict['kitti_trans'].append( results['kitti_score'][1]* 100  )
+    #             result_dict['kitti_rot'].append( results['kitti_score'][0] * 100)
+    #             print("==> KITTI: %d ATE: %.4f,\t KITTI-T/R: %.4f, %.4f" %(i, results['ate_score'], results['kitti_score'][1]* 100, results['kitti_score'][0]* 100 ))
 
-            elif datastr=='euroc':
-                result_dict['euroc_ate'].append(results['ate_score'])
-                print("==> EuRoc: %s ATE: %.4f" %(euroc_dataset[i], results['ate_score']))
+    #         elif datastr=='euroc':
+    #             result_dict['euroc_ate'].append(results['ate_score'])
+    #             print("==> EuRoc: %s ATE: %.4f" %(euroc_dataset[i], results['ate_score']))
         
-        # print average result
-        if datastr=='euroc':
-            ate_score = np.mean(result_dict['ate_score'])
-            print("==> EuRoc: ATE: %.4f" %(ate_score))
+    #     # print average result
+    #     if datastr=='euroc':
+    #         ate_score = np.mean(result_dict['ate_score'])
+    #         print("==> EuRoc: ATE: %.4f" %(ate_score))
 
-            if not self.args.not_write_log:
-                writer.add_scalar('Error/EuRoc_ATE', results['ate_score'], self.count)
-                wandb.log({"EuRoc_ATE": results['ate_score']}, step=self.count)
+    #         if not self.args.not_write_log:
+    #             writer.add_scalar('Error/EuRoc_ATE', results['ate_score'], self.count)
+    #             wandb.log({"EuRoc_ATE": results['ate_score']}, step=self.count)
 
-            return ate_score
+    #         return ate_score
         
-        elif datastr == 'kitti':
-            ate_score = np.mean(result_dict['kitti_ate'])
-            trans_score = np.mean(result_dict['kitti_trans'])
-            rot_score = np.mean(result_dict['kitti_rot'])
+    #     elif datastr == 'kitti':
+    #         ate_score = np.mean(result_dict['kitti_ate'])
+    #         trans_score = np.mean(result_dict['kitti_trans'])
+    #         rot_score = np.mean(result_dict['kitti_rot'])
 
-            print("==> KITTI: ATE: %.4f" %(ate_score))
-            print("==> KITTI: Trans: %.4f" %(trans_score))
-            print("==> KITTI: Rot: %.4f" %(rot_score))
+    #         print("==> KITTI: ATE: %.4f" %(ate_score))
+    #         print("==> KITTI: Trans: %.4f" %(trans_score))
+    #         print("==> KITTI: Rot: %.4f" %(rot_score))
 
-            if not self.args.not_write_log:
-                writer.add_scalar('Error/KITTI_ATE', results['ate_score'], self.count)
-                writer.add_scalar('Error/KITTI_trans', results['kitti_score'][1]* 100, self.count)
-                writer.add_scalar('Error/KITTI_rot', results['kitti_score'][0]* 100, self.count)
-                wandb.log({"KITTI_ATE": results['ate_score'], "KITTI_trans": results['kitti_score'][1]* 100, "KITTI_rot": results['kitti_score'][0]* 100 }, step=self.count)
+    #         if not self.args.not_write_log:
+    #             writer.add_scalar('Error/KITTI_ATE', results['ate_score'], self.count)
+    #             writer.add_scalar('Error/KITTI_trans', results['kitti_score'][1]* 100, self.count)
+    #             writer.add_scalar('Error/KITTI_rot', results['kitti_score'][0]* 100, self.count)
+    #             wandb.log({"KITTI_ATE": results['ate_score'], "KITTI_trans": results['kitti_score'][1]* 100, "KITTI_rot": results['kitti_score'][0]* 100 }, step=self.count)
 
-            return ate_score, trans_score, rot_score
+    #         return ate_score, trans_score, rot_score
 
 
-    def validate_test_batch(self, sample):
-        # self.test_count += 1
+    # def validate_test_batch(self, sample):
+    #     # self.test_count += 1
         
-        # import ipdb;ipdb.set_trace()
-        img0   = sample['img1'].cuda()
-        img1   = sample['img2'].cuda()
-        intrinsic = sample['intrinsic'].cuda()
-        inputs = [img0, img1, intrinsic]
+    #     # import ipdb;ipdb.set_trace()
+    #     img0   = sample['img1'].cuda()
+    #     img1   = sample['img2'].cuda()
+    #     intrinsic = sample['intrinsic'].cuda()
+    #     inputs = [img0, img1, intrinsic]
 
-        self.vonet.eval()
+    #     self.vonet.eval()
 
-        with torch.no_grad():
-            starttime = time.time()
+    #     with torch.no_grad():
+    #         starttime = time.time()
 
-            imgs = torch.cat((inputs[0], inputs[1]), 1)
-            intrinsic = inputs[2]
-            # in tartanvo val 
-            # flow, pose = self.vonet(inputs)
-            # in tartanvo training
-            flow_output, pose_output = self.vonet([imgs, intrinsic])
-            # flow, pose = self.vonet([imgs, intrinsic])
+    #         imgs = torch.cat((inputs[0], inputs[1]), 1)
+    #         intrinsic = inputs[2]
+    #         # in tartanvo val 
+    #         # flow, pose = self.vonet(inputs)
+    #         # in tartanvo training
+    #         flow_output, pose_output = self.vonet([imgs, intrinsic])
+    #         # flow, pose = self.vonet([imgs, intrinsic])
 
-            res = self.run_batch(sample)
-            motion = res['pose']
+    #         res = self.run_batch(sample)
+    #         motion = res['pose']
             
-            # print(pose)
+    #         # print(pose)
 
-            # Transfer SE3 to translation and rotation
+    #         # Transfer SE3 to translation and rotation
             
-            if pose.shape[-1] == 7:
-                posenp,_,_ = SE32ws(pose)
+    #         if pose.shape[-1] == 7:
+    #             posenp,_,_ = SE32ws(pose)
 
-            else:
-                posenp = pose.data.cpu().numpy()
+    #         else:
+    #             posenp = pose.data.cpu().numpy()
 
-            inferencetime = time.time()-starttime
-            # import ipdb;ipdb.set_trace()
+    #         inferencetime = time.time()-starttime
+    #         # import ipdb;ipdb.set_trace()
             
-            # Very very important
-            posenp = posenp * self.pose_std # The output is normalized during training, now scale it back
-            flownp = flow.data.cpu().numpy()
-            # flownp = flownp * self.flow_norm
+    #         # Very very important
+    #         posenp = posenp * self.pose_std # The output is normalized during training, now scale it back
+    #         flownp = flow.data.cpu().numpy()
+    #         # flownp = flownp * self.flow_norm
 
-        # calculate scale from GT posefile
-        if 'motion' in sample:
-            motions_gt = sample['motion']
-            scale = np.linalg.norm(motions_gt[:,:3], axis=1)
-            trans_est = posenp[:,:3]    
+    #     # calculate scale from GT posefile
+    #     if 'motion' in sample:
+    #         motions_gt = sample['motion']
+    #         scale = np.linalg.norm(motions_gt[:,:3], axis=1)
+    #         trans_est = posenp[:,:3]    
             
-            '''
-            trans_est_norm = np.linalg.norm(trans_est,axis=1).reshape(-1,1)
-            eps = 1e-12 * np.ones(trans_est_norm.shape)
-            '''
+    #         '''
+    #         trans_est_norm = np.linalg.norm(trans_est,axis=1).reshape(-1,1)
+    #         eps = 1e-12 * np.ones(trans_est_norm.shape)
+    #         '''
             
-            # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
-            # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
+    #         # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
+    #         # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
 
-            posenp[:,:3] = trans_est 
-            # print(posenp)
-        else:
-            print('    scale is not given, using 1 as the default scale value..')
+    #         posenp[:,:3] = trans_est 
+    #         # print(posenp)
+    #     else:
+    #         print('    scale is not given, using 1 as the default scale value..')
 
-        return posenp, flownp
+    #     return posenp, flownp
 
