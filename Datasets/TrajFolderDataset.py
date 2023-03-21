@@ -559,6 +559,9 @@ class MultiTrajFolderDataset(Dataset):
                         continue
                     folder = '{}/{}/{}/{}'.format(self.dataroot, scene, level, traj)
                     res.append([folder, 'tartanair'])
+
+                    # Debugging!!!!!!
+                    break
         
         return res
     
@@ -586,9 +589,9 @@ class LoopDataSampler:
         self.dataset = dataset
         if distributed:
             self.dist_sampler = DistributedSampler(dataset, shuffle=shuffle)
-            self.dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=self.dist_sampler, pin_memory=False)
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=self.dist_sampler, pin_memory=True)
         else:
-            self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=False)
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
         self.dataiter = iter(self.dataloader)
         self.epoch_cnt = 0
         self.distributed = distributed

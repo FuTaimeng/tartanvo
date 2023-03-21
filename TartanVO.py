@@ -95,7 +95,7 @@ class TartanVO:
 
 
     def load_model(self, model, modelname):
-        preTrainDict = torch.load(modelname, map_location='cpu')
+        preTrainDict = torch.load(modelname, map_location='cuda:%d'%self.device_id)
         model_dict = model.state_dict()
 
         preTrainDictTemp = {}
@@ -120,12 +120,16 @@ class TartanVO:
 
         model_dict.update(preTrainDictTemp)
         model.load_state_dict(model_dict)
+
+        del preTrainDict
+        del preTrainDictTemp
+
         return model
 
 
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        nb = False
+        nb = True
         img0   = sample['img0'].cuda(non_blocking=nb)
         img1   = sample['img1'].cuda(non_blocking=nb)
         intrinsic = sample['intrinsic'].cuda(non_blocking=nb)

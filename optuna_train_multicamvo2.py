@@ -18,6 +18,7 @@ from scipy.spatial.transform import Rotation
 
 import re
 import sys
+import random
 import argparse
 from os import mkdir, makedirs
 from os.path import isdir, isfile
@@ -123,6 +124,8 @@ def get_args():
                         help='upper bound of learning rate')
     parser.add_argument('--world-size', type=int, default=1,
                         help='number of processes')
+    parser.add_argument('--tcp-port', type=int, default=65530,
+                        help='tcp port for multi-processes')
     args = parser.parse_args()
 
     args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
@@ -256,7 +259,6 @@ def objective(trial, study_name, args, local_rank, datasets):
         else:
             # # small and success dataset
             sample = trainsampler_dext.next()
-        print('abs:', sample['img0'].shape)
         timer.toc('load')
 
         timer.tic('infer')
@@ -420,7 +422,7 @@ def objective(trial, study_name, args, local_rank, datasets):
 
 
 def process(local_rank, args):
-    torch.distributed.init_process_group(backend='nccl', init_method='tcp://127.0.0.1:65533',
+    torch.distributed.init_process_group(backend='nccl', init_method='tcp://127.0.0.1:%d'%args.tcp_port,
                                          rank=local_rank, world_size=args.world_size)
 
     print('local_rank=', local_rank)

@@ -38,11 +38,11 @@ data_dir=/user/taimengf/projects/tartanair/TartanAir
 batch=16
 step=100
 
-nick_name=Dist-2A16-block
+nick_name=Dist-4A16-B16
 train_name=${nick_name}
 
 # export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
-export CUDA_VISIBLE_DEVICES=4,5
+export CUDA_VISIBLE_DEVICES=8,9,10,11
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
@@ -63,7 +63,9 @@ python optuna_train_multicamvo2.py \
     --train-step ${step} \
     --test-interval 50 \
     --lr 6e-6 \
-    --world-size 2
+    --world-size 4 \
+    --not-write-log \
+    --tcp-port 65532
 
     # --tuning-val 'lr' \
     # --lr-lb  1e-7 \

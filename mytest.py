@@ -3,7 +3,7 @@ import pypose as pp
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-fname = 'train_multicamvo/Dist-1A16-block/log_P0.txt'
+fname = 'train_multicamvo/Dist-4A16-B16/log_P0.txt'
 with open(fname, 'r') as f:
     lines = f.readlines()
 
