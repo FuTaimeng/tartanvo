@@ -329,10 +329,11 @@ class TrajFolderDataset(Dataset):
             self.has_imu = False
 
         self.transform = transform
-        self.loader = loader
 
         self.links = None
         self.num_link = 0
+
+        del loader
 
     def imu_pose2motion(self, imu_poses):
         SEs = pos_quats2SEs(imu_poses)
@@ -399,7 +400,6 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
             img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_COLOR)
             res['img0_r'] = [img0_r]
             res['path_img0_r'] = self.rgbfiles_right[self.links[idx][0]]
-            # print("res['img0_r'] = [img0_r]")
             # res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
         else:
             print('incorrect right image path')
@@ -418,9 +418,7 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
             res['imu_motion'] = self.imu_motions[idx]
 
         if self.right2left_pose != None:
-            # res['extrinsic'] = self.right2left_pose.Log()
             res['extrinsic'] = self.right2left_pose.Log().numpy()
-            # res['extrinsic'] = self.right2left_pose.Log().tensor()
         return res
 
 
@@ -452,16 +450,11 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
         imgC = cv2.imread(self.rgbfiles[self.links[idx][2]], cv2.IMREAD_COLOR)
         res['img0'] = [imgA]
         res['img1'] = [imgC]
-        # print("res['img0_r'] = [imgB]")
         res['img0_r'] = [imgB]
 
         res['path_img0'] = self.rgbfiles[self.links[idx][0]]
         res['path_img1'] = self.rgbfiles[self.links[idx][2]]
         res['path_img0_r'] = self.rgbfiles[self.links[idx][1]]
-
-        # if 'right' in self.rgbfiles[self.links[idx][1]]:
-        #     print('right')
-
 
         h, w, _ = imgA.shape
         intrinsicLayer = make_intrinsics_layer(w, h, self.intrinsic[0], self.intrinsic[1], self.intrinsic[2], self.intrinsic[3])
@@ -478,19 +471,19 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
 
         if self.extrinsics is not None:
             res['extrinsic'] = self.extrinsics[idx]
-            # transform to tensor
-            # res['extrinsic'] = torch.from_numpy(self.extrinsics[idx])
         return res
 
 
 class MultiTrajFolderDataset(Dataset):
-    def __init__(self, DatasetType, dataroot, transform=None, mode='train'):
+    def __init__(self, DatasetType, dataroot, transform=None, mode='train', debug=False):
         self.dataroot = dataroot
         self.mode = mode
 
         folder_list = []
         folder_list.extend(self.list_tartanair_folders())
         folder_list.sort()
+        if debug:
+            folder_list = [folder_list[0]]
 
         self.datasets = []
         self.accmulatedDataSize = [0]
@@ -525,11 +518,12 @@ class MultiTrajFolderDataset(Dataset):
         # if self.mode == 'train':
         #     scenedirs = scenedirs[0:10]
 
-        scenedirs = \
-        ['abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
-         'gascola',             'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
-         'office',              'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
-         'soulcity',            'westerndesert',            'endofworld']
+        scenedirs = [
+            'abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
+            'gascola',             'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
+            'office',              'office2',                  'oldtown',          'seasidetown',  'seasonsforest_winter',
+            'soulcity',            'westerndesert',            'endofworld'
+        ]
         level_set = ['Easy', 'Hard']
 
         if self.mode == 'train':
@@ -541,26 +535,16 @@ class MultiTrajFolderDataset(Dataset):
         
         # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
         
-        print('===============================')
-        print('Debugging!!!!!!')
-        scenedirs = ['abandonedfactory']
-        level_set  = ['Easy']
-        print('scenedirs: ', scenedirs)
-        print('level_set: ', level_set)
-        print('===============================')
-        
         for scene in scenedirs:
             for level in level_set:
-            # for level in ['Easy']:
                 trajdirs = listdir('{}/{}/{}'.format(self.dataroot, scene, level))
-                # trajdirs = ['P000']
+                trajdirs.sort()
                 for traj in trajdirs:
                     if not (len(traj)==4 and traj.startswith('P0')):
                         continue
                     folder = '{}/{}/{}/{}'.format(self.dataroot, scene, level, traj)
                     res.append([folder, 'tartanair'])
-
-                    # Debugging!!!!!!
+                    # only load one traj per env level!
                     break
         
         return res
@@ -587,14 +571,17 @@ class MultiTrajFolderDataset(Dataset):
 class LoopDataSampler:
     def __init__(self, dataset, batch_size=4, shuffle=True, num_workers=4, distributed=True):
         self.dataset = dataset
+        pin = False
         if distributed:
             self.dist_sampler = DistributedSampler(dataset, shuffle=shuffle)
-            self.dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=self.dist_sampler, pin_memory=True)
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=self.dist_sampler, pin_memory=pin)
         else:
-            self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
+            self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin)
         self.dataiter = iter(self.dataloader)
         self.epoch_cnt = 0
         self.distributed = distributed
+
+        self.first_sample = self.next()
     
     def next(self):
         try:
@@ -609,4 +596,7 @@ class LoopDataSampler:
             sample = next(self.dataiter)
 
         return sample
+
+    def first(self):
+        return self.first_sample
         

@@ -67,18 +67,18 @@ class TartanVO:
         if vo_model_name is not None and vo_model_name != "":
             print('load vo network...')
             self.load_model(self.vonet, vo_model_name)
-        else:
-            if flow_model_name is not None and flow_model_name != "":
-                print('load pwc network...')
-                # data = torch.load('models/' + flow_model_name)
-                # self.vonet.flowNet.load_state_dict(data)
-                self.load_model(self.vonet.flowNet, flow_model_name)
-            if pose_model_name is not None and pose_model_name != "":
-                print('load pose network...')
-                self.load_model(self.vonet.flowPoseNet, pose_model_name)
-            if use_stereo==1 and stereo_model_name is not None and stereo_model_name != "":
-                print('load stereo network...')
-                self.load_model(self.vonet.stereoNet, stereo_model_name)
+        # can override part of the model
+        if flow_model_name is not None and flow_model_name != "":
+            print('load pwc network...')
+            # data = torch.load('models/' + flow_model_name)
+            # self.vonet.flowNet.load_state_dict(data)
+            self.load_model(self.vonet.flowNet, flow_model_name)
+        if pose_model_name is not None and pose_model_name != "":
+            print('load pose network...')
+            self.load_model(self.vonet.flowPoseNet, pose_model_name)
+        if use_stereo==1 and stereo_model_name is not None and stereo_model_name != "":
+            print('load stereo network...')
+            self.load_model(self.vonet.stereoNet, stereo_model_name)
             
         self.pose_std = torch.tensor([0.13, 0.13, 0.13, 0.013, 0.013, 0.013], dtype=torch.float32).cuda() # the output scale factor
         self.flow_norm = 20 # scale factor for flow
@@ -91,6 +91,7 @@ class TartanVO:
         # self.vonet = self.vonet.cuda(device_id)
         # self.vonet = DistributedDataParallel(self.vonet, device_ids=[device_id])
         self.vonet.flowNet = self.vonet.flowNet.cuda(device_id)
+        self.vonet.stereoNet = self.vonet.stereoNet.cuda(device_id)
         self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet.cuda(device_id), device_ids=[device_id])
 
 
@@ -102,6 +103,19 @@ class TartanVO:
         for k, v in preTrainDict.items():
             if k in model_dict and v.size() == model_dict[k].size():
                 preTrainDictTemp[k] = v
+
+        # print('model_dict:')
+        # for k in model_dict:
+        #     print(k, model_dict[k].shape)
+        # print('pretrain:')
+        # for k in preTrainDict:
+        #     print(k, preTrainDict[k].shape)
+
+        if 0 == len(preTrainDictTemp):
+            for k, v in preTrainDict.items():
+                kk = k[7:]
+                if kk in model_dict and v.size() == model_dict[kk].size():
+                    preTrainDictTemp[kk] = v
 
         if 0 == len(preTrainDictTemp):
             raise Exception("Could not load model from %s." % (modelname), "load_model")
@@ -129,7 +143,7 @@ class TartanVO:
 
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
-        nb = True
+        nb = False
         img0   = sample['img0'].cuda(non_blocking=nb)
         img1   = sample['img1'].cuda(non_blocking=nb)
         intrinsic = sample['intrinsic'].cuda(non_blocking=nb)
@@ -137,7 +151,8 @@ class TartanVO:
         if self.use_stereo==1:
             img0_norm = sample['img0_norm'].cuda(non_blocking=nb)
             img0_r_norm = sample['img0_r_norm'].cuda(non_blocking=nb)
-            blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(non_blocking=nb)
+            # blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(non_blocking=nb)
+            blxfx = torch.tensor([0.25 * 320]).view(1, 1, 1, 1).cuda(non_blocking=nb)
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].cuda(non_blocking=nb)
             if self.normalize_extrinsic:
@@ -178,7 +193,6 @@ class TartanVO:
             res['flowAB'] = flowAB
             res['flowAC'] = flowAC
             
-
         if self.correct_scale:
             pose = self.handle_scale(sample, pose)
             res['pose'] = pose

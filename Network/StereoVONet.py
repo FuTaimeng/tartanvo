@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class StereoVONet(nn.Module):
-    def __init__(self, network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=1.0, poseDepthNormFactor=0.25, 
-                    down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.):
+    def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=1.0, poseDepthNormFactor=0.25, down_scale=True, 
+                        config=1, fixflow=True, fixstereo=True, autoDistTarget=0.):
         '''
         flowNormFactor: difference between flownet and posenet
         stereoNormFactor: norm value used in stereo training
@@ -19,7 +19,7 @@ class StereoVONet(nn.Module):
             from .PWC import PWCDCNet as FlowNet
             from .PSM import stackhourglass as StereoNet
             self.flowNet   = FlowNet()
-        elif network==1: # 5_5 + PWC
+        if network==1: # 5_5 + PWC
             from .PWC import PWCDCNet as FlowNet
             from .StereoNet7 import StereoNet7 as StereoNet
             self.flowNet   = FlowNet()
@@ -30,8 +30,8 @@ class StereoVONet(nn.Module):
 
         self.stereoNet = StereoNet()
 
-        from .VOFlowNet import VOFlowRes as FlowPoseNet
-        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, stereo=1, autoDistTarget=autoDistTarget)
+        from .orig_VOFlowNet import VOFlowRes as FlowPoseNet
+        self.flowPoseNet = FlowPoseNet(intrinsic=intrinsic, down_scale=down_scale, config=config, stereo=True, autoDistTarget=autoDistTarget)
 
         self.network = network
         self.intrinsic = intrinsic
@@ -173,3 +173,32 @@ class StereoVONet(nn.Module):
             return loss_nounc
         else: 
             return criterion(netoutput, target)
+
+if __name__ == '__main__':
+    
+    voflownet = StereoVONet(network=0, intrinsic=True, flowNormFactor=1.0, down_scale=True, config=1, fixflow=True) # 
+    voflownet.cuda()
+    voflownet.eval()
+    print (voflownet)
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import time
+
+    x, y = np.ogrid[:448, :640]
+    # print (x, y, (x+y))
+    img = np.repeat((x + y)[..., np.newaxis], 3, 2) / float(512 + 384)
+    img = img.astype(np.float32)
+    print (img.dtype)
+    imgInput = img[np.newaxis,...].transpose(0, 3, 1, 2)
+    intrin = imgInput[:,:2,:112,:160].copy()
+
+    imgTensor = torch.from_numpy(imgInput)
+    intrinTensor = torch.from_numpy(intrin)
+    print (imgTensor.shape)
+    stime = time.time()
+    for k in range(100):
+        flow, pose = voflownet((imgTensor.cuda(), imgTensor.cuda(), intrinTensor.cuda()))
+        print (flow.data.shape, pose.data.shape)
+        print (pose.data.cpu().numpy())
+        print (time.time()-stime)
+    print (time.time()-stime)/100

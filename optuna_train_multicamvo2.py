@@ -52,7 +52,7 @@ def get_args():
     parser.add_argument('--pose-model-name', default='',
                         help='name of pretrained pose model (default: "")')
     parser.add_argument('--vo-model-name', default='',
-                        help='name of pretrained vo model. if provided, this will override the other seperated models (default: "")')
+                        help='name of pretrained vo model (default: "")')
     parser.add_argument('--save-flow', action='store_true', default=False,
                         help='save optical flow (default: False)')
     parser.add_argument('--train-step', type=int, default=1000000,
@@ -100,24 +100,24 @@ def get_args():
                                 [2.2] multicam sep feat encoder')
     parser.add_argument('--fix_model_parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
-    parser.add_argument('--out-to-cml',action='store_true', default=False,
+    parser.add_argument('--out-to-cml', action='store_true', default=False,
                         help='output to command line')
-    parser.add_argument('--trail-num', type=int, default=10,
-                        help='number of trails for optuna.')
-    parser.add_argument('--enable-pruning',action='store_true', default=False,
+    parser.add_argument('--trial-num', type=int, default=10,
+                        help='number of trials for optuna.')
+    parser.add_argument('--enable-pruning', action='store_true', default=False,
                         help='Enable pruning for optuna.')
-    parser.add_argument('--load-study',action='store_true', default=False,
+    parser.add_argument('--load-study', action='store_true', default=False,
                         help='load optuna study from a file')
     parser.add_argument('--study-name', default='',
                         help='the name of load study.')
-    parser.add_argument('--not-write-log',action='store_true', default=False,
+    parser.add_argument('--not-write-log', action='store_true', default=False,
                         help='write log file')
-    parser.add_argument('--enable-decay',action='store_true', default=False,
+    parser.add_argument('--enable-decay', action='store_true', default=False,
                         help='write log file')
     parser.add_argument('--tuning-val', default=[], nargs='+',
                         help='tuning variables for optuna (default: [])')
     parser.add_argument('--start-iter', type=int, default=1,
-                        help='number of trails for optuna.')
+                        help='start iteration')
     parser.add_argument('--lr-lb', type=float, default=1e-7,
                         help='lower bound of learning rate')
     parser.add_argument('--lr-ub', type=float, default=1e-6,
@@ -126,6 +126,12 @@ def get_args():
                         help='number of processes')
     parser.add_argument('--tcp-port', type=int, default=65530,
                         help='tcp port for multi-processes')
+    parser.add_argument('--only-one-traj', action='store_true', default=False,
+                        help='only use one traj for fast loading when debug')
+    parser.add_argument('--only-first-batch', action='store_true', default=False,
+                        help='only use the first batch to test overfit')
+    parser.add_argument('--stereo-data-type', default=['s', 'd'], nargs='+',
+                        help='(default: [\'s\', \'d\'])')
     args = parser.parse_args()
 
     args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
@@ -150,18 +156,29 @@ def create_dataset(args, DatasetType, mode='train'):
                                       fix_ratio=False, scale_w=1.0, scale_disp=False)]
     transformlist.append(DownscaleFlow())
     transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    transformlist.extend([Normalize(), ToTensor(), SqueezeBatchDim()])
+    if args.use_stereo==1:
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        transformlist.append(Normalize(mean=mean, std=std, keep_old=True))
+    else:
+        transformlist.append(Normalize())
+    transformlist.extend([ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
     dataset  = MultiTrajFolderDataset(DatasetType=DatasetType, dataroot=args.data_root, 
-                                        transform=transform, mode=mode)
+                                        transform=transform, mode=mode, debug=args.only_one_traj)
     return dataset
 
 
 def objective(trial, study_name, args, local_rank, datasets):
     timer = Timer()
 
-    trainsampler_sext, trainsampler_dext, testsampler_sext, testsampler_dext = datasets
+    if 's' in args.stereo_data_type:
+        trainsampler_sext = datasets['train_s']
+        testsampler_sext = datasets['test_s']
+    if 'd' in args.stereo_data_type:
+        trainsampler_dext = datasets['train_d']
+        testsampler_dext = datasets['test_d']
     
     print(" \nOptuna tuning val:", args.tuning_val, end='\n\n')
 
@@ -187,8 +204,9 @@ def objective(trial, study_name, args, local_rank, datasets):
         
     batch_size = args.batch_size
     
-    file_name = study_name  + "_B"+str(args.batch_size) + "_lr"+"{:.3e}".format(lr) + "_O"+args.vo_optimizer \
-                            + "_nel"+str(extrinsic_encoder_layers) + "_ntl"+str(trans_head_layers)
+    file_name = study_name  + "_B"+str(batch_size) + "_lr"+"{:.3e}".format(lr) + "_O"+optimizer
+    if args.use_stereo==2.1 or args.use_stereo==2.2:
+        file_name += "_nel"+str(extrinsic_encoder_layers) + "_ntl"+str(trans_head_layers)
 
     print('==========================================')
     print('Local rank:', local_rank)
@@ -253,12 +271,17 @@ def objective(trial, study_name, args, local_rank, datasets):
         timer.tic('step')
 
         timer.tic('load')
-        if train_step_cnt % 2 == 0:
-            # large and failed dataset
-            sample = trainsampler_sext.next()
+        train_on_sext = True if args.use_stereo==1 else (train_step_cnt % 2 == 0)
+        if train_on_sext:
+            if args.only_first_batch:
+                sample = trainsampler_sext.first()
+            else:
+                sample = trainsampler_sext.next()
         else:
-            # # small and success dataset
-            sample = trainsampler_dext.next()
+            if args.only_first_batch:
+                sample = trainsampler_dext.first()
+            else:
+                sample = trainsampler_dext.next()
         timer.toc('load')
 
         timer.tic('infer')
@@ -273,6 +296,7 @@ def objective(trial, study_name, args, local_rank, datasets):
 
         gt_motion = sample['motion'].to(args.device)
         loss = criterion(motion, gt_motion)
+        posenetOptimizer.zero_grad()
         loss.backward()
         posenetOptimizer.step()
 
@@ -332,7 +356,7 @@ def objective(trial, study_name, args, local_rank, datasets):
         if train_step_cnt % args.test_interval == 0:
             timer.tic('test')
 
-            test_on_sext = (train_step_cnt // args.test_interval % 2 == 0)
+            test_on_sext = True if args.use_stereo==1 else (train_step_cnt // args.test_interval % 2 == 0)
 
             motion_list = []
             gt_motion_list = []
@@ -393,10 +417,15 @@ def objective(trial, study_name, args, local_rank, datasets):
                     wandb.log({"testing trans err dynamic": test_trans_err}, step=train_step_cnt)
 
             if test_on_sext:
-                return_value_list.append(test_trans_err)
+                if args.use_stereo==1:
+                    optuna_metric = test_tot_loss
+                else:
+                    optuna_metric = test_trans_err
+
+                return_value_list.append(optuna_metric)
 
                 if args.enable_pruning:
-                    trial.report(test_trans_err, train_step_cnt)
+                    trial.report(optuna_metric, train_step_cnt)
                     # Handle pruning based on the intermediate value.
                     if trial.should_prune():
                         raise optuna.exceptions.TrialPruned()
@@ -447,7 +476,8 @@ def process(local_rank, args):
 
     dist.barrier()
 
-    sys.stdout = open(trainroot + "/log_P"+str(local_rank)+".txt", "w")
+    if args.world_size > 1:
+        sys.stdout = open(trainroot + "/log_P"+str(local_rank)+".txt", "w")
     
     print('==========================================')
     print('Local rank:', local_rank)
@@ -458,32 +488,35 @@ def process(local_rank, args):
     print('Device name:', device_name)
     print('==========================================')
 
-    # create datasets
-    traindataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='train')
-    traindataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='train')
-    
-    testdataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='test')
-    testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
+    datasets = {}
+    if 's' in args.stereo_data_type:
+        traindataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='train')
+        trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, 
+                                            num_workers=args.worker_num, distributed=True)
+        datasets['train_s'] = trainsampler_sext
 
-    # create data samplers
-    trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, 
-                                        num_workers=args.worker_num, distributed=True)
-    trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, 
-                                        num_workers=args.worker_num, distributed=True)
+        testdataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='test')
+        testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, 
+                                            num_workers=args.worker_num, distributed=True)
+        datasets['test_s'] = testsampler_sext
 
-    testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, 
-                                        num_workers=args.worker_num, distributed=True)
-    testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, 
-                                        num_workers=args.worker_num, distributed=True)
+    if 'd' in args.stereo_data_type:
+        traindataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='train')
+        trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, 
+                                            num_workers=args.worker_num, distributed=True)
+        datasets['train_d'] = trainsampler_dext
 
-    datasets = (trainsampler_sext, trainsampler_dext, testsampler_sext, testsampler_dext)
+        testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
+        testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, 
+                                            num_workers=args.worker_num, distributed=True)
+        datasets['test_d'] = testsampler_dext
     
     if args.world_size == 1 and len(args.tuning_val) > 0:
         storage_name = "sqlite:///./database/{}.db".format(study_name)
         study = optuna.create_study(study_name=study_name, direction="minimize", storage=storage_name, 
                                     load_if_exists=args.load_study, sampler=optuna.samplers.RandomSampler())
 
-        study.optimize(lambda trial: objective(trial, study_name, args, local_rank, datasets), n_trials=args.trail_num)
+        study.optimize(lambda trial: objective(trial, study_name, args, local_rank, datasets), n_trials=args.trial_num)
 
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
         complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
