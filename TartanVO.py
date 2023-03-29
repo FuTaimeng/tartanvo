@@ -91,7 +91,8 @@ class TartanVO:
         # self.vonet = self.vonet.cuda(device_id)
         # self.vonet = DistributedDataParallel(self.vonet, device_ids=[device_id])
         self.vonet.flowNet = self.vonet.flowNet.cuda(device_id)
-        self.vonet.stereoNet = self.vonet.stereoNet.cuda(device_id)
+        if use_stereo==1:
+            self.vonet.stereoNet = self.vonet.stereoNet.cuda(device_id)
         self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet.cuda(device_id), device_ids=[device_id])
 
 

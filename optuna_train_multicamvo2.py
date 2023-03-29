@@ -271,7 +271,12 @@ def objective(trial, study_name, args, local_rank, datasets):
         timer.tic('step')
 
         timer.tic('load')
-        train_on_sext = True if args.use_stereo==1 else (train_step_cnt % 2 == 0)
+
+        if 's' in args.stereo_data_type and 'd' in args.stereo_data_type:
+            train_on_sext = (train_step_cnt % 2 == 0)
+        else:
+            train_on_sext = ('s' in args.stereo_data_type)
+
         if train_on_sext:
             if args.only_first_batch:
                 sample = trainsampler_sext.first()
@@ -282,6 +287,7 @@ def objective(trial, study_name, args, local_rank, datasets):
                 sample = trainsampler_dext.first()
             else:
                 sample = trainsampler_dext.next()
+
         timer.toc('load')
 
         timer.tic('infer')
@@ -356,7 +362,10 @@ def objective(trial, study_name, args, local_rank, datasets):
         if train_step_cnt % args.test_interval == 0:
             timer.tic('test')
 
-            test_on_sext = True if args.use_stereo==1 else (train_step_cnt // args.test_interval % 2 == 0)
+            if 's' in args.stereo_data_type and 'd' in args.stereo_data_type:
+                test_on_sext = (train_step_cnt // args.test_interval % 2 == 0)
+            else:
+                test_on_sext = ('s' in args.stereo_data_type)
 
             motion_list = []
             gt_motion_list = []
@@ -465,16 +474,6 @@ def process(local_rank, args):
 
     study_name = args.train_name
     trainroot = args.result_dir + '/' + study_name
-    record_file_name = study_name + "_P"+str(local_rank)
-
-    if local_rank == 0:
-        if not isdir(trainroot):
-            makedirs(trainroot)
-
-        with open(trainroot+'/args.txt', 'w') as f:
-            f.write(str(args))
-
-    dist.barrier()
 
     if args.world_size > 1:
         sys.stdout = open(trainroot + "/log_P"+str(local_rank)+".txt", "w")
@@ -548,6 +547,13 @@ def process(local_rank, args):
 
 if __name__ == "__main__":
     args = get_args()
+
+    study_name = args.train_name
+    trainroot = args.result_dir + '/' + study_name
+    if not isdir(trainroot):
+        makedirs(trainroot)
+    with open(trainroot+'/args.txt', 'w') as f:
+        f.write(str(args))
 
     if args.world_size > 1:
         mp.spawn(process, nprocs=args.world_size, args=(args,))

@@ -11,8 +11,8 @@
 #SBATCH --ntasks-per-node=4
 
 ###SBATCH --gpus=nvidia_a100-pcie-40gb:2
-###SBATCH --gres=gpu:2
-#SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
+#SBATCH --gres=gpu:2
+###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
 ###SBATCH --gres=gpu:tesla_v100-pcie-16gb:1
 ###SBATCH --gres=gpu:nvidia_a16:1
 
@@ -35,17 +35,19 @@ conda activate impe-learning
 
 data_dir=/user/taimengf/projects/tartanair/TartanAir
 
-batch=16
-step=2500
+batch=32
+step=60000
 
-nick_name=StereoVO_AllEnv_Proc4_lrDec0.5_10000+
+nick_name=MulticamVO_SOnly_lrFix_Proc2
 train_name=${nick_name}
 
 # export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
-export CUDA_VISIBLE_DEVICES=8,9,10,11
+# export CUDA_VISIBLE_DEVICES=8,9,10,11
+export CUDA_LAUNCH_BLOCKING=1
 
 python optuna_train_multicamvo2.py \
-    --vo-model-name ./models/StereoVO_AllEnv_Proc2_lrDec0.5_B32_lr6.000e-05_Oadam_st10000.pkl \
+    --flow-model-name ./models/pwc_net.pth.tar \
+    --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl \
     --batch-size ${batch} \
     --worker-num 2 \
     --data-root ${data_dir} \
@@ -54,17 +56,18 @@ python optuna_train_multicamvo2.py \
     --mode train-all \
     --random-intrinsic 800 \
     --hsv-rand 0.2 \
-    --use-stereo 1 \
+    --use-stereo 2.2 \
     --result-dir ./train_multicamvo \
     --train-name ${train_name} \
     --debug-flag '' \
     --train-step ${step} \
     --test-interval 50 \
-    --world-size 4 \
-    --lr 7.5e-6 \
-    --lr-decay-rate 0.5 \
+    --world-size 2 \
+    --lr 8e-4 \
     --stereo-data-type 's' \
-    --vo-optimizer adam
+    --vo-optimizer adam \
+    --fix_model_parts 'flow' 'feat' 'rot' \
+    --start-iter 40000
 
     # --flow-model-name ./models/pwc_net.pth.tar \
     # --use-stereo 2.2 \
@@ -79,7 +82,6 @@ python optuna_train_multicamvo2.py \
     # --load-study \
     
     # --lr 6e-6 \
-    # --trail-num 1 \
     # --enable-decay \
 
     # --out-to-cml \
