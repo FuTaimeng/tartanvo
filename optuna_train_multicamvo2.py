@@ -325,9 +325,12 @@ def objective(trial, study_name, args, local_rank, datasets):
                 tot_loss = loss.item()
                 trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
                 rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
-                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                rot_errs, trans_errs, rot_norms, trans_norms = \
+                    calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
+                trans_err_percent = np.mean(trans_errs / trans_norms)
+                rot_err_percent = np.mean(rot_errs / rot_norms)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/train_loss', tot_loss, train_step_cnt)
@@ -337,6 +340,9 @@ def objective(trial, study_name, args, local_rank, datasets):
 
                 writer.add_scalar('error/train_trans_err', trans_err, train_step_cnt)
                 writer.add_scalar('error/train_rot_err', rot_err, train_step_cnt)
+
+                writer.add_scalar('error/train_trans_err_percent', trans_err_percent, train_step_cnt)
+                writer.add_scalar('error/train_rot_err_percent', rot_err_percent, train_step_cnt)
                 
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
 
@@ -345,7 +351,9 @@ def objective(trial, study_name, args, local_rank, datasets):
                         "training trans loss": trans_loss, 
                         "training rot loss": rot_loss, 
                         "training trans err": trans_err, 
-                        "training rot err": rot_err 
+                        "training rot err": rot_err,
+                        "training trans err percent": trans_err_percent, 
+                        "training rot err percent": rot_err_percent
                     }, 
                     step=train_step_cnt
                 )
@@ -392,9 +400,12 @@ def objective(trial, study_name, args, local_rank, datasets):
                 test_tot_loss = criterion(motion, gt_motion).item()
                 test_trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
                 test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
-                rot_errs, trans_errs = calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
-                test_trans_err = np.mean(trans_errs)
-                test_rot_err = np.mean(rot_errs)
+                rot_errs, trans_errs, rot_norms, trans_norms = \
+                    calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                trans_err = np.mean(trans_errs)
+                rot_err = np.mean(rot_errs)
+                trans_err_percent = np.mean(trans_errs / trans_norms)
+                rot_err_percent = np.mean(rot_errs / rot_norms)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/test_loss', test_tot_loss, train_step_cnt)
@@ -409,6 +420,9 @@ def objective(trial, study_name, args, local_rank, datasets):
                 else:
                     writer.add_scalar('error/test_trans_err_dext', test_trans_err, train_step_cnt)
 
+                writer.add_scalar('error/test_trans_err_percent', trans_err_percent, train_step_cnt)
+                writer.add_scalar('error/test_rot_err_percent', rot_err_percent, train_step_cnt)
+
                 writer.add_scalar('time/test_time', timer.last('test'), train_step_cnt)
 
                 wandb.log({
@@ -416,7 +430,9 @@ def objective(trial, study_name, args, local_rank, datasets):
                         "testing trans loss": test_trans_loss, 
                         "testing rot loss": test_rot_loss, 
                         "testing trans err": test_trans_err, 
-                        "testing rot err": test_rot_err 
+                        "testing rot err": test_rot_err,
+                        "testing trans err percent": trans_err_percent, 
+                        "testing rot err percent": rot_err_percent
                     }, 
                     step = train_step_cnt
                 )

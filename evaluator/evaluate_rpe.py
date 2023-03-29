@@ -145,26 +145,22 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
         s2 = np.linalg.norm(motions_est[:, :3], axis=1)
         factor = np.median(s1 / s2)
 
-    R_errs = []
-    t_errs = []
-    for i in range(len(motions_gt)):
+    t_gt = motions_gt[:, :3]
+    if motions_gt.shape[1] == 7:
+        R_gt = Rotation.from_quat(motions_gt[:, 3:])
+    else:
+        R_gt = Rotation.from_rotvec(motions_gt[:, 3:])
 
-        t_gt = motions_gt[i, :3]
-        if motions_gt.shape[1] == 7:
-            R_gt = Rotation.from_quat(motions_gt[i, 3:])
-        else:
-            R_gt = Rotation.from_rotvec(motions_gt[i, 3:])
+    t_est = motions_est[:, :3] * factor
+    if motions_est.shape[1] == 7:
+        R_est = Rotation.from_quat(motions_est[:, 3:])
+    else:
+        R_est = Rotation.from_rotvec(motions_est[:, 3:])
 
-        t_est = motions_est[i, :3] * factor
-        if motions_est.shape[1] == 7:
-            R_est = Rotation.from_quat(motions_est[i, 3:])
-        else:
-            R_est = Rotation.from_rotvec(motions_est[i, 3:])
+    t_errs = np.linalg.norm(t_gt - t_est, axis=1)
+    R_errs = np.rad2deg((R_gt.inv() * R_est).magnitude())
 
-        t_err = np.linalg.norm(t_gt - t_est)
-        R_err = np.rad2deg((R_gt.inv() * R_est).magnitude())
-        t_errs.append(t_err)
-        R_errs.append(R_err)
+    R_norms = R_gt.magnitude()
+    t_norms = np.linalg.norm(t_gt, axis=1)
 
-    return np.array(R_errs), np.array(t_errs)
-        
+    return R_errs, t_errs, R_norms, t_norms
