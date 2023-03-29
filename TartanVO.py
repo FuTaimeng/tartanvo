@@ -178,8 +178,9 @@ class TartanVO:
             res['flow'] = flow
 
         elif self.use_stereo==1:
+            scale_w = sample['scale_w']
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic, 
-                                            scale_w=1.0, scale_disp=1.0, blxfx=blxfx)
+                                            scale_w=scale_w, scale_disp=1.0, blxfx=blxfx)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flow'] = flow
