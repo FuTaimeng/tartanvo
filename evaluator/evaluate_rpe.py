@@ -160,7 +160,7 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
     t_errs = np.linalg.norm(t_gt - t_est, axis=1)
     R_errs = np.rad2deg((R_gt.inv() * R_est).magnitude())
 
-    R_norms = R_gt.magnitude()
+    R_norms = np.rad2deg(R_gt.magnitude())
     t_norms = np.linalg.norm(t_gt, axis=1)
 
     return R_errs, t_errs, R_norms, t_norms
