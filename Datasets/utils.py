@@ -458,11 +458,16 @@ def generate_random_scale_crop(h, w, target_h, target_w, scale_base, keep_center
     keep_center: crop at center
     fix_ratio: scale_h == scale_w
     '''
-    scale_w = random.random() * (scale_base - 1) + 1
+    
     if fix_ratio:
+        scale_w = random.random() * (scale_base - 1) + 1
+        scale_w = max(scale_w, max(target_w / w, target_h / h))
         scale_h = scale_w
     else:
+        scale_w = random.random() * (scale_base - 1) + 1
+        scale_w = max(scale_w, target_w / w)
         scale_h = random.random() * (scale_base - 1) + 1
+        scale_h = max(scale_h, target_h / h)
 
     crop_w = int(math.ceil(target_w/scale_w)) # ceil for redundancy
     crop_h = int(math.ceil(target_h/scale_h)) # crop_w * scale_w > w
@@ -535,7 +540,7 @@ class RandomResizeCrop(object):
 
     def __init__(self, size, max_scale=2.5, keep_center=False, fix_ratio=False, scale_disp=False):
         '''
-        size: output frame size, this should be NO LARGER than the input frame size! 
+        size: output frame size 
         scale_disp: when training the stereovo, disparity represents depth, which is not scaled with resize 
         '''
         if isinstance(size, numbers.Number):
@@ -560,8 +565,8 @@ class RandomResizeCrop(object):
 
     def __call__(self, sample): 
         h, w = get_sample_dimention(sample)
-        self.target_h = min(self.target_h, h)
-        self.target_w = min(self.target_w, w)
+        # self.target_h = min(self.target_h, h)
+        # self.target_w = min(self.target_w, w)
 
         scale_w, scale_h, x1, y1, crop_w, crop_h = generate_random_scale_crop(h, w, self.target_h, self.target_w, 
                                                     self.scale_base, self.keep_center, self.fix_ratio)

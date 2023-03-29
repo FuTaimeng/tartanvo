@@ -245,7 +245,7 @@ class KITTITrajFolderLoader:
         ############################## load gt poses ######################################################################
         T_w_imu = np.array([oxts_frame.T_w_imu for oxts_frame in dataset.oxts])
         self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type).to(dtype=torch.float32)
-        vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float64)
+        vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float32)
         self.vels = self.poses.rotation() @ vels_local
         self.poses = self.poses.numpy()
         self.vels = self.vels.numpy()
@@ -475,12 +475,14 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
 
 
 class MultiTrajFolderDataset(Dataset):
-    def __init__(self, DatasetType, dataroot, transform=None, mode='train', debug=False):
-        self.dataroot = dataroot
+    def __init__(self, DatasetType, datatype_root, transform=None, mode='train', debug=False):
+        self.datatype_root = datatype_root
         self.mode = mode
 
         folder_list = []
         folder_list.extend(self.list_tartanair_folders())
+        folder_list.extend(self.list_kitti_folders())
+        folder_list.extend(self.list_euroc_folders())
         folder_list.sort()
         if debug:
             folder_list = [folder_list[0]]
@@ -505,18 +507,10 @@ class MultiTrajFolderDataset(Dataset):
         print('Find {} datasets. Have {} frames in total.'.format(len(self.datasets), self.accmulatedDataSize[-1]))
 
     def list_tartanair_folders(self):
-        res = []
-
-        # scenedirs = '''
-        #     abandonedfactory        gascola        office         seasonsforest_winter
-        #     abandonedfactory_night  hospital       office2        soulcity
-        #     amusement               japanesealley  oldtown        westerndesert
-        #     carwelding              neighborhood   seasidetown
-        #     endofworld              ocean          seasonsforest
-        # '''
-        # scenedirs = scenedirs.replace('\n', '').split()
-        # if self.mode == 'train':
-        #     scenedirs = scenedirs[0:10]
+        if 'tartanair' not in self.datatype_root:
+            return []
+        else:
+            dataroot = self.datatype_root['tartanair']
 
         scenedirs = [
             'abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
@@ -532,23 +526,72 @@ class MultiTrajFolderDataset(Dataset):
         elif self.mode == 'test':
             scenedirs = scenedirs[16:18]
             print('\nLoading Testing dataset')
-        
-        # scenedirs = ['abandonedfactory', 'endofworld', 'hospital', 'office', 'ocean', 'seasidetown']
-        
+                
+        res = []
+
         for scene in scenedirs:
             for level in level_set:
-                trajdirs = listdir('{}/{}/{}'.format(self.dataroot, scene, level))
+                trajdirs = listdir('{}/{}/{}'.format(dataroot, scene, level))
                 trajdirs.sort()
                 for traj in trajdirs:
                     if not (len(traj)==4 and traj.startswith('P0')):
                         continue
-                    folder = '{}/{}/{}/{}'.format(self.dataroot, scene, level, traj)
+                    folder = '{}/{}/{}/{}'.format(dataroot, scene, level, traj)
                     res.append([folder, 'tartanair'])
                     # only load one traj per env level!
                     break
         
         return res
+
+    def list_kitti_folders(self):
+        if 'kitti' not in self.datatype_root:
+            return []
+        else:
+            dataroot = self.datatype_root['kitti']
+
+        date_drive = {
+            '2011_09_26':[
+                '2011_09_26_drive_0001_sync'
+                '2011_09_26_drive_0002_sync'
+                '2011_09_26_drive_0005_sync'
+                '2011_09_26_drive_0009_sync'
+            ]
+        }
+
+        if self.mode == 'train':
+            print('\nLoading Training dataset')
+        elif self.mode == 'test':
+            print('\nLoading Testing dataset')
+
+        res = []
+
+        for date, drive_list in date_drive.items():
+            for drive in drive_list:
+                folder = '{}/{}/{}'.format(dataroot, date, drive)
+                res.append([folder, 'kitti'])
+        
+        return res
     
+    def list_euroc_folders(self):
+        if 'euroc' not in self.datatype_root:
+            return []
+        else:
+            dataroot = self.datatype_root['euroc']
+
+        trajs = [
+            'MH_01_easy', 'MH_02_easy', 'MH_03_medium', 'MH_04_difficult', 'MH_05_difficult',
+            'V1_01_easy', 'V1_02_medium', 'V1_03_difficult',
+            'V2_01_easy', 'V2_02_medium', 'V2_03_difficult'
+        ]
+
+        res = []
+
+        for traj in trajs:
+            folder = '{}/{}/mav0'.format(dataroot, traj)
+            res.append([folder, 'euroc'])
+        
+        return res
+
     def __len__(self):
         return self.accmulatedDataSize[-1]
 
@@ -560,12 +603,12 @@ class MultiTrajFolderDataset(Dataset):
 
         return self.datasets[ds_idx][idx - self.accmulatedDataSize[ds_idx]]
 
-    def list_all_frames(self):
-        all_frames = []
-        for ds in self.datasets:
-            rgb = np.array([fname.replace(self.dataroot, '') for fname in ds.rgbfiles])
-            all_frames.extend(rgb[ds.links].tolist())
-        return all_frames
+    # def list_all_frames(self):
+    #     all_frames = []
+    #     for ds in self.datasets:
+    #         rgb = np.array([fname.replace(self.dataroot, '') for fname in ds.rgbfiles])
+    #         all_frames.extend(rgb[ds.links].tolist())
+    #     return all_frames
 
 
 class LoopDataSampler:

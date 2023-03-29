@@ -165,8 +165,8 @@ def create_dataset(args, DatasetType, mode='train'):
     transformlist.extend([ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    dataset  = MultiTrajFolderDataset(DatasetType=DatasetType, dataroot=args.data_root, 
-                                        transform=transform, mode=mode, debug=args.only_one_traj)
+    dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'euroc':args.data_root}, 
+                                    transform=transform, mode=mode, debug=args.only_one_traj)
     return dataset
 
 
