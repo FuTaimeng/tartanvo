@@ -98,7 +98,7 @@ def get_args():
                                 [1] stereo disp \
                                 [2.1] multicam single feat endocer \
                                 [2.2] multicam sep feat encoder')
-    parser.add_argument('--fix_model_parts', default=[], nargs='+',
+    parser.add_argument('--fix-model-parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
     parser.add_argument('--out-to-cml', action='store_true', default=False,
                         help='output to command line')
@@ -165,8 +165,10 @@ def create_dataset(args, DatasetType, mode='train'):
     transformlist.extend([ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'euroc':args.data_root}, 
-                                    transform=transform, mode=mode, debug=args.only_one_traj)
+    # dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'tartanair':args.data_root}, 
+    #                                 transform=transform, mode=mode, debug=args.only_one_traj)
+    dataset = TrajFolderDatasetPVGO(datadir=args.data_root, datatype='tartanair', transform=transform,
+                                    start_frame=850, end_frame=900)
     return dataset
 
 
@@ -252,7 +254,7 @@ def objective(trial, study_name, args, local_rank, datasets):
     trainroot = args.result_dir + '/' + study_name
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                        device_id=local_rank, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,
+                        device_id=local_rank, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), fix_parts=args.fix_model_parts,
                         extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers, normalize_extrinsic=True)
 
     if optimizer == 'adam':
@@ -402,8 +404,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                 test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
                 rot_errs, trans_errs, rot_norms, trans_norms = \
                     calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
-                trans_err = np.mean(trans_errs)
-                rot_err = np.mean(rot_errs)
+                test_trans_err = np.mean(trans_errs)
+                test_rot_err = np.mean(rot_errs)
                 trans_err_percent = np.mean(trans_errs / trans_norms)
                 rot_err_percent = np.mean(rot_errs / rot_norms)
 

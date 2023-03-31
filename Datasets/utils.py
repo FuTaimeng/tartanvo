@@ -587,7 +587,7 @@ class RandomResizeCrop(object):
             sample[kk] = datalist
     
         if not self.scale_disp:
-            sample['scale_w'] = np.array([scale_w],dtype=np.float32)    # used in e2e-stereo-vo
+            sample['scale_w'] = np.array([scale_w], dtype=np.float32)    # used in e2e-stereo-vo
 
         return sample
 

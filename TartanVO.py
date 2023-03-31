@@ -53,12 +53,12 @@ class TartanVO:
         # import ipdb;ipdb.set_trace()
         self.device_id = device_id
         
-        if use_stereo==0:
-            self.vonet = VONet()
-        elif use_stereo==1:
-            stereonorm = 0.02 # the norm factor for the stereonet
-            self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
-                                        down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
+        if use_stereo==1:
+            self.vonet = VONet(fix_parts=fix_parts)
+            # # wenshan's version below
+            # stereonorm = 0.02 # the norm factor for the stereonet
+            # self.vonet = StereoVONet(network=1, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=stereonorm, poseDepthNormFactor=0.25, 
+            #                             down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.)
         elif use_stereo==2.1 or use_stereo==2.2:
             self.vonet = MultiCamVONet(flowNormFactor=1.0, use_stereo=use_stereo, fix_parts=fix_parts,
                                         extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
@@ -124,14 +124,14 @@ class TartanVO:
         for k in model_dict.keys():
             if k not in preTrainDictTemp:
                 print("! [load_model] Key {} in model but not in {}!".format(k, modelname))
-                if k.endswith('weight'):
-                    print('\tinit with kaiming_normal_')
-                    w = torch.rand_like(model_dict[k])
-                    nn.init.kaiming_normal_(w, mode='fan_out', nonlinearity='relu')
-                else:
-                    print('\tinit to zeros')
-                    w = torch.zeros_like(model_dict[k])
-                preTrainDictTemp[k] = w
+                # if k.endswith('weight'):
+                #     print('\tinit with kaiming_normal_')
+                #     w = torch.rand_like(model_dict[k])
+                #     nn.init.kaiming_normal_(w, mode='fan_out', nonlinearity='relu')
+                # else:
+                #     print('\tinit to zeros')
+                #     w = torch.zeros_like(model_dict[k])
+                # preTrainDictTemp[k] = w
 
         model_dict.update(preTrainDictTemp)
         model.load_state_dict(model_dict)
@@ -154,6 +154,7 @@ class TartanVO:
             img0_r_norm = sample['img0_r_norm'].cuda(non_blocking=nb)
             # blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(non_blocking=nb)
             blxfx = torch.tensor([0.25 * 320]).view(1, 1, 1, 1).cuda(non_blocking=nb)
+            scale_w = sample['scale_w'].view(-1, 1, 1, 1).cuda(non_blocking=nb)
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].cuda(non_blocking=nb)
             if self.normalize_extrinsic:
@@ -170,17 +171,9 @@ class TartanVO:
 
         _ = torch.set_grad_enabled(is_train)
 
-        if self.use_stereo==0:
-            inputs = [torch.cat([img0, img1], axis=1), intrinsic]
-            flow, pose = self.vonet(inputs)
-            pose = pose * self.pose_std # The output is normalized during training, now scale it back
-            res['pose'] = pose
-            res['flow'] = flow
-
-        elif self.use_stereo==1:
-            scale_w = sample['scale_w']
+        if self.use_stereo==1:
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic, 
-                                            scale_w=scale_w, scale_disp=1.0, blxfx=blxfx)
+                                            scale_w=scale_w, blxfx=blxfx)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
             res['pose'] = pose
             res['flow'] = flow

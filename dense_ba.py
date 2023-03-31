@@ -11,7 +11,7 @@ from timer import Timer
 def proj(x):
     return x / x[..., -1:]
 
-def disp_flow_ba(disp, flow, motion, fx, fy, cx, cy, baseline):
+def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
     height, width = disp.shape[-2:]
 
     T = pp.SE3(motion.detach())

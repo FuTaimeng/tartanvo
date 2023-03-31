@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class StereoVONet(nn.Module):
-    def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=1.0, poseDepthNormFactor=0.25, down_scale=True, 
-                        config=1, fixflow=True, fixstereo=True, autoDistTarget=0.):
+    def __init__(self, network=0, intrinsic=True, flowNormFactor=1.0, stereoNormFactor=1.0, poseDepthNormFactor=0.25, 
+                    down_scale=True, config=1, fixflow=True, fixstereo=True, autoDistTarget=0.):
         '''
         flowNormFactor: difference between flownet and posenet
         stereoNormFactor: norm value used in stereo training
@@ -121,7 +121,7 @@ class StereoVONet(nn.Module):
         # depth_input    = 1 / depth_input
         # depth_input = 1 / ( (blxfx / (stereo / self.stereoNormFactor)) * self.poseDepthNormFactor)
         # import ipdb;ipdb.set_trace()
-        depth_input = stereo / blxfx / float(self.stereoNormFactor * self.poseDepthNormFactor )
+        depth_input = stereo / blxfx / float(self.stereoNormFactor * self.poseDepthNormFactor)
 
         # scale the disp back, because we treat it as depth
         depth_input = depth_input / scale_w

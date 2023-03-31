@@ -361,17 +361,18 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
 
         ############################## generate links ######################################################################
         self.links = []
-        # # [loop closure] gt pose
+        # [loop closure] gt pose
         if use_loop_closure and self.poses is not None:
             loop_min_interval = 100
             trans_th = np.average([np.linalg.norm(self.poses[i+1, :3] - self.poses[i, :3]) for i in range(len(self.poses)-1)]) * 5
             self.links.extend(gt_pose_loop_detector(self.poses, loop_min_interval, trans_th, 5))
         # # [loop closure] bag of word (to do)
         # self.links = bow_orb_loop_detector(self.rgbfiles, loop_min_interval)
-        # [loop closure] adjancent
-        loop_range = 2
-        loop_interval = 1
-        self.links.extend(adj_loop_detector(self.num_img, loop_range, loop_interval))
+        # # [loop closure] adjancent
+        # loop_range = 2
+        # loop_interval = 1
+        # self.links.extend(adj_loop_detector(self.num_img, loop_range, loop_interval))
+        self.links = [[i, i+1] for i in range(self.num_img-1)]
         
         # start_frame = 1735
         # self.links = self.links[start_frame:]
