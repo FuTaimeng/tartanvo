@@ -550,11 +550,19 @@ class MultiTrajFolderDataset(Dataset):
             dataroot = self.datatype_root['kitti']
 
         date_drive = {
-            '2011_09_26':[
-                '2011_09_26_drive_0001_sync'
-                '2011_09_26_drive_0002_sync'
-                '2011_09_26_drive_0005_sync'
-                '2011_09_26_drive_0009_sync'
+            '2011_09_30': [
+                '2011_09_30_drive_0016',
+                '2011_09_30_drive_0018',
+                '2011_09_30_drive_0020',
+                '2011_09_30_drive_0027',
+                '2011_09_30_drive_0028',
+                '2011_09_30_drive_0033',
+                '2011_09_30_drive_0034'
+            ],
+            '2011_10_03': [
+                '2011_10_03_drive_0027',
+                '2011_10_03_drive_0034',
+                '2011_10_03_drive_0042'
             ]
         }
 
