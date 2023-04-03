@@ -165,7 +165,7 @@ def create_dataset(args, DatasetType, mode='train'):
     transformlist.extend([ToTensor(), SqueezeBatchDim()])
     transform = Compose(transformlist)
 
-    dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'euroc':args.data_root}, 
+    dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'tartanair':args.data_root}, 
                                     transform=transform, mode=mode, debug=args.only_one_traj)
     return dataset
 
@@ -402,10 +402,10 @@ def objective(trial, study_name, args, local_rank, datasets):
                 test_rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
                 rot_errs, trans_errs, rot_norms, trans_norms = \
                     calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
-                trans_err = np.mean(trans_errs)
-                rot_err = np.mean(rot_errs)
-                trans_err_percent = np.mean(trans_errs / trans_norms)
-                rot_err_percent = np.mean(rot_errs / rot_norms)
+                test_trans_err = np.mean(trans_errs)
+                test_rot_err = np.mean(rot_errs)
+                test_trans_err_percent = np.mean(trans_errs / trans_norms)
+                test_rot_err_percent = np.mean(rot_errs / rot_norms)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/test_loss', test_tot_loss, train_step_cnt)
@@ -420,8 +420,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                 else:
                     writer.add_scalar('error/test_trans_err_dext', test_trans_err, train_step_cnt)
 
-                writer.add_scalar('error/test_trans_err_percent', trans_err_percent, train_step_cnt)
-                writer.add_scalar('error/test_rot_err_percent', rot_err_percent, train_step_cnt)
+                writer.add_scalar('error/test_trans_err_percent', test_trans_err_percent, train_step_cnt)
+                writer.add_scalar('error/test_rot_err_percent', test_rot_err_percent, train_step_cnt)
 
                 writer.add_scalar('time/test_time', timer.last('test'), train_step_cnt)
 
@@ -431,8 +431,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                         "testing rot loss": test_rot_loss, 
                         "testing trans err": test_trans_err, 
                         "testing rot err": test_rot_err,
-                        "testing trans err percent": trans_err_percent, 
-                        "testing rot err percent": rot_err_percent
+                        "testing trans err percent": test_trans_err_percent, 
+                        "testing rot err percent": test_rot_err_percent
                     }, 
                     step = train_step_cnt
                 )

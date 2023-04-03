@@ -145,8 +145,8 @@ class TartanVO:
     def run_batch(self, sample, is_train=True):        
         # import ipdb;ipdb.set_trace()
         nb = False
-        img0   = sample['img0'].cuda(non_blocking=nb)
-        img1   = sample['img1'].cuda(non_blocking=nb)
+        img0 = sample['img0'].cuda(non_blocking=nb)
+        img1 = sample['img1'].cuda(non_blocking=nb)
         intrinsic = sample['intrinsic'].cuda(non_blocking=nb)
 
         if self.use_stereo==1:
@@ -154,6 +154,7 @@ class TartanVO:
             img0_r_norm = sample['img0_r_norm'].cuda(non_blocking=nb)
             # blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(non_blocking=nb)
             blxfx = torch.tensor([0.25 * 320]).view(1, 1, 1, 1).cuda(non_blocking=nb)
+            scale_w = sample['scale_w'].view(-1, 1, 1, 1).cuda(non_blocking=nb)
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].cuda(non_blocking=nb)
             if self.normalize_extrinsic:
@@ -178,7 +179,6 @@ class TartanVO:
             res['flow'] = flow
 
         elif self.use_stereo==1:
-            scale_w = sample['scale_w']
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic, 
                                             scale_w=scale_w, scale_disp=1.0, blxfx=blxfx)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back

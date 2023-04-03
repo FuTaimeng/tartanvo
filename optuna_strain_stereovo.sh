@@ -11,8 +11,8 @@
 #SBATCH --ntasks-per-node=4
 
 ###SBATCH --gpus=nvidia_a100-pcie-40gb:2
-###SBATCH --gres=gpu:2
-#SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
+#SBATCH --gres=gpu:2
+###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
 ###SBATCH --gres=gpu:tesla_v100-pcie-16gb:1
 ###SBATCH --gres=gpu:nvidia_a16:1
 
@@ -35,17 +35,17 @@ conda activate impe-learning
 
 data_dir=/user/taimengf/projects/tartanair/TartanAir
 
-batch=32
+batch=16
 step=20000
 
-nick_name=StereoVO_AllEnv_Proc2_lrDec0.5
+nick_name=StereoVO_ScaleW_Proc2
 train_name=${nick_name}
 
 # export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
 # export CUDA_VISIBLE_DEVICES=8,9,10,11
 
 python optuna_train_multicamvo2.py \
-    --vo-model-name ./models/StereoVO_AllEnv_Proc2_lrDec0.5_B32_lr6.000e-05_Oadam_st10000.pkl \
+    --vo-model-name ./models/43_6_2_vonet_30000.pkl \
     --batch-size ${batch} \
     --worker-num 2 \
     --data-root ${data_dir} \
@@ -62,10 +62,8 @@ python optuna_train_multicamvo2.py \
     --test-interval 50 \
     --world-size 2 \
     --lr 1e-5 \
-    --lr-decay-rate 0.5 \
     --stereo-data-type 's' \
-    --vo-optimizer adam \
-    --start-iter 10000
+    --vo-optimizer adam
 
     # --flow-model-name ./models/pwc_net.pth.tar \
     # --use-stereo 2.2 \
