@@ -203,7 +203,7 @@ class KITTITrajFolderLoader:
 
         # Specify the dataset to load
         date = datadir_split[-2]
-        drive = datadir_split[-1].split('_')[-2]
+        drive = datadir_split[-1].split('_')[-1]
 
         # Load the data. Optionally, specify the frame range to load.
         dataset = pykitti.raw(basedir, date, drive)

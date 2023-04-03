@@ -33,13 +33,13 @@
 source ~/.bashrc
 conda activate impe-learning
 
-# data_dir=/projects/academic/cwx/kitti_raw
-data_dir=/projects/academic/cwx/euroc
+data_dir=/projects/academic/cwx/kitti_raw
+# data_dir=/projects/academic/cwx/euroc
 
 batch=32
 step=100
 
-nick_name=TestEuRoC
+nick_name=TestKittiB
 train_name=${nick_name}
 
 # export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
