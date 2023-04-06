@@ -20,6 +20,7 @@ from .loopDetector import multicam_frame_selector
 
 class TartanAirTrajFolderLoader:
     def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
+
         ############################## load images ######################################################################
         imgfolder = datadir + '/image_left'
         files = listdir(imgfolder)
@@ -36,12 +37,29 @@ class TartanAirTrajFolderLoader:
         else:
             self.rgbfiles_right = None
 
+        ############################## load flow ######################################################################
+        if isdir(datadir + '/flow'):
+            imgfolder = datadir + '/flow'
+            files = listdir(imgfolder)
+            self.flowfiles = [(imgfolder +'/'+ ff) for ff in files if ff.endswith('_flow.npy')]
+            self.flowfiles.sort()
+        else:
+            self.flowfiles = None
+
+        ############################## load depth ######################################################################
+        if isdir(datadir + '/depth_left'):
+            imgfolder = datadir + '/depth_left'
+            files = listdir(imgfolder)
+            self.depthfiles = [(imgfolder +'/'+ ff) for ff in files if ff.endswith('_depth.npy')]
+            self.depthfiles.sort()
+        else:
+            self.depthfiles = None
+
         ############################## load calibrations ######################################################################
         self.intrinsic = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
         self.intrinsic_right = np.array([320.0, 320.0, 320.0, 240.0], dtype=np.float32)
         self.right2left_pose = pp.SE3([0, 0.25, 0,   0, 0, 0, 1]).to(dtype=torch.float32)
         # self.right2left_pose = np.array([0, 0.25, 0,   0, 0, 0, 1], dtype=np.float32)
-
 
         ############################## load gt poses ######################################################################
         posefile = datadir + '/pose_left.txt'
@@ -295,18 +313,31 @@ class TrajFolderDataset(Dataset):
         self.rgb_dts = loader.rgb_dts[start_frame:end_frame-1]
         self.num_img = len(self.rgbfiles)
 
-        self.rgbfiles_right = loader.rgbfiles_right
-        if self.rgbfiles_right is not None:
-            self.rgbfiles_right = self.rgbfiles_right[start_frame:end_frame]
+        try:
+            self.rgbfiles_right = loader.rgbfiles_right[start_frame:end_frame]
+        except:
+            self.rgbfiles_right = None
+
+        try:
+            self.flowfiles = loader.flowfiles[start_frame:end_frame-1]
+        except:
+            self.flowfiles = None
+
+        try:
+            self.depthfiles = loader.depthfiles[start_frame:end_frame]
+        except:
+            self.depthfiles = None
 
         self.intrinsic = loader.intrinsic
         self.intrinsic_right = loader.intrinsic_right
         self.right2left_pose = loader.right2left_pose
 
         self.poses = loader.poses[start_frame:end_frame]
-        self.vels = loader.vels
-        if self.vels is not None:
-            self.vels = self.vels[start_frame:end_frame]
+
+        try:
+            self.vels = loader.vels[start_frame:end_frame]
+        except:
+            self.vels = None
 
         if loader.has_imu:
             self.rgb2imu_sync = loader.rgb2imu_sync[start_frame:end_frame]
@@ -402,9 +433,17 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
             res['img0_r'] = [img0_r]
             res['path_img0_r'] = self.rgbfiles_right[self.links[idx][0]]
             # res['blxfx'] = np.array([self.focalx * self.baseline], dtype=np.float32) # used for convert disp to depth
-        else:
-            print('incorrect right image path')
             
+        if self.flowfiles is not None:
+            flow = np.load(self.flowfiles[self.links[idx][0]])
+            res['flow'] = [flow]
+            res['path_flow'] = self.flowfiles[self.links[idx][0]]
+
+        if self.depthfiles is not None:
+            depth = np.load(self.depthfiles[self.links[idx][0]])
+            res['depth0'] = [depth]
+            res['path_depth0'] = self.depthfiles[self.links[idx][0]]
+
         h, w, _ = img0.shape
         intrinsicLayer = make_intrinsics_layer(w, h, self.intrinsic[0], self.intrinsic[1], self.intrinsic[2], self.intrinsic[3])
         res['intrinsic'] = [intrinsicLayer]

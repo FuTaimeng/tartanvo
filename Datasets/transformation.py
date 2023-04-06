@@ -231,10 +231,24 @@ def tartan2kitti(traj):
         
     return np.array(new_traj)
 
+def tartan2kitti_pypose(traj):
+    T= [[0.,1.,0.,0.],
+        [0.,0.,1.,0.],
+        [1.,0.,0.,0.],
+        [0.,0.,0.,1.]]
+    T = pp.from_matrix(T, ltype=pp.SE3_type).to(traj.device)
 
-def SE32ws(pose_output):
+    if traj.shape[-1] == 6:
+        if not isinstance(traj, pp.LieTensor):
+            traj = pp.se3(traj)
+        traj = traj.Exp()
+    else:
+        if not isinstance(traj, pp.LieTensor):
+            traj = pp.SE3(traj)
 
-    
+    return (T @ traj) @ T.Inv()
+
+def SE32ws(pose_output):    
     pose_output = pp.SE3(pose_output)
     # trans
     output_trans = pose_output.translation()

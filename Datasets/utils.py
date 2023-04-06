@@ -30,9 +30,13 @@ import matplotlib.pyplot as plt
 
 # Deprecated the support for non-seq data - 03/07/2022
 
-KEY2DIM =  {'flow':3, 'img0':3, 'img1':3, 'img0_norm':3, 'img1_norm':3, \
-            'intrinsic':3, 'fmask':2, 'disp0':2, 'disp1':2, 'depth0':2, 'depth1':2, \
-            'flow_unc':2, 'depth0_unc':2, 'img0_r':3, 'img1_r':3, 'img0_r_norm':3, 'img1_r_norm':3}
+KEY2DIM = {
+    'img0':3, 'img1':3, 'img0_norm':3, 'img1_norm':3,
+    'intrinsic':3, 'flow':3, 'fmask':2,
+    'disp0':2, 'disp1':2, 'depth0':2, 'depth1':2,
+    'flow_unc':2, 'depth0_unc':2,
+    'img0_r':3, 'img1_r':3, 'img0_r_norm':3, 'img1_r_norm':3
+}
 
 class Compose(object):
     """Composes several transforms together.
@@ -616,7 +620,7 @@ class DownscaleFlow(object):
                 imgseq = []
                 for k in range(len(sample[key])):
                     imgseq.append(cv2.resize(sample[key][k], 
-                        (0, 0), fx=self.downscale, fy=self.downscale, interpolation=cv2.INTER_LINEAR))
+                        (0, 0), fx=self.downscale, fy=self.downscale, interpolation=cv2.INTER_NEAREST))
                 sample[key] = imgseq
 
         return sample

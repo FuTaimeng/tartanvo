@@ -7,31 +7,48 @@ from torch.masked import masked_tensor
 
 from timer import Timer
 
+from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
+
 
 def proj(x):
     return x / x[..., -1:]
 
-def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
-    height, width = disp.shape[-2:]
+def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=None):
+    height, width = flow.shape[-2:]
+    device = motion.device
 
-    T = pp.SE3(motion.detach())
+    if motion.shape[-1] == 7:
+        T = pp.SE3(motion)
+    else:
+        T = pp.se3(motion).Exp()
     # T.requires_grad = True
 
-    disp_th = 1
     flow_th = 0.1*height
+    print(flow.shape)
     flow_norm = torch.linalg.norm(flow, dim=0)
-    mask = torch.logical_and(disp >= disp_th, flow_norm <= flow_th)
-    # mask2 = torch.stack([mask, mask])
-    # m_disp = masked_tensor(disp, mask)
-    # m_flow = masked_tensor(flow, mask2)
-    m_disp = torch.where(mask, disp, disp_th)
-    # m_disp = disp
-    # m_flow = flow
+    mask = flow_norm <= flow_th
 
-    # m_disp_gray = to_image(m_disp.numpy())
-    # cv2.imwrite('m_disp_gray.png', m_disp_gray)
+    if depth is None:
+        disp_th = 1
+        mask = torch.logical_and(disp >= disp_th, mask)
+        # mask2 = torch.stack([mask, mask])
+        # m_disp = masked_tensor(disp, mask)
+        # m_flow = masked_tensor(flow, mask2)
+        m_disp = torch.where(mask, disp, disp_th)
+        # m_disp = disp
+        # m_flow = flow
 
-    z = fx*baseline / m_disp
+        # m_disp_gray = to_image(m_disp.numpy())
+        # cv2.imwrite('m_disp_gray.png', m_disp_gray)
+
+        z = fx*baseline / m_disp
+
+    else:
+        depth_th = fx*baseline
+        mask = torch.logical_and(depth <= depth_th, mask)
+        m_depth = torch.where(mask, depth, depth_th)
+
+        z = m_depth
 
     # z_gray = to_image(z.numpy()*10)
     # cv2.imwrite('z_gray.png', z_gray)
@@ -39,15 +56,15 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
     u_lin = torch.linspace(0, width-1, width)
     v_lin = torch.linspace(0, height-1, height)
     u, v = torch.meshgrid(u_lin, v_lin, indexing='xy')
-    uv = torch.stack([u, v])
-    uv1 = torch.stack([u, v, torch.ones_like(u)])
+    uv = torch.stack([u, v]).to(device=device)
+    uv1 = torch.stack([u, v, torch.ones_like(u)]).to(device=device)
 
     # u_gray = to_image(u.numpy()*0.5)
     # v_gray = to_image(v.numpy()*0.5)
     # cv2.imwrite('u_gray.png', u_gray)
     # cv2.imwrite('v_gray.png', v_gray)    
 
-    K = torch.tensor([fx, 0, cx, 0, fy, cy, 0, 0, 1], dtype=torch.float32).view(3, 3)
+    K = torch.tensor([fx, 0, cx, 0, fy, cy, 0, 0, 1], dtype=torch.float32).view(3, 3).to(device=device)
     K_inv = torch.linalg.inv(K)
 
     P = z.unsqueeze(-1) * (K_inv.unsqueeze(0).unsqueeze(0) @ uv1.permute(1, 2, 0).unsqueeze(-1)).squeeze()
@@ -57,6 +74,7 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
     # scale = torch.linalg.norm(t)
     # t_norm = t / scale
     t_norm = torch.nn.functional.normalize(t, dim=0)
+    # t_norm = t  # the input trans is normalized
     a = (K @ t_norm.view(3, 1)).squeeze().unsqueeze(0).unsqueeze(0)
     b = (K.unsqueeze(0).unsqueeze(0) @ (R.unsqueeze(0).unsqueeze(0) @ P).unsqueeze(-1)).squeeze()
     # print(a.shape, b.shape)
@@ -69,6 +87,7 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
     # print(M.shape, w.shape)
 
     # print(torch.sum(mask))
+    print('mask', mask.shape)
     m_M1 = M1.view(-1)[mask.view(-1)]
     m_M2 = M2.view(-1)[mask.view(-1)]
     m_w1 = w1.view(-1)[mask.view(-1)]
@@ -77,7 +96,8 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline):
     M = torch.stack([m_M1, m_M2]).view(-1, 1)
     w = torch.stack([m_w1, m_w2]).view(-1, 1)
     s = 1 / torch.sum(M * M) * M.t() @ w
-    s = s.item()
+    s = s.view(1)
+    # s = s.item()
 
     # print(s, scale)
 
@@ -118,25 +138,52 @@ def warp_flow(img, flow):
     res = cv2.remap(img, flow, None, cv2.INTER_LINEAR)
     return res
 
-def tartan2kitti(pose):
-    T = np.array([[0,1,0,0],
-                  [0,0,1,0],
-                  [1,0,0,0],
-                  [0,0,0,1]], dtype=np.float32) 
-    T = pp.from_matrix(T, ltype=pp.SE3_type)
-    if len(pose.shape) == 2:
-        T = T.view(1, 7)
 
-    new_pose = T @ pose @ T.Inv()
+def create_dataset():
+    # transform = Compose([   CropCenter((args.image_height, args.image_width), fix_ratio=True), 
+    #                         DownscaleFlow(), 
+    #                         Normalize(), 
+    #                         ToTensor(),
+    #                         SqueezeBatchDim()
+    #                     ])
 
-    return new_pose
+    transformlist = []
+    transformlist = [ CropCenter( size=(448, 640), 
+                                    fix_ratio=False, scale_w=1.0, scale_disp=False)]
+    transformlist.append(DownscaleFlow())
+    transformlist.append(RandomHSV((10,80,80), random_random=0.2))
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    transformlist.append(Normalize(mean=mean, std=std, keep_old=True))
+    transformlist.extend([ToTensor(), SqueezeBatchDim()])
+    transform = Compose(transformlist)
+
+    return transform
+
 
 if __name__ == '__main__':
+    from Datasets.transformation import tartan2kitti_pypose
+
     timer = Timer()
 
-    flow = np.load(path+'/flow/000000_000001_flow.npy')
-    depth = np.load(path+'/depth_left/000000_left_depth.npy')
+    idx = 866
+    flow = np.load(path+'/flow/%06d_%06d_flow.npy'%(idx, idx+1))
+    depth = np.load(path+'/depth_left/%06d_left_depth.npy'%idx)
     disp = 320*0.25 / depth
+
+    transform = create_dataset()
+    sample = {}
+    sample['depth0'] = [depth]
+    sample['flow'] = [flow]
+    sample['disp0'] = [disp]
+    transform(sample)
+    depth = sample['depth0']
+    flow = sample['flow']
+    disp = sample['disp0']
+    if flow.shape[-1] == 160:
+        print('scale flow /4')
+        flow /= 4
+        disp /= 4
 
     # img1 = cv2.imread(path+'/image_left/000000_left.png')
     # img2 = cv2.imread(path+'/image_left/000001_left.png')
@@ -157,21 +204,32 @@ if __name__ == '__main__':
     # print('disp max min', np.max(disp), np.min(disp))
     # print('depth max min', np.max(depth), np.min(depth))
 
-    flow = torch.from_numpy(flow).permute(2, 0, 1)
-    disp = torch.from_numpy(disp)
+    # flow = torch.from_numpy(flow).permute(2, 0, 1)
+    # disp = torch.from_numpy(disp)
+    # depth = torch.from_numpy(depth)
+            
+    print('flow', flow.shape, 'depth', depth.shape)
+    print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
+    print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
+    print('disp', torch.min(disp), torch.max(disp), torch.mean(disp))
 
     poses = np.loadtxt(path+'/pose_left.txt')
     poses = pp.SE3(poses)
     # poses = tartan2kitti(poses)
-    motion = poses[0].Inv() @ poses[1]
-    motion = tartan2kitti(motion)
-    t = motion.translation()
-    scale = torch.linalg.norm(t)
+    motion = poses[idx].Inv() @ poses[idx+1]
+    motion = tartan2kitti_pypose(motion)
+    print(motion)
+    scale = torch.linalg.norm(motion.translation())
+
+    motion[:3] = torch.nn.functional.normalize(motion[:3], dim=0)    
 
     # print(motion)
 
     timer.tic('fwd')
-    r, s = disp_flow_ba(disp, flow, motion, 320, 320, 320, 240, 0.25)
+    fx = fy = cx = flow.shape[-1] / 2
+    cy = flow.shape[-2] / 2
+    print('intrinsic', fx, fy, cx, cy)
+    r, s = scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, 0.25)
     timer.toc('fwd')
 
     # img1_reproj = warp_flow(img1, reproj_flow.permute(1, 2, 0).numpy())

@@ -36,7 +36,7 @@ conda activate impe-learning
 # data_dir=/user/taimengf/projects/tartanair/TartanAir
 data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
 
-batch=5
+batch=1
 step=10
 
 nick_name=CalcScale
@@ -53,7 +53,7 @@ python optuna_train_multicamvo2.py \
     --print-interval 5 \
     --snapshot-interval 500 \
     --mode train-all \
-    --random-intrinsic 800 \
+    --random-intrinsic 0 \
     --hsv-rand 0.2 \
     --use-stereo 1 \
     --result-dir ./train_multicamvo \
