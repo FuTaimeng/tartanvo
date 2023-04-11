@@ -329,7 +329,7 @@ class TartanVO:
                                                         transform=transform, mode='train', debug=False, validate = True, traj_idx=i ,verbose=False)
 
                 batch_size = 64
-                worker_num = 8
+                worker_num = 2
                 testDataloader = DataLoader(testDataset, batch_size=batch_size,
                                             shuffle=False, num_workers=worker_num)
                 testDataiter = iter(testDataloader)

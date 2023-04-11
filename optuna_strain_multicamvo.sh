@@ -30,10 +30,13 @@
 ###SBATCH --array=1-2
 
 
-source ~/.bashrc
-conda activate impe-learning
+# source ~/.bashrc
+# conda activate impe-learning
+# conda activate /home/shaoshus/anaconda3/envs/pypose
 
-data_dir=/user/taimengf/projects/tartanair/TartanAir
+# data_dir=/user/taimengf/projects/tartanair/TartanAir
+data_dir=/home/data2/TartanAir/TartanAir_comb
+
 
 batch=32
 step=60000
@@ -44,10 +47,12 @@ train_name=${nick_name}
 # export CUDA_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
 # export CUDA_VISIBLE_DEVICES=8,9,10,11
 export CUDA_LAUNCH_BLOCKING=1
+mkdir -p ./train_multicamvo/${train_name}/models
+mkdir ./results
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
-    --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl \
+    --pose-model-name ./models/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3_st60000.pkl \
     --batch-size ${batch} \
     --worker-num 2 \
     --data-root ${data_dir} \
@@ -62,12 +67,18 @@ python optuna_train_multicamvo2.py \
     --debug-flag '' \
     --train-step ${step} \
     --test-interval 50 \
-    --world-size 2 \
+    --world-size 1 \
     --lr 8e-4 \
     --stereo-data-type 's' \
     --vo-optimizer adam \
     --fix_model_parts 'flow' 'feat' 'rot' \
-    --start-iter 40000
+    --start-iter 40000 \
+    --val-interval 1000 \
+    --euroc-path /home/data2/euroc_raw \
+    --kitti-path /home/data2/kitti_raw \
+    # --out-to-cml \
+    # --not-write-log \
+    # --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl \
 
     # --flow-model-name ./models/pwc_net.pth.tar \
     # --use-stereo 2.2 \
