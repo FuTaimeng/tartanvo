@@ -36,7 +36,7 @@ conda activate impe-learning
 data_dir=/user/taimengf/projects/tartanair/TartanAir
 
 batch=32
-step=60000
+step=100000
 
 nick_name=MulticamVO_SOnly_lrFix_Proc2
 train_name=${nick_name}
@@ -47,7 +47,7 @@ export CUDA_LAUNCH_BLOCKING=1
 
 python optuna_train_multicamvo2.py \
     --flow-model-name ./models/pwc_net.pth.tar \
-    --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl \
+    --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3_st60000.pkl \
     --batch-size ${batch} \
     --worker-num 2 \
     --data-root ${data_dir} \
@@ -62,12 +62,12 @@ python optuna_train_multicamvo2.py \
     --debug-flag '' \
     --train-step ${step} \
     --test-interval 50 \
-    --world-size 2 \
-    --lr 8e-4 \
+    --world-size 1 \
+    --lr 2e-4 \
     --stereo-data-type 's' \
     --vo-optimizer adam \
     --fix_model_parts 'flow' 'feat' 'rot' \
-    --start-iter 40000
+    --start-iter 60000
 
     # --flow-model-name ./models/pwc_net.pth.tar \
     # --use-stereo 2.2 \
