@@ -32,7 +32,7 @@ class VONet(nn.Module):
         flow = flow[0]
 
         disp, _ = self.stereoNet(torch.cat((img0_norm, img0_r_norm),dim=1))
-        disp = F.interpolate(disp, scale_factor=0.25, mode='bilinear', align_corners=True)
+        disp = F.interpolate(disp, scale_factor=0.25, mode='nearest')
         
         x = torch.cat([flow, intrinsic], dim=1)
         pose = self.flowPoseNet(x)

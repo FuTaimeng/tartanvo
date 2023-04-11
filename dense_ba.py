@@ -24,7 +24,6 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
     # T.requires_grad = True
 
     flow_th = 0.1*height
-    print(flow.shape)
     flow_norm = torch.linalg.norm(flow, dim=0)
     mask = flow_norm <= flow_th
 
@@ -87,7 +86,6 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
     # print(M.shape, w.shape)
 
     # print(torch.sum(mask))
-    print('mask', mask.shape)
     m_M1 = M1.view(-1)[mask.view(-1)]
     m_M2 = M2.view(-1)[mask.view(-1)]
     m_w1 = w1.view(-1)[mask.view(-1)]
@@ -166,7 +164,7 @@ if __name__ == '__main__':
 
     timer = Timer()
 
-    idx = 866
+    idx = 269
     flow = np.load(path+'/flow/%06d_%06d_flow.npy'%(idx, idx+1))
     depth = np.load(path+'/depth_left/%06d_left_depth.npy'%idx)
     disp = 320*0.25 / depth

@@ -176,42 +176,43 @@ class TartanVO:
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
 
-            pose = pose.detach()
-            # pose = sample['motion'].cuda(self.device_id)
-            flow_gt = sample['flow'].cuda(self.device_id)
-            depth = sample['depth0'].cuda(self.device_id)
-            disp_gt = 320*0.25 / depth
+            pose_gt = sample['motion'].cuda(self.device_id)
+            pose = pose_gt
 
             flow *= 5
+            flow_gt = sample['flow'].cuda(self.device_id)
             flow_gt /= 4
-            disp *= 50
+            flow = flow_gt
+            
+            disp *= 50/4
+            depth = sample['depth0'].cuda(self.device_id)
+            disp_gt = 320/4*0.25 / depth
+            disp = disp_gt
 
-            flow_scale = flow[0] / flow_gt[0]
-            print('flow_scale', flow_scale.mean(), flow_scale.median())
+            # flow_scale = flow[0] / flow_gt[0]
+            # print('flow_scale', flow_scale.mean(), flow_scale.median())
 
-            disp_scale = disp[0] / disp_gt[0]
-            print('disp_scale', disp_scale.mean(), disp_scale.median())
+            # disp_scale = disp[0] / disp_gt[0]
+            # print('disp_scale', disp_scale.mean(), disp_scale.median())
 
-            print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
-            print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
-            print('disp', torch.min(disp), torch.max(disp), torch.mean(disp))
-
-            print('flow', flow.shape, 'disp', disp.shape, 'pose', pose.shape, 'depth', depth.shape)
-            print(sample['path_img0'], sample['path_flow'], sample['path_depth0'])
+            # print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
+            # print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
+            # print('disp', torch.min(disp), torch.max(disp), torch.mean(disp))
             
             pose_ENU_SE3 = tartan2kitti_pypose(pose)
-            print('pose_ENU_SE3', pose_ENU_SE3)
-            # pose_ENU_SE3_norm = torch.cat([torch.nn.functional.normalize(pose_ENU_SE3[:, :3], dim=1), pose[:, 3:]], dim=1)
+
+            # print('pose_ENU_SE3', pose_ENU_SE3)
 
             scale = []
             for i in range(pose.shape[0]):
                 fx = fy = cx = 320/4
                 cy = 224/4
-                r, s = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, 0.25)
+                baseline = 0.25
+                r, s = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline)
                 scale.append(s)
             scale = torch.stack(scale)
 
-            print('scale', scale)
+            # print('scale', scale)
 
             trans = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1, 1)
             pose = torch.cat([trans, pose[:, 3:]], dim=1)
@@ -221,19 +222,18 @@ class TartanVO:
             res['disp'] = disp
             res['scale'] = scale
 
-            gt_pose = sample['motion'].cuda(self.device_id)
-            gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
-            gt_trans_norm = torch.nn.functional.normalize(gt_pose[:, :3], dim=1)
-            trans_norm = torch.nn.functional.normalize(pose[:, :3], dim=1)
-            cross = torch.sum(gt_trans_norm * trans_norm, dim=1)
-            trans_angle = torch.arccos(torch.clamp(cross, min=-1, max=1)) * 180 / 3.14
-            scale_err = torch.abs(gt_scale - scale)
-            scale_err_percent = scale_err / gt_scale
-            print('trans_angle', trans_angle)
-            print('scale_err', scale_err)
-            print('scale_err_percent', scale_err_percent)
-            print('trans', pose)
-
+            # gt_pose = sample['motion'].cuda(self.device_id)
+            # gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
+            # gt_trans_norm = torch.nn.functional.normalize(gt_pose[:, :3], dim=1)
+            # trans_norm = torch.nn.functional.normalize(pose[:, :3], dim=1)
+            # cross = torch.sum(gt_trans_norm * trans_norm, dim=1)
+            # trans_angle = torch.arccos(torch.clamp(cross, min=-1, max=1)) * 180 / 3.14
+            # scale_err = torch.abs(gt_scale - scale)
+            # scale_err_percent = scale_err / gt_scale
+            # print('trans_angle', trans_angle)
+            # print('scale_err', scale_err)
+            # print('scale_err_percent', scale_err_percent)
+            # print('trans', pose)
 
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)

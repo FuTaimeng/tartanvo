@@ -37,7 +37,7 @@ conda activate impe-learning
 data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
 
 batch=1
-step=10
+step=1000
 
 nick_name=CalcScale
 train_name=${nick_name}
@@ -50,23 +50,23 @@ python optuna_train_multicamvo2.py \
     --batch-size ${batch} \
     --worker-num 2 \
     --data-root ${data_dir} \
-    --print-interval 5 \
+    --print-interval 1 \
     --snapshot-interval 500 \
     --mode train-all \
     --random-intrinsic 0 \
-    --hsv-rand 0.2 \
+    --hsv-rand 0 \
     --use-stereo 1 \
     --result-dir ./train_multicamvo \
     --train-name ${train_name} \
     --debug-flag '' \
     --train-step ${step} \
-    --test-interval 50 \
+    --test-interval 1000 \
     --world-size 1 \
-    --lr 1e-6 \
+    --lr 0 \
     --stereo-data-type 's' \
     --vo-optimizer adam \
     --fix-model-parts 'flow' 'stereo' \
-    --not-write-log
+    # --not-write-log \
 
     # --flow-model-name ./models/pwc_net.pth.tar \
     # --use-stereo 2.2 \

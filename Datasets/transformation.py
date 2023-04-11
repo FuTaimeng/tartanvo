@@ -240,7 +240,7 @@ def tartan2kitti_pypose(traj):
 
     if traj.shape[-1] == 6:
         if not isinstance(traj, pp.LieTensor):
-            traj = pp.se3(traj)
+            traj = pp.se3(traj) # ???
         traj = traj.Exp()
     else:
         if not isinstance(traj, pp.LieTensor):

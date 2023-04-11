@@ -1,7 +1,7 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
 from Datasets.TrajFolderDataset import TrajFolderDatasetMultiCam, MultiTrajFolderDataset, TrajFolderDatasetPVGO, LoopDataSampler
 from Datasets.transformation import ses2poses_quat, ses2pos_quat
-from evaluator.evaluate_rpe import calc_motion_error
+from evaluator.evaluate_rpe import calc_motion_error, calc_trans_angle_scale
 
 from TartanVO import TartanVO
 
@@ -147,16 +147,18 @@ def create_dataset(args, DatasetType, mode='train'):
     #                         SqueezeBatchDim()
     #                     ])
 
-    if args.random_intrinsic>0:
-        transformlist = [ RandomResizeCrop( size=(args.image_height, args.image_width), 
-                                            max_scale=args.random_intrinsic/320.0, 
-                                            keep_center=False, fix_ratio=False) ]
+    transformlist = []
+    if args.random_intrinsic > 0:
+        transformlist.append(RandomResizeCrop(size=(args.image_height, args.image_width), 
+                                                max_scale=args.random_intrinsic/320.0, 
+                                                keep_center=False, fix_ratio=False))
     else:
-        transformlist = [ CropCenter( size=(args.image_height, args.image_width), 
-                                      fix_ratio=False, scale_w=1.0, scale_disp=False)]
+        transformlist.append(CropCenter(size=(args.image_height, args.image_width), 
+                                        fix_ratio=False, scale_w=1.0, scale_disp=False))
     transformlist.append(DownscaleFlow())
-    transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
-    if args.use_stereo==1:
+    if args.hsv_rand > 0:
+        transformlist.append(RandomHSV((10,80,80), random_random=args.hsv_rand))
+    if args.use_stereo == 1:
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
         transformlist.append(Normalize(mean=mean, std=std, keep_old=True))
@@ -168,7 +170,7 @@ def create_dataset(args, DatasetType, mode='train'):
     # dataset = MultiTrajFolderDataset(DatasetType=DatasetType, datatype_root={'tartanair':args.data_root}, 
     #                                 transform=transform, mode=mode, debug=args.only_one_traj)
     dataset = TrajFolderDatasetPVGO(datadir=args.data_root, datatype='tartanair', transform=transform,
-                                    start_frame=850, end_frame=900)
+                                    start_frame=0, end_frame=-1)
     return dataset
 
 
@@ -304,9 +306,10 @@ def objective(trial, study_name, args, local_rank, datasets):
 
         gt_motion = sample['motion'].to(args.device)
         loss = criterion(motion, gt_motion)
-        posenetOptimizer.zero_grad()
-        loss.backward()
-        posenetOptimizer.step()
+        if lr > 0:
+            posenetOptimizer.zero_grad()
+            loss.backward()
+            posenetOptimizer.step()
 
         timer.toc('bp')
 
@@ -327,12 +330,20 @@ def objective(trial, study_name, args, local_rank, datasets):
                 tot_loss = loss.item()
                 trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
                 rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
+
                 rot_errs, trans_errs, rot_norms, trans_norms = \
                     calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 trans_err = np.mean(trans_errs)
                 rot_err = np.mean(rot_errs)
                 trans_err_percent = np.mean(trans_errs / trans_norms)
                 rot_err_percent = np.mean(rot_errs / rot_norms)
+                trans_norm = np.mean(trans_norms)
+                rot_norm = np.mean(rot_norms)
+                
+                trans_angles, scale_errs = calc_trans_angle_scale(gt_motion.cpu().numpy(), motion.cpu().numpy())
+                trans_angle = np.mean(trans_angles)
+                scale_err = np.mean(scale_errs)
+                scale_err_percent = np.mean(scale_err / trans_norms)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/train_loss', tot_loss, train_step_cnt)
@@ -345,17 +356,26 @@ def objective(trial, study_name, args, local_rank, datasets):
 
                 writer.add_scalar('error/train_trans_err_percent', trans_err_percent, train_step_cnt)
                 writer.add_scalar('error/train_rot_err_percent', rot_err_percent, train_step_cnt)
+
+                writer.add_scalar('error/trans_angle', trans_angle, train_step_cnt)
+                writer.add_scalar('error/scale_err', scale_err, train_step_cnt)
+                writer.add_scalar('error/scale_err_percent', scale_err_percent, train_step_cnt)
                 
                 writer.add_scalar('time/time', timer.last('step'), train_step_cnt)
 
                 wandb.log({ 
-                        "training loss": loss.item(), 
+                        "training loss": tot_loss, 
                         "training trans loss": trans_loss, 
                         "training rot loss": rot_loss, 
                         "training trans err": trans_err, 
                         "training rot err": rot_err,
                         "training trans err percent": trans_err_percent, 
-                        "training rot err percent": rot_err_percent
+                        "training rot err percent": rot_err_percent,
+                        "training trans angle": trans_angle,
+                        "training scale err": scale_err,
+                        "training scale err percent": scale_err_percent,
+                        "training trans norm": trans_norm,
+                        "training rot norm": rot_norm
                     }, 
                     step=train_step_cnt
                 )
@@ -406,8 +426,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                     calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
                 test_trans_err = np.mean(trans_errs)
                 test_rot_err = np.mean(rot_errs)
-                trans_err_percent = np.mean(trans_errs / trans_norms)
-                rot_err_percent = np.mean(rot_errs / rot_norms)
+                test_trans_err_percent = np.mean(trans_errs / trans_norms)
+                test_rot_err_percent = np.mean(rot_errs / rot_norms)
 
             if not args.not_write_log:
                 writer.add_scalar('loss/test_loss', test_tot_loss, train_step_cnt)
@@ -422,8 +442,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                 else:
                     writer.add_scalar('error/test_trans_err_dext', test_trans_err, train_step_cnt)
 
-                writer.add_scalar('error/test_trans_err_percent', trans_err_percent, train_step_cnt)
-                writer.add_scalar('error/test_rot_err_percent', rot_err_percent, train_step_cnt)
+                writer.add_scalar('error/test_trans_err_percent', test_trans_err_percent, train_step_cnt)
+                writer.add_scalar('error/test_rot_err_percent', test_rot_err_percent, train_step_cnt)
 
                 writer.add_scalar('time/test_time', timer.last('test'), train_step_cnt)
 
@@ -433,8 +453,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                         "testing rot loss": test_rot_loss, 
                         "testing trans err": test_trans_err, 
                         "testing rot err": test_rot_err,
-                        "testing trans err percent": trans_err_percent, 
-                        "testing rot err percent": rot_err_percent
+                        "testing trans err percent": test_trans_err_percent, 
+                        "testing rot err percent": test_rot_err_percent
                     }, 
                     step = train_step_cnt
                 )
@@ -505,27 +525,30 @@ def process(local_rank, args):
     print('Device name:', device_name)
     print('==========================================')
 
+    shuffle = False
+    distributed = args.world_size > 1
+
     datasets = {}
     if 's' in args.stereo_data_type:
         traindataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='train')
-        trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, 
-                                            num_workers=args.worker_num, distributed=True)
+        trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=shuffle, 
+                                            num_workers=args.worker_num, distributed=distributed)
         datasets['train_s'] = trainsampler_sext
 
         testdataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='test')
-        testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, 
-                                            num_workers=args.worker_num, distributed=True)
+        testsampler_sext = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=shuffle, 
+                                            num_workers=args.worker_num, distributed=distributed)
         datasets['test_s'] = testsampler_sext
 
     if 'd' in args.stereo_data_type:
         traindataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='train')
-        trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, 
-                                            num_workers=args.worker_num, distributed=True)
+        trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=shuffle, 
+                                            num_workers=args.worker_num, distributed=distributed)
         datasets['train_d'] = trainsampler_dext
 
         testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
-        testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, 
-                                            num_workers=args.worker_num, distributed=True)
+        testsampler_dext = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=shuffle, 
+                                            num_workers=args.worker_num, distributed=distributed)
         datasets['test_d'] = testsampler_dext
     
     if args.world_size == 1 and len(args.tuning_val) > 0:
