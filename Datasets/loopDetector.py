@@ -104,8 +104,8 @@ def adj_loop_detector(N, loop_range, loop_interval):
     links = []
     for i in range(N-1):
         links.append((i, i+1))
-    for i in range(0, N-loop_range, loop_interval):
-        links.append((i, i+loop_range))
+    # for i in range(0, N-loop_range, loop_interval):
+    #     links.append((i, i+loop_range))
     return links
 
 

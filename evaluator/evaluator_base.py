@@ -7,11 +7,12 @@ from .transformation import pos_quats2SE_matrices, SE2pos_quat
 
 np.set_printoptions(suppress=True, precision=2, threshold=100000)
 
-def transform_trajs(gt_traj, est_traj, cal_scale):
+def transform_trajs(gt_traj, est_traj, cal_scale,verbose=True):
     gt_traj, est_traj = trajectory_transform(gt_traj, est_traj)
     if cal_scale :
         est_traj, s = rescale(gt_traj, est_traj)
-        print('  Scale, {}'.format(s))
+        if verbose:
+            print('  Scale, {}'.format(s))
     else:
         s = 1.0
     return gt_traj, est_traj, s
@@ -28,12 +29,13 @@ class ATEEvaluator(object):
         super(ATEEvaluator, self).__init__()
 
 
-    def evaluate(self, gt_traj, est_traj, scale):
+    def evaluate(self, gt_traj, est_traj, scale, verbose=True):
         gt_xyz = np.matrix(gt_traj[:,0:3].transpose())
         est_xyz = np.matrix(est_traj[:, 0:3].transpose())
 
         rot, trans, trans_error, s = align(gt_xyz, est_xyz, scale)
-        print('  ATE scale: {}'.format(s))
+        if verbose:
+            print('  ATE scale: {}'.format(s))
         error = np.sqrt(np.dot(trans_error,trans_error) / len(trans_error))
 
         # align two trajs 

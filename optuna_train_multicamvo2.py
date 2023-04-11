@@ -69,12 +69,16 @@ def get_args():
                         help='the interval for snapshot results (default: 1000)')
     parser.add_argument('--test-interval', type=int, default=100,
                         help='the interval for test results (default: 100)')
-    parser.add_argument('--val-interval', type=int, default=1,
+    parser.add_argument('--val-interval', type=int, default=1000,
                         help='the interval for validate results (default: 100)')
     parser.add_argument('--train-name', default='',
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
                         help='root directory of results (default: "")')
+    parser.add_argument('--euroc-path', default='',
+                        help='path to the EuRoC dataset (default: "")')
+    parser.add_argument('--kitti-path', default='',
+                        help='path to the KITTI dataset (default: "")')
     parser.add_argument('--device', default='cuda',
                         help='device (default: "cuda")')
     parser.add_argument('--mode', default='train-all', choices=['test', 'train-all'],
@@ -116,7 +120,7 @@ def get_args():
                         help='write log file')
     parser.add_argument('--tuning-val', default=[], nargs='+',
                         help='tuning variables for optuna (default: [])')
-    parser.add_argument('--start-iter', type=int, default=1,
+    parser.add_argument('--start-iter', type=int, default=0,
                         help='start iteration')
     parser.add_argument('--lr-lb', type=float, default=1e-7,
                         help='lower bound of learning rate')
@@ -248,6 +252,8 @@ def objective(trial, study_name, args, local_rank, datasets):
                 'trans_head_layers': trans_head_layers,
             }
         )
+    else:
+        writer = None
 
     trainroot = args.result_dir + '/' + study_name
 
@@ -458,6 +464,13 @@ def objective(trial, study_name, args, local_rank, datasets):
             formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print('[{}] TEST:  step:{:07d}, loss:{:.4f}, trans_loss:{:.4f}, rot_loss:{:.4f}, trans_err:{:.4f}, rot_err:{:.4f},                    time: total:{:.4f}'.format(
                 formatted_date, train_step_cnt, test_tot_loss, test_trans_loss, test_rot_loss, test_trans_err, test_rot_err,                            timer.last('test')))
+
+
+        if train_step_cnt % args.val_interval == 0:
+            score = tartanvo.validate_model_result(args=args, train_step_cnt=train_step_cnt, writer=writer,verbose= False )
+            
+            if not args.not_write_log:
+                wandb.log({"validation score": score}, step=train_step_cnt)
 
         if train_step_cnt % args.snapshot_interval == 0:
             if not isdir(trainroot+'/models/'+file_name):

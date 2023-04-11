@@ -30,17 +30,42 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# PyTorch imports
 import torch
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel
+from torch.utils.data import DataLoader
 
+# Data processing imports
 import time
 import random
 import numpy as np
 import pypose as pp
+from Datasets.utils import (
+    DownscaleFlow, ToTensor, Compose, CropCenter, SqueezeBatchDim, 
+    Normalize, plot_traj, visflow, dataset_intrinsics, load_kiiti_intrinsics
+)
+from Datasets.TrajFolderDataset import (
+    MultiTrajFolderDataset as MultiTrajFolderDataset, 
+    TrajFolderDatasetPVGO as TrajFolderDatasetPVGO
+)
+from evaluator.tartanair_evaluator import TartanAirEvaluator
+from Datasets.transformation import ses2poses_quat
 
+# Network imports
 from Network.VONet import VONet, MultiCamVONet
 from Network.StereoVONet import StereoVONet
+
+# Visualization imports
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Other imports
+import wandb
+from evaluator.evaluate_rpe import calc_motion_error
+from tqdm import tqdm
+from datetime import datetime
+
 
 np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
@@ -94,6 +119,11 @@ class TartanVO:
         if use_stereo==1:
             self.vonet.stereoNet = self.vonet.stereoNet.cuda(device_id)
         self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet.cuda(device_id), device_ids=[device_id])
+
+        self.kitti_ate_bs = 8.77
+        self.kitti_trans_bs = 9.1
+        self.kitti_rot_bs = 2.89
+        self.euroc_ate_bs = 0.378
 
 
     def load_model(self, model, modelname):
@@ -220,197 +250,201 @@ class TartanVO:
         
         return pose
 
-
-    # def validate_model_result(self, train_step_cnt=None,writer =None):
-    #     kitti_ate, kitti_trans, kitti_rot = self.validate_model(count=train_step_cnt, writer=writer,verbose = False, datastr = 'kitti')
-    #     euroc_ate = self.validate_model(count=train_step_cnt, writer = writer,verbose = False, datastr = 'euroc')
-
-    #     print("  VAL %s #%d - KITTI-ATE/T/R/EuRoc-ATE: %.4f  %.4f  %.4f %.4f"  % (self.args.exp_prefix[:-1], 
-    #     self.val_count, kitti_ate, kitti_trans, kitti_rot, euroc_ate))
-    #     score = kitti_ate/ self.kitti_ate_bs/self.kitti_trans_bs + kitti_trans + kitti_rot/self.kitti_rot_bs   + euroc_ate/self.euroc_ate_bs
-    #     print('score: ', score)
-
-
-    # def validate_model(self,writer,count = None, verbose = False, datastr =None,source_dir = '/home/data2'):
-    #     euroc_dataset = ['MH_01', 'MH_02', 'MH_03', 'MH_04', 'MH_05', 'V1_01', 'V1_02', 'V1_03', 'V2_01', 'V2_02', 'V2_03']
-    #     if datastr == None:
-    #         print('Here is a bug!!!')
-
-    #     args = load_args('args/args_'+datastr+'.pkl')[0]
-    #     # read testdir adn posefile from kitti from tarjectory 1 to 10
-    #     self.count = count
-
-    #     result_dict = {}
-
-    #     for i in range(11):
-    #         # args.test_dir = '/data/azcopy/kitti/10/image_left'
-    #         # args.pose_file = '/data/azcopy/kitti/10/pose_left.txt'
-    #         if datastr == 'kitti':
-    #             args.test_dir = source_dir + '/kitti/'+str(i).zfill(2)+'/image_left'
-    #             args.pose_file = source_dir + '/kitti/'+str(i).zfill(2)+'/pose_left.txt'
-                
-    #             # Specify the path to the KITTI calib.txt file
-    #             args.kitti_intrinsics_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
-    #             calib_file = source_dir + '/kitti/'+str(i).zfill(2)+'/calib.txt'
-    #             focalx, focaly, centerx, centery = load_kiiti_intrinsics(args.kitti_intrinsics_file)
-
-    #             result_dict['kitti_ate'] = []
-    #             result_dict['kitti_trans'] = []
-    #             result_dict['kitti_rot'] = []
-
-    #         elif datastr == 'euroc':
-    #             args.test_dir = source_dir + '/euroc/'+euroc_dataset[i]+ '/cam0' + '/data2'
-    #             args.pose_file = source_dir + '/euroc/'+euroc_dataset[i] + '/cam0' +'/pose_left.txt'
-    #             focalx, focaly, centerx, centery = dataset_intrinsics(datastr) 
-                
-    #             result_dict['euroc_ate'] = []
-
-    #         transform = Compose([CropCenter((args.image_height, args.image_width)), DownscaleFlow(), ToTensor()])
-
-    #         testDataset = TrajFolderDataset(args.test_dir,  posefile = args.pose_file, transform=transform, 
-    #                                             focalx=focalx, focaly=focaly, centerx=centerx, centery=centery,verbose = False)
-            
-    #         testDataset  = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetMultiCam,
-    #                                             root=args.data_root, transform=transform, mode = 'test')
-            
-    #         testDataloader  = DataLoader(testDataset,  batch_size=args.batch_size, shuffle=False,num_workers=args.worker_num)
-            
-    #         args.batch_size = 64
-    #         args.worker_num = 4
-    #         testDataloader = DataLoader(testDataset, batch_size=args.batch_size, 
-    #                                             shuffle=False, num_workers=args.worker_num)
-    #         testDataiter = iter(testDataloader)
-
-    #         motionlist = []
-    #         testname = datastr + '_' + args.model_name.split('.')[0]
-    #         # length = len(testDataiter)
-
-    #         motionlist_array = np.zeros((len(testDataset), 6))
-    #         batch_size = args.batch_size
-            
-    #         for idx in tqdm(range(len(testDataiter))):    
-    #             try:
-    #                 sample = next(testDataiter)
-    #             except StopIteration:
-    #                 break
-                
-    #             # motions, flow = self.validate_test_batch(sample)
-    #             res =  self.run_batch(sample)
-    #             motions = res['pose']
-
-    #             try:
-    #                 motionlist_array[batch_size*idx:batch_size*idx+batch_size,:] = motions
-    #             except:
-    #                 motionlist_array[batch_size*idx:,:] = motions
-
-    #         # poselist = ses2poses_quat(np.array(motionlist))
-    #         poselist = ses2poses_quat( motionlist_array)
-            
-    #         # calculate ATE, RPE, KITTI-RPE
-    #         # if args.pose_file.endswith('.txt'):
-    #         evaluator = TartanAirEvaluator()
-    #         results = evaluator.evaluate_one_trajectory(args.pose_file, poselist, scale=True, kittitype=(datastr=='kitti'))
-            
-    #         if datastr=='kitti':
-    #             result_dict['kitti_ate'].append(results['ate_score'])
-    #             result_dict['kitti_trans'].append( results['kitti_score'][1]* 100  )
-    #             result_dict['kitti_rot'].append( results['kitti_score'][0] * 100)
-    #             print("==> KITTI: %d ATE: %.4f,\t KITTI-T/R: %.4f, %.4f" %(i, results['ate_score'], results['kitti_score'][1]* 100, results['kitti_score'][0]* 100 ))
-
-    #         elif datastr=='euroc':
-    #             result_dict['euroc_ate'].append(results['ate_score'])
-    #             print("==> EuRoc: %s ATE: %.4f" %(euroc_dataset[i], results['ate_score']))
+    def validate_model_result(self, args, train_step_cnt=None, writer=None,verbose=False):    
         
-    #     # print average result
-    #     if datastr=='euroc':
-    #         ate_score = np.mean(result_dict['ate_score'])
-    #         print("==> EuRoc: ATE: %.4f" %(ate_score))
-
-    #         if not self.args.not_write_log:
-    #             writer.add_scalar('Error/EuRoc_ATE', results['ate_score'], self.count)
-    #             wandb.log({"EuRoc_ATE": results['ate_score']}, step=self.count)
-
-    #         return ate_score
+        print('\nvalidating on euroc dataset...')
+        euroc_ate = self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='euroc')
         
-    #     elif datastr == 'kitti':
-    #         ate_score = np.mean(result_dict['kitti_ate'])
-    #         trans_score = np.mean(result_dict['kitti_trans'])
-    #         rot_score = np.mean(result_dict['kitti_rot'])
+        print('\nvalidating on kitti dataset...')
+        kitti_ate, kitti_trans, kitti_rot = \
+            self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='kitti')
+        formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{formatted_date}]  VAL: {train_step_cnt:07d} - KITTI-ATE/T/R/EuRoc-ATE: {kitti_ate:.4f}  {kitti_trans:.4f}  {kitti_rot:.4f} {euroc_ate:.4f}")
 
-    #         print("==> KITTI: ATE: %.4f" %(ate_score))
-    #         print("==> KITTI: Trans: %.4f" %(trans_score))
-    #         print("==> KITTI: Rot: %.4f" %(rot_score))
-
-    #         if not self.args.not_write_log:
-    #             writer.add_scalar('Error/KITTI_ATE', results['ate_score'], self.count)
-    #             writer.add_scalar('Error/KITTI_trans', results['kitti_score'][1]* 100, self.count)
-    #             writer.add_scalar('Error/KITTI_rot', results['kitti_score'][0]* 100, self.count)
-    #             wandb.log({"KITTI_ATE": results['ate_score'], "KITTI_trans": results['kitti_score'][1]* 100, "KITTI_rot": results['kitti_score'][0]* 100 }, step=self.count)
-
-    #         return ate_score, trans_score, rot_score
-
-
-    # def validate_test_batch(self, sample):
-    #     # self.test_count += 1
         
-    #     # import ipdb;ipdb.set_trace()
-    #     img0   = sample['img1'].cuda()
-    #     img1   = sample['img2'].cuda()
-    #     intrinsic = sample['intrinsic'].cuda()
-    #     inputs = [img0, img1, intrinsic]
+        score = kitti_ate / self.kitti_ate_bs + \
+            kitti_trans/self.kitti_trans_bs + kitti_rot/self.kitti_rot_bs + euroc_ate/self.euroc_ate_bs
+        if verbose:
+            print('score: ', score)
+            print()
 
-    #     self.vonet.eval()
+    def validate_model(self, args, writer, count=None, verbose=False, datastr=None, 
+                       source_dir='/home/data2',verbose_whole = True,  verbose_each = False):
+        if datastr == None:
+            print('Here is a bug!!!')
+        # read testdir adn posefile from kitti from tarjectory 1 to 10
 
-    #     with torch.no_grad():
-    #         starttime = time.time()
+        self.count = count
+        result_dict = {}
 
-    #         imgs = torch.cat((inputs[0], inputs[1]), 1)
-    #         intrinsic = inputs[2]
-    #         # in tartanvo val 
-    #         # flow, pose = self.vonet(inputs)
-    #         # in tartanvo training
-    #         flow_output, pose_output = self.vonet([imgs, intrinsic])
-    #         # flow, pose = self.vonet([imgs, intrinsic])
+        # kitti do not have trajectory 3
+        kitti_dataset_list = [0,1,2,4,5,6,7,8,9,10]
+        euroc_dataset_list = [0,1,2,3,4,5,6,7,8,9,10]
 
-    #         res = self.run_batch(sample)
-    #         motion = res['pose']
-            
-    #         # print(pose)
+        # kitti_dataset_list = [0]
+        # euroc_dataset_list = [0]
 
-    #         # Transfer SE3 to translation and rotation
-            
-    #         if pose.shape[-1] == 7:
-    #             posenp,_,_ = SE32ws(pose)
+        if datastr == 'kitti':
+            dataset_list = kitti_dataset_list
+        elif datastr == 'euroc':
+            dataset_list = euroc_dataset_list
+        
+        
+        with tqdm(dataset_list, disable= True) as pbar:
+            for i in pbar:
+                # this dataset does not exist
+                # if verbose:
 
-    #         else:
-    #             posenp = pose.data.cpu().numpy()
+                print(f'\nvalidating {datastr} trajectory {i}...')
+                # if datastr == 'kitti' and i in kitti_skip_list:
+                #     continue
+                # if datastr == 'euroc' and i in euroc_skip_list:
+                #     continue
 
-    #         inferencetime = time.time()-starttime
-    #         # import ipdb;ipdb.set_trace()
-            
-    #         # Very very important
-    #         posenp = posenp * self.pose_std # The output is normalized during training, now scale it back
-    #         flownp = flow.data.cpu().numpy()
-    #         # flownp = flownp * self.flow_norm
+                if datastr == 'kitti':
+                    result_dict = {'kitti_ate': [],'kitti_trans': [], 'kitti_rot': []}
 
-    #     # calculate scale from GT posefile
-    #     if 'motion' in sample:
-    #         motions_gt = sample['motion']
-    #         scale = np.linalg.norm(motions_gt[:,:3], axis=1)
-    #         trans_est = posenp[:,:3]    
-            
-    #         '''
-    #         trans_est_norm = np.linalg.norm(trans_est,axis=1).reshape(-1,1)
-    #         eps = 1e-12 * np.ones(trans_est_norm.shape)
-    #         '''
-            
-    #         # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
-    #         # trans_est = trans_est/np.max(( trans_est_norm , eps)) * scale.reshape(-1,1)
+                    # kitti_path = "/home/data2/kitti_raw"
+                    datatype_root = {'kitti': args.kitti_path}
 
-    #         posenp[:,:3] = trans_est 
-    #         # print(posenp)
-    #     else:
-    #         print('    scale is not given, using 1 as the default scale value..')
+                elif datastr == 'euroc':
 
-    #     return posenp, flownp
+                    result_dict = {'euroc_ate': []}
 
+                    # euroc_path = "/home/data2/euroc_raw"
+                    datatype_root = {'euroc': args.euroc_path}
+
+                elif datastr == 'tartanair':
+
+                    result_dict = {'tartanair_ate': []}
+                    tartanair_path = "/home/data2/TartanAir/TartanAir_comb"
+                    datatype_root = {'tartanair': tartanair_path}
+
+                image_height = 448
+                image_width = 640
+                transform = Compose([CropCenter(
+                    (image_height, image_width)), DownscaleFlow(),  Normalize(), ToTensor(), SqueezeBatchDim()])
+
+                testDataset = MultiTrajFolderDataset(DatasetType=TrajFolderDatasetPVGO, datatype_root=datatype_root,
+                                                        transform=transform, mode='train', debug=False, validate = True, traj_idx=i ,verbose=False)
+
+                batch_size = 64
+                worker_num = 8
+                testDataloader = DataLoader(testDataset, batch_size=batch_size,
+                                            shuffle=False, num_workers=worker_num)
+                testDataiter = iter(testDataloader)
+
+                motionlist_array = np.zeros((len(testDataset), 6))
+                gtmotionlist_array = np.zeros((len(testDataset), 6))
+
+                # print()
+                # print(f'{datastr} raw gt shape {motionlist_array.shape}')
+
+                # for idx in range(len(testDataiter)):
+                with tqdm( range(len(testDataiter)) , disable=False) as pbar:
+                    for idx in pbar:
+                        try:
+                            sample = next(testDataiter)
+                        except StopIteration:
+                            break
+
+                        res = self.run_batch(sample)
+                        motions = res['pose']
+                        gtmotions = sample['motion']
+
+                        try:
+                            motionlist_array[batch_size*idx:batch_size*idx +
+                                            batch_size, :] = motions.detach().cpu().numpy()
+                            gtmotionlist_array[batch_size*idx:batch_size*idx +
+                                            batch_size, :] = gtmotions.detach().cpu().numpy()
+                        except:
+                            motionlist_array[batch_size*idx:, :] = motions
+                            gtmotionlist_array[batch_size*idx:, :] = gtmotions
+
+                val_rot_errs, val_trans_errs, rot_norms, trans_norms = calc_motion_error(
+                    gtmotionlist_array, motionlist_array, allow_rescale=False)
+                val_trans_errs = np.mean(val_trans_errs)
+                val_rot_errs = np.mean(val_rot_errs)
+
+                val_trans_err_percent = np.mean(val_trans_errs / trans_norms)
+                val_rot_err_percent = np.mean(val_rot_errs / rot_norms)
+                
+                if verbose_each:
+                    print(
+                        f'val_rot_errs {val_rot_errs:.5f} val_trans_errs {val_trans_errs:.5f} val_trans_err_percent {val_trans_err_percent:.5f} val_rot_err_percent {val_rot_err_percent:.5f}')
+
+                poselist = ses2poses_quat(motionlist_array)
+                gtposelist = ses2poses_quat(gtmotionlist_array)
+
+                # np.savetxt(
+                #     f'./test_csv/{datastr}_{i}_gtposelist.csv', gtposelist, delimiter=',')
+                # np.savetxt(
+                #     f'./test_csv/{datastr}_{i}_poselist.csv', poselist, delimiter=',')
+                # gt_traj_ori = np.loadtxt(args.pose_file)
+                # np.savetxt(
+                #     f'./test_csv/{datastr}_{i}_gt_traj_ori.csv', gt_traj_ori, delimiter=',')
+
+                # calculate ATE, RPE, KITTI-RPE
+                evaluator = TartanAirEvaluator()
+                testname = datastr + '_' + str(i) + '_' + 'val'
+                plot_traj(gtposelist, poselist, savefigname='results/' +
+                        testname+'_origin.png', title='origin')
+
+                results = evaluator.evaluate_one_trajectory(
+                    gtposelist, poselist, scale=True, kittitype=(datastr == 'kitti'), verbose= verbose)
+
+                plot_traj(results['gt_aligned'], results['est_aligned'], vis=False,
+                        savefigname='results/'+testname+'_aligned_scaled'+'.png', title='ATE %.4f' % (results['ate_score']))
+
+                # print(
+                #     f"ave_score: {results['ate_score']}|{results['kitti_score'][1] * 100}|{results['kitti_score'][0] * 100}")
+
+                results = evaluator.evaluate_one_trajectory(
+                    gtposelist, poselist, scale=False, kittitype=(datastr == 'kitti'), verbose= verbose)
+
+                plot_traj(results['gt_aligned'], results['est_aligned'], vis=False,
+                        savefigname='results/'+testname+'_aligned'+'.png', title='ATE %.4f' % (results['ate_score']))
+
+                # print(
+                #     f"ave_score: {results['ate_score']}|{results['kitti_score'][1] * 100}|{results['kitti_score'][0] * 100}")
+
+                if datastr == 'kitti':
+                    result_dict['kitti_ate'].append(results['ate_score'])
+                    result_dict['kitti_trans'].append(
+                        results['kitti_score'][1] * 100)
+                    result_dict['kitti_rot'].append(
+                        results['kitti_score'][0] * 100)
+                    print(f"==> KITTI: {i} ATE: {results['ate_score']:.4f},\t KITTI-T/R: {results['kitti_score'][1] * 100:.4f}, {results['kitti_score'][0] * 100:.4f}")
+                    
+                elif datastr == 'euroc':
+                    result_dict['euroc_ate'].append(results['ate_score'])
+                    print(f"==> EuRoc: {i} ATE: {results['ate_score']:.4f}")
+
+        # print average result
+        if datastr == 'euroc':
+            ate_score = np.mean(result_dict['euroc_ate'])
+            if verbose:
+                print("==> EuRoc: ATE: %.4f" % (ate_score))
+
+            if not args.not_write_log:
+                writer.add_scalar('Error/EuRoc_ATE',results['ate_score'], self.count)
+                wandb.log({"EuRoc_ATE": results['ate_score']}, step=self.count)
+
+            return ate_score
+
+        elif datastr == 'kitti':
+            ate_score = np.mean(result_dict['kitti_ate'])
+            trans_score = np.mean(result_dict['kitti_trans'])
+            rot_score = np.mean(result_dict['kitti_rot'])
+            if verbose:
+                print("==> KITTI: ATE: %.4f" % (ate_score))
+                print("==> KITTI: Trans: %.4f" % (trans_score))
+                print("==> KITTI: Rot: %.4f" % (rot_score))
+
+            if not args.not_write_log:
+                writer.add_scalar('Error/KITTI_ATE', results['ate_score'], self.count)
+                writer.add_scalar('Error/KITTI_trans', results['kitti_score'][1] * 100, self.count)
+                writer.add_scalar('Error/KITTI_rot', results['kitti_score'][0] * 100, self.count)
+                wandb.log({"KITTI_ATE": results['ate_score'], "KITTI_trans": results['kitti_score'][1] * 100, "KITTI_rot": results['kitti_score'][0] * 100}, step=self.count)
+
+            return ate_score, trans_score, rot_score

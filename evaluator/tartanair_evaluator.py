@@ -2,7 +2,7 @@
 # For License information please see the LICENSE file in the root directory.
 
 import numpy as np
-from .evaluator_base import ATEEvaluator, RPEEvaluator, KittiEvaluator, transform_trajs, quats2SEs
+from evaluator.evaluator_base import ATEEvaluator, RPEEvaluator, KittiEvaluator, transform_trajs, quats2SEs
 from os.path import isdir, isfile
 
 # from trajectory_transform import timestamp_associate
@@ -13,7 +13,7 @@ class TartanAirEvaluator:
         self.rpe_eval = RPEEvaluator()
         self.kitti_eval = KittiEvaluator()
         
-    def evaluate_one_trajectory(self, gt_traj, est_traj, scale=False, kittitype=True):
+    def evaluate_one_trajectory(self, gt_traj, est_traj, scale=False, kittitype=True, verbose=True):
         """
         scale = True: calculate a global scale
         """
@@ -30,10 +30,10 @@ class TartanAirEvaluator:
             raise Exception("POSEFILE_FORMAT_ILLEGAL")
 
         # transform and scale
-        gt_traj_trans, est_traj_trans, s = transform_trajs(gt_traj, est_traj, scale)
+        gt_traj_trans, est_traj_trans, s = transform_trajs(gt_traj, est_traj, scale, verbose=verbose)
         gt_SEs, est_SEs = quats2SEs(gt_traj_trans, est_traj_trans)
 
-        ate_score, gt_ate_aligned, est_ate_aligned = self.ate_eval.evaluate(gt_traj, est_traj, scale)
+        ate_score, gt_ate_aligned, est_ate_aligned = self.ate_eval.evaluate(gt_traj, est_traj, scale, verbose=verbose)
         rpe_score = self.rpe_eval.evaluate(gt_SEs, est_SEs)
         kitti_score = self.kitti_eval.evaluate(gt_SEs, est_SEs, kittitype=kittitype)
 

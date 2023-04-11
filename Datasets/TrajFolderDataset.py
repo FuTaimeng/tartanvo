@@ -16,7 +16,7 @@ from .utils import make_intrinsics_layer
 from .loopDetector import gt_pose_loop_detector, bow_orb_loop_detector, adj_loop_detector
 from .stopDetector import gt_vel_stop_detector
 from .loopDetector import multicam_frame_selector
-
+from tqdm import tqdm
 
 class TartanAirTrajFolderLoader:
     def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
@@ -169,11 +169,19 @@ class EuRoCTrajFolderLoader:
             
             self.rgb2imu_sync = np.searchsorted(timestamps_imu, timestamps)
 
+            T_C1C2 = np.array([ 0., 1.,0.,0.,
+                                0., 0.,1.,0.,
+                                1., 0.,0.,0.,
+                                0., 0.,0.,1.]).reshape(4,4)
+
+            T_C1C2 = pp.from_matrix(T_C1C2, ltype=pp.SE3_type).to(dtype=torch.float32)
+
             with open(datadir + '/imu0/sensor.yaml') as f:
                 res = yaml.load(f.read(), Loader=yaml.FullLoader)
                 T_BI = np.array(res['T_BS']['data']).reshape(4, 4)
                 T_IL = np.matmul(np.linalg.inv(T_BI), T_BL)
                 self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
+                T_IMU_CAM = self.rgb2imu_pose
 
             if self.poses is not None:
                 init_pos = self.poses[0, :3]
@@ -184,7 +192,10 @@ class EuRoCTrajFolderLoader:
                 init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
                 init_vel = np.zeros(3, dtype=np.float32)
             self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
-
+            
+            pose_cam_ned = pp.SE3(self.poses) * T_IMU_CAM * T_C1C2
+            self.poses =  pose_cam_ned[0,:].Inv() * pose_cam_ned
+            self.poses = self.poses.numpy().astype(np.float32)
             self.gravity = 9.81
 
             self.has_imu = True
@@ -272,6 +283,21 @@ class KITTITrajFolderLoader:
             init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
             init_vel = np.zeros(3, dtype=np.float32)
         self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
+        
+
+        T_C1C2 = np.array([ 0., 1.,0.,0.,
+                            0., 0.,1.,0.,
+                            1., 0.,0.,0.,
+                            0., 0.,0.,1.]).reshape(4,4)
+
+        T_C1C2 = pp.from_matrix(T_C1C2, ltype=pp.SE3_type).to(dtype=torch.float32)
+
+        T_CAM_IMU = pp.from_matrix(torch.tensor(T_LI), ltype=pp.SE3_type).to(dtype=torch.float32)
+        T_IMU_CAM = T_CAM_IMU.Inv() 
+                
+        pose_cam_ned = pp.SE3(self.poses) * T_IMU_CAM * T_C1C2
+        self.poses =  pose_cam_ned[0,:].Inv() * pose_cam_ned
+        self.poses = self.poses.numpy().astype(np.float32)
 
         self.gravity = 9.81
 
@@ -475,7 +501,8 @@ class TrajFolderDatasetMultiCam(TrajFolderDataset):
 
 
 class MultiTrajFolderDataset(Dataset):
-    def __init__(self, DatasetType, datatype_root, transform=None, mode='train', debug=False):
+    def __init__(self, DatasetType, datatype_root, transform=None, mode='train', debug=False, 
+                 validate=False,traj_idx=None,verbose=True):
         self.datatype_root = datatype_root
         self.mode = mode
 
@@ -483,28 +510,36 @@ class MultiTrajFolderDataset(Dataset):
         folder_list.extend(self.list_tartanair_folders())
         folder_list.extend(self.list_kitti_folders())
         folder_list.extend(self.list_euroc_folders())
-        folder_list.sort()
+        if 'tartanair' in datatype_root:
+            folder_list.sort()
+
         if debug:
             folder_list = [folder_list[0]]
+        if validate:
+            folder_list = [folder_list[traj_idx]]
 
         self.datasets = []
         self.accmulatedDataSize = [0]
 
-        print('Loading dataset for {} dirs ...'.format(len(folder_list)))
+        if verbose==True:
+            print('Loading dataset for {} dirs ...'.format(len(folder_list)))
 
-        from tqdm import tqdm
-        for folder, datatype in tqdm(folder_list):
-            if isinstance(DatasetType, list) or isinstance(DatasetType, tuple):
-                for DS in DatasetType:
-                    dataset = DS(datadir=folder, datatype=datatype, transform=transform)
+        
+
+        with tqdm(folder_list, disable=not verbose) as pbar:
+            for folder, datatype in pbar:
+                if isinstance(DatasetType, list) or isinstance(DatasetType, tuple):
+                    for DS in DatasetType:
+                        dataset = DS(datadir=folder, datatype=datatype, transform=transform)
+                        self.datasets.append(dataset)
+                        self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
+                else:
+                    dataset = DatasetType(datadir=folder, datatype=datatype, transform=transform)
                     self.datasets.append(dataset)
                     self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
-            else:
-                dataset = DatasetType(datadir=folder, datatype=datatype, transform=transform)
-                self.datasets.append(dataset)
-                self.accmulatedDataSize.append(self.accmulatedDataSize[-1] + len(dataset))
-
-        print('Find {} datasets. Have {} frames in total.'.format(len(self.datasets), self.accmulatedDataSize[-1]))
+        
+        if verbose==True:
+            print('Find {} datasets. Have {} frames in total.\n'.format(len(self.datasets), self.accmulatedDataSize[-1]))
 
     def list_tartanair_folders(self):
         if 'tartanair' not in self.datatype_root:
@@ -548,7 +583,7 @@ class MultiTrajFolderDataset(Dataset):
             return []
         else:
             dataroot = self.datatype_root['kitti']
-
+        '''
         date_drive = {
             '2011_09_30': [
                 '2011_09_30_drive_0016',
@@ -565,19 +600,46 @@ class MultiTrajFolderDataset(Dataset):
                 '2011_10_03_drive_0042'
             ]
         }
+        '''
 
-        if self.mode == 'train':
-            print('\nLoading Training dataset')
-        elif self.mode == 'test':
-            print('\nLoading Testing dataset')
+        # if self.mode == 'train':
+        #     print('\nLoading Training dataset')
+        # elif self.mode == 'test':
+        #     print('\nLoading Testing dataset')
 
         res = []
 
+        '''
         for date, drive_list in date_drive.items():
             for drive in drive_list:
                 folder = '{}/{}/{}'.format(dataroot, date, drive)
                 res.append([folder, 'kitti'])
+        '''
         
+        kitti_data = \
+        [    
+        ["00", "2011_10_03", "2011_10_03_drive_0027", "000000", "004540"],
+        ["01", "2011_10_03", "2011_10_03_drive_0042", "000000", "001100"],
+        ["02", "2011_10_03", "2011_10_03_drive_0034", "000000", "004660"],
+        
+        ["03", "2011_09_26", "2011_09_26_drive_0067", "000000", "000800"],
+
+        ["04", "2011_09_30", "2011_09_30_drive_0016", "000000", "000270"],
+        ["05", "2011_09_30", "2011_09_30_drive_0018", "000000", "002760"],
+        ["06", "2011_09_30", "2011_09_30_drive_0020", "000000", "001100"],
+        ["07", "2011_09_30", "2011_09_30_drive_0027", "000000", "001100"],
+        ["08", "2011_09_30", "2011_09_30_drive_0028", "001100", "005170"],
+        ["09", "2011_09_30", "2011_09_30_drive_0033", "000000", "001590"],
+        ["10", "2011_09_30", "2011_09_30_drive_0034", "000000", "001200"]
+        ]
+
+        res = []
+        for record in range(len(kitti_data)):
+            date = kitti_data[record][1]
+            drive = kitti_data[record][2]
+            folder = '{}/{}/{}'.format(dataroot, date, drive)
+            res.append([folder, 'kitti'])
+
         return res
     
     def list_euroc_folders(self):

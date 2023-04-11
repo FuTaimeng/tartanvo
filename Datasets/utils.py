@@ -1279,17 +1279,29 @@ def per_frame_scale_alignment(gt_motions, est_motions):
     return motions_scale
 
 def plot_traj(gtposes, estposes, vis=False, savefigname=None, title=''):
-    fig = plt.figure(figsize=(4,4))
+    fig = plt.figure(figsize=(4, 4))
     cm = plt.cm.get_cmap('Spectral')
 
     plt.subplot(111)
-    plt.plot(gtposes[:,0],gtposes[:,1], linestyle='dashed',c='k')
+    plt.plot(gtposes[:, 0], gtposes[:, 1],
+             linestyle='dashed', c='k', label='Ground Truth')
+
     if type(estposes) == list:
         estposes = np.array(estposes)
-    plt.plot(estposes[:, 0], estposes[:, 1],c='#ff7f0e')
+    plt.plot(estposes[:, 0], estposes[:, 1], c='#ff7f0e', label='TartanVO')
+
+    plt.scatter(gtposes[0, 0], gtposes[0, 1], color='red', label='GT Start')
+    plt.scatter(estposes[0, 0], estposes[0, 1],
+                color='green',  label='EST Start')
+
+    plt.scatter(gtposes[-1, 0], gtposes[-1, 1],
+                color='red', marker='x', label='GT End')
+    plt.scatter(estposes[-1, 0], estposes[-1, 1],
+                color='green', marker='x', label='EST End')
+    plt.axis('equal')
     plt.xlabel('x (m)')
     plt.ylabel('y (m)')
-    plt.legend(['Ground Truth','TartanVO'])
+    plt.legend()
     plt.title(title)
     if savefigname is not None:
         plt.savefig(savefigname)

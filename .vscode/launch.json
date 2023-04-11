@@ -4,18 +4,106 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        // {
+        //     "name": "Python: Current File",
+        //     "type": "python",
+        //     "request": "launch",
+        //     "program": "${file}",
+        //     "console": "integratedTerminal",
+        //     "justMyCode": true
+        // },
         {
-            "name": "Python: Current File",
+            "name": "autotune_taimeng",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            // specify the debug python file
+            "program": "${workspaceFolder}/optuna_train_multicamvo2.py",
+            // "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
-        },
+            "justMyCode": false,
+            "args": [
+                "--flow-model-name", "./models/pwc_net.pth.tar",
+                "--pose-model-name", "./models/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3_st60000.pkl",
+                // "--pose-model-name", "./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl",
+                "--batch-size", "16",
+                "--worker-num", "2",
+                "--data-root", "/home/data2/TartanAir/TartanAir_comb",
+            //   "--data-root", "${data_dir}",
+                "--print-interval", "5",
+                "--snapshot-interval", "500",
+                "--mode", "train-all",
+                "--random-intrinsic", "800",
+                "--hsv-rand", "0.2",
+                // "--use-stereo", "1",
+                "--use-stereo", "2.2",
+
+                "--result-dir", "./train_multicamvo",
+                "--train-name", "debug_autotuna",
+                "--debug-flag", "",
+                "--train-step", "4000",
+                "--test-interval", "50",
+                "--world-size", "1",
+                // "--lr", "1e-5",
+                "--lr", "8e-4",
+                "--stereo-data-type", "s",
+                "--vo-optimizer", "adam",
+                
+                "--fix_model_parts", "flow", "feat", "rot",
+                // "--start-iter", "40000"，
+                "--not-write-log",
+                "--out-to-cml",
+                "--val-interval", "1",
+                "--euroc-path", "/home/data2/euroc_raw",
+                "--kitti-path", "/home/data2/kitti_raw",
+                ]
+          },
+
+                // autotune
+                {
+                    // "name": "Python: Current File",
+                    "name": "autotune",
+                    "type": "python",
+                    "request": "launch",
+                    // specify the debug python file
+                    "program": "${workspaceFolder}/optuna_train_multicamvo2.py",
+                    // "program": "${file}",
+                    "console": "integratedTerminal",
+                    "justMyCode": false,
+                    "args": [
+                        "--result-dir", "./train_multicamvo",
+                        "--train-name", "debug_autotuna",
+                        "--flow-model-name", "${workspaceFolder}/models/pwc_net.pth.tar",
+                        "--pose-model-name", "${workspaceFolder}/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3_st60000.pkl",
+                        "--batch-size", "16",
+                        "--worker-num", "0",
+                        "--data-root", "/home/data2/TartanAir/TartanAir_comb",
+                        "--train-step", "4000",
+                        "--print-interval", "1",
+                        "--snapshot-interval", "1000",
+                        "--device", "cuda",
+                        "--mode", "train-all",
+                        "--debug-flag", "",
+                        "--random-intrinsic", "800",
+                        "--hsv-rand", "0.2",
+                        "--use-stereo", "2.2",
+                        "--gpu-id", "1",
+                        "--fix_model_parts", "flow", "feat", "rot",
+                        "--not-write-log",
+                        "--lr", "4e-5",
+                        "--out-to-cml",
+                        "--val-interval", "1"
+                    ],
+                    // "env": {
+                    // "CUDA_VISIBLE_DEVICES": "0"
+                    // "root_dir" : "train_multicamvo"
+                    // },
+                    "cwd": "${workspaceFolder}"
+                },
+
         // autotune
         {
             // "name": "Python: Current File",
-            "name": "autotune",
+            "name": "autotue_old",
             "type": "python",
             "request": "launch",
             "program": "${file}",
