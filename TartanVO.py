@@ -251,20 +251,23 @@ class TartanVO:
         return pose
 
     def validate_model_result(self, args, train_step_cnt=None, writer=None,verbose=False):    
+        print('\nvalidating on kitti dataset...')
+        kitti_ate, kitti_trans, kitti_rot = \
+            self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='kitti')
         
         print('\nvalidating on euroc dataset...')
         euroc_ate = self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='euroc')
         
-        print('\nvalidating on kitti dataset...')
-        kitti_ate, kitti_trans, kitti_rot = \
-            self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='kitti')
+        
+        
         formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{formatted_date}]  VAL: {train_step_cnt:07d} - KITTI-ATE/T/R/EuRoc-ATE: {kitti_ate:.4f}  {kitti_trans:.4f}  {kitti_rot:.4f} {euroc_ate:.4f}")
 
         
         score = kitti_ate / self.kitti_ate_bs + \
             kitti_trans/self.kitti_trans_bs + kitti_rot/self.kitti_rot_bs + euroc_ate/self.euroc_ate_bs
-        wandb.log({"ValScore": score }, step=self.count)
+        if not args.not_write_log:
+            wandb.log({"ValScore": score }, step=self.count)
         
         if verbose:
             print('score: ', score)
@@ -283,7 +286,7 @@ class TartanVO:
         kitti_dataset_list = [0,1,2,4,5,6,7,8,9,10]
         euroc_dataset_list = [0,1,2,3,4,5,6,7,8,9,10]
 
-        # kitti_dataset_list = [0]
+        # kitti_dataset_list = [7]
         # euroc_dataset_list = [0]
 
         if datastr == 'kitti':
