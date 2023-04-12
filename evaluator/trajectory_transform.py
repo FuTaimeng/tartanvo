@@ -109,9 +109,12 @@ def rescale(poses_gt, poses):
     speed = np.sqrt(speed_square)
     # when the speed is small, the scale could become very large
     # import ipdb;ipdb.set_trace()
-    mask = (speed_gt>0.005) # * (speed>0.00001)
-    scale = np.mean((speed[mask])/speed_gt[mask])
-    scale = 1.0/scale
+
+    # mask = (speed_gt>0.005) # * (speed>0.00001)
+    # scale = np.mean((speed[mask])/speed_gt[mask])
+    # scale = 1.0/scale
+    mask = (speed>0.01) # * (speed>0.00001)
+    scale = np.mean(speed_gt[mask]/speed[mask])
     poses[:,0:3] = poses[:,0:3]*scale
     return  poses, scale
 
