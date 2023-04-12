@@ -387,26 +387,24 @@ class TartanVO:
                 # calculate ATE, RPE, KITTI-RPE
                 evaluator = TartanAirEvaluator()
                 testname = datastr + '_' + str(i) + '_' + 'val'
-                plot_traj(gtposelist, poselist, savefigname='results/' +
-                        testname+'_origin.png', title='origin')
-
-                results = evaluator.evaluate_one_trajectory(
-                    gtposelist, poselist, scale=True, kittitype=(datastr == 'kitti'), verbose= verbose)
-
-                plot_traj(results['gt_aligned'], results['est_aligned'], vis=False,
-                        savefigname='results/'+testname+'_aligned_scaled'+'.png', title='ATE %.4f' % (results['ate_score']))
-
-                # print(
-                #     f"ave_score: {results['ate_score']}|{results['kitti_score'][1] * 100}|{results['kitti_score'][0] * 100}")
 
                 results = evaluator.evaluate_one_trajectory(
                     gtposelist, poselist, scale=False, kittitype=(datastr == 'kitti'), verbose= verbose)
 
                 plot_traj(results['gt_aligned'], results['est_aligned'], vis=False,
-                        savefigname='results/'+testname+'_aligned'+'.png', title='ATE %.4f' % (results['ate_score']))
+                        savefigname='results/'+testname+'_aligned'+'.png', 
+                        title=f"ATE {results['ate_score']:.4f}   Scale {results['scale']:.4f}" )
+                
+                # plot_traj(gtposelist, poselist, vis=False,
+                #           savefigname='results/' +testname+'_origin_aligned.png', title='ATE %.4f' % (results['ate_score']))
+                
+                results = evaluator.evaluate_one_trajectory(
+                    gtposelist, poselist, scale=True, kittitype=(datastr == 'kitti'), verbose= verbose)
 
-                # print(
-                #     f"ave_score: {results['ate_score']}|{results['kitti_score'][1] * 100}|{results['kitti_score'][0] * 100}")
+                plot_traj(results['gt_aligned'], results['est_aligned'], vis=False,
+                        savefigname='results/'+testname+'_aligned_scaled'+'.png', 
+                        title=f"ATE {results['ate_score']:.4f}   Scale {results['scale']:.4f}" )
+
 
                 if datastr == 'kitti':
                     result_dict['kitti_ate'].append(results['ate_score'])

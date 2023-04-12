@@ -41,7 +41,8 @@ class TartanAirEvaluator:
                 'rpe_score': rpe_score, 
                 'kitti_score': kitti_score,
                 'gt_aligned': gt_ate_aligned, 
-                'est_aligned': est_ate_aligned}
+                'est_aligned': est_ate_aligned,
+                'scale': s}
 
 if __name__ == "__main__":
     
