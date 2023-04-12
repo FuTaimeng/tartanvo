@@ -264,6 +264,8 @@ class TartanVO:
         
         score = kitti_ate / self.kitti_ate_bs + \
             kitti_trans/self.kitti_trans_bs + kitti_rot/self.kitti_rot_bs + euroc_ate/self.euroc_ate_bs
+        wandb.log({"ValScore": score }, step=self.count)
+        
         if verbose:
             print('score: ', score)
             print()

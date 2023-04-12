@@ -69,7 +69,7 @@ def get_args():
                         help='the interval for snapshot results (default: 1000)')
     parser.add_argument('--test-interval', type=int, default=100,
                         help='the interval for test results (default: 100)')
-    parser.add_argument('--val-interval', type=int, default=1000,
+    parser.add_argument('--val-interval', type=int, default=20000,
                         help='the interval for validate results (default: 100)')
     parser.add_argument('--train-name', default='',
                         help='name of the training (default: "")')
@@ -120,7 +120,7 @@ def get_args():
                         help='write log file')
     parser.add_argument('--tuning-val', default=[], nargs='+',
                         help='tuning variables for optuna (default: [])')
-    parser.add_argument('--start-iter', type=int, default=0,
+    parser.add_argument('--start-iter', type=int, default=1,
                         help='start iteration')
     parser.add_argument('--lr-lb', type=float, default=1e-7,
                         help='lower bound of learning rate')
