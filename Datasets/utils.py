@@ -100,6 +100,11 @@ class RandomCrop(object):
             for k in range(seqlen): 
                 datalist.append(sample[kk][k][y1:y1+th,x1:x1+tw,...])
             sample[kk] = datalist
+
+        if 'intrinsic_calib' in sample:
+            sample['intrinsic_calib'][2] -= x1
+            sample['intrinsic_calib'][3] -= y1
+
         return sample
 
 class CropCenter(object):
@@ -157,6 +162,11 @@ class CropCenter(object):
                 datalist.append(sample[kk][k][y1:y1+th,x1:x1+tw,...])
             sample[kk] = datalist
 
+        if 'intrinsic_calib' in sample:
+            sample['intrinsic_calib'][2] -= x1
+            sample['intrinsic_calib'][3] -= y1
+
+
         return sample
 
 class ResizeData(object):
@@ -209,6 +219,12 @@ class ResizeData(object):
                     sample['disp1'][k] = sample['disp1'][k] * scale_w
         else:
             sample['scale_w'] = np.array([scale_w ],dtype=np.float32)# used in e2e-stereo-vo
+
+        if 'intrinsic_calib' in sample:
+            sample['intrinsic_calib'][0] *= scale_w
+            sample['intrinsic_calib'][2] *= scale_w
+            sample['intrinsic_calib'][1] *= scale_h
+            sample['intrinsic_calib'][3] *= scale_h
 
         return sample
 
@@ -958,13 +974,6 @@ def calculate_angle_distance_from_du_dv(du, dv, flagDegree=False):
 
     return a, d, angleShift
 
-def visrgb(img, mean=None, std=None):
-    if mean is not None and std is not None:
-        for k in range(3):
-            img[...,k] = img[...,k] * std[k] + mean[k]
-    return (img*255).astype(np.uint8)
-
-
 def dataset_intrinsics(dataset='tartanair'):
     if dataset == 'kitti':
         focalx, focaly, centerx, centery = 707.0912, 707.0912, 601.8873, 183.1104
@@ -987,6 +996,11 @@ def load_kiiti_intrinsics(filename):
 
     return focalx, focaly, centerx, centery
 
+def visrgb(img, mean=None, std=None):
+    if mean is not None and std is not None:
+        for k in range(3):
+            img[...,k] = img[...,k] * std[k] + mean[k]
+    return (img*255).astype(np.uint8)
 
 def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0): 
     """
@@ -1019,11 +1033,13 @@ def visflow(flownp, maxF=500.0, n=8, mask=None, hueMax=179, angShift=0.0):
     return bgr
 
 def visdepth(disp, scale=3):
-    res = np.clip(disp*scale, 0, 255).astype(np.uint8)
-    res = np.tile(res[:,:,np.newaxis], (1, 1, 3))
-    return res
+    disp = disp.astype(np.float32)
+    min_val = np.min(disp)
+    max_val = np.max(disp)
+    res = (disp - min_val) / (max_val - min_val) * 255
+    return res.astype(np.uint8)
 
-def save_images(dir, data, prefix='', suffix='', mean=None, std=None):
+def save_images(dir, data, prefix='', suffix='', mean=None, std=None, fx=1, fy=1):
     if torch.is_tensor(data):
         data = data.detach().cpu().numpy()
 
@@ -1031,30 +1047,79 @@ def save_images(dir, data, prefix='', suffix='', mean=None, std=None):
     data = data.transpose(0, 2, 3, 1)
     # after: (batch, height, width, channel)
 
-    np.save('{}/{}{}.npy'.format(dir, prefix, suffix), data)
-
-    # print(suffix, data.dtype, np.max(data), np.min(data))
-
     if data.shape[-1] == 3:
         rgb_images = []
         for i in range(data.shape[0]):
-            rgb_images.append(visrgb(data[i], mean=mean, std=std))
+            img = visrgb(data[i], mean=mean, std=std)
+            rgb_images.append(cv2.resize(img, None, fx=fx, fy=fy))
         data = np.stack(rgb_images)
     if data.shape[-1] == 2:
         flow_images = []
         for i in range(data.shape[0]):
-            flow_images.append(visflow(data[i]))
+            img = visflow(data[i])
+            flow_images.append(cv2.resize(img, None, fx=fx, fy=fy))
         data = np.stack(flow_images)
     elif data.shape[-1] == 1:
         disp_images = []
         for i in range(data.shape[0]):
-            disp_images.append(visdepth(data[i]))
+            img = visdepth(data[i])
+            disp_images.append(cv2.resize(img, None, fx=fx, fy=fy))
         data = np.stack(disp_images)
     
     # print(suffix, data.dtype, np.max(data), np.min(data))
 
     for i in range(data.shape[0]):
         cv2.imwrite('{}/{}{}{}.png'.format(dir, prefix, i, suffix), data[i])
+
+def warp_images(dir, data, flow, mean=None, std=None):
+    if torch.is_tensor(data):
+        data = data.detach().cpu().numpy()
+
+    # before: (batch, channel, height, width)
+    data = data.transpose(0, 2, 3, 1)
+    # after: (batch, height, width, channel)
+
+    fx = 1/4
+    fy = 1/4
+    img = []
+    for i in range(data.shape[0]):
+        rgb = visrgb(data[i], mean=mean, std=std)
+        img.append(cv2.resize(rgb, None, fx=fx, fy=fy))
+    img = np.stack(img)
+
+    print(img.shape)
+
+    if torch.is_tensor(flow):
+        flow = flow.detach().cpu().numpy()
+
+    flow = flow.transpose(0, 2, 3, 1)
+
+    fx = 1
+    fy = 1
+    resized_flow = []
+    for i in range(flow.shape[0]):
+        resized_flow.append(cv2.resize(flow[i], None, fx=fx, fy=fy))
+    flow = np.stack(resized_flow)
+
+    print(flow.shape)
+
+    res = []
+    for i in range(flow.shape[0]):
+        f = flow[i]
+        if len(f.shape) == 2:
+            f = np.stack((f, np.zeros_like(f)), axis=-1)
+        h, w = f.shape[:2]
+        grid_x, grid_y = np.meshgrid(np.linspace(0, w-1, w), np.linspace(0, h-1, h))
+        uv = np.stack((grid_x, grid_y), axis=-1)
+        f = (f + uv).astype(np.float32)
+        warp = cv2.remap(img[i], f, None, cv2.INTER_LINEAR)
+        res.append(warp)
+    res = np.stack(res)
+
+    for i in range(res.shape[0]):
+        cv2.imwrite('{}/{}_warp.png'.format(dir, i), res[i])
+    
+    return res
 
 def plottraj(fname, poses, color):
     fig = plt.figure(fname)

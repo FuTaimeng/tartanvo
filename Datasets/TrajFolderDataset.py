@@ -386,27 +386,32 @@ class TrajFolderDataset(Dataset):
 
 class TrajFolderDatasetPVGO(TrajFolderDataset):
     def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1, loader=None,
-                    use_loop_closure=False, use_stop_constraint=False):
+                    use_loop_closure=False, use_stop_constraint=False, batch_size=None):
 
         super(TrajFolderDatasetPVGO, self).__init__(datadir, datatype, transform, start_frame, end_frame, loader)
 
         ############################## generate links ######################################################################
         self.links = []
-        # [loop closure] gt pose
-        if use_loop_closure and self.poses is not None:
-            loop_min_interval = 100
-            trans_th = np.average([np.linalg.norm(self.poses[i+1, :3] - self.poses[i, :3]) for i in range(len(self.poses)-1)]) * 5
-            self.links.extend(gt_pose_loop_detector(self.poses, loop_min_interval, trans_th, 5))
+        # # [loop closure] gt pose
+        # if use_loop_closure and self.poses is not None:
+        #     loop_min_interval = 100
+        #     trans_th = np.average([np.linalg.norm(self.poses[i+1, :3] - self.poses[i, :3]) for i in range(len(self.poses)-1)]) * 5
+        #     self.links.extend(gt_pose_loop_detector(self.poses, loop_min_interval, trans_th, 5))
         # # [loop closure] bag of word (to do)
         # self.links = bow_orb_loop_detector(self.rgbfiles, loop_min_interval)
         # # [loop closure] adjancent
         # loop_range = 2
         # loop_interval = 1
         # self.links.extend(adj_loop_detector(self.num_img, loop_range, loop_interval))
-        self.links = [[i, i+1] for i in range(self.num_img-1)]
-        
-        # start_frame = 1735
-        # self.links = self.links[start_frame:]
+        if batch_size == None:
+            self.links = [[i, i+1] for i in range(self.num_img-1)]
+        else:
+            for current_idx in range(0, self.num_img-batch_size-1, batch_size):
+                for i in range(current_idx, current_idx+batch_size):
+                    self.links.append([i, i+1])
+                for i in range(current_idx, current_idx+batch_size-1):
+                    self.links.append([i, i+2])
+
 
         self.num_link = len(self.links)
 
@@ -448,6 +453,10 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
         intrinsicLayer = make_intrinsics_layer(w, h, self.intrinsic[0], self.intrinsic[1], self.intrinsic[2], self.intrinsic[3])
         res['intrinsic'] = [intrinsicLayer]
 
+        res['intrinsic_calib'] = self.intrinsic.copy()
+
+        res['link'] = np.array(self.links[idx])
+
         if self.transform:
             res = self.transform(res)
 
@@ -459,6 +468,7 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
 
         if self.right2left_pose != None:
             res['extrinsic'] = self.right2left_pose.Log().numpy()
+
         return res
 
 
@@ -591,18 +601,18 @@ class MultiTrajFolderDataset(Dataset):
 
         date_drive = {
             '2011_09_30': [
-                '2011_09_30_drive_0016',
-                '2011_09_30_drive_0018',
-                '2011_09_30_drive_0020',
-                '2011_09_30_drive_0027',
-                '2011_09_30_drive_0028',
-                '2011_09_30_drive_0033',
-                '2011_09_30_drive_0034'
+                '2011_09_30_drive_0016_sync',
+                '2011_09_30_drive_0018_sync',
+                '2011_09_30_drive_0020_sync',
+                '2011_09_30_drive_0027_sync',
+                '2011_09_30_drive_0028_sync',
+                '2011_09_30_drive_0033_sync',
+                '2011_09_30_drive_0034_sync'
             ],
             '2011_10_03': [
-                '2011_10_03_drive_0027',
-                '2011_10_03_drive_0034',
-                '2011_10_03_drive_0042'
+                '2011_10_03_drive_0027_sync',
+                '2011_10_03_drive_0034_sync',
+                '2011_10_03_drive_0042_sync'
             ]
         }
 

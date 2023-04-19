@@ -80,7 +80,7 @@ class VOPGO(Data.Dataset):
 
 
 class PVGO_Dataset(Data.Dataset):
-    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, device='cpu'):
+    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device='cpu'):
         super().__init__()
 
         N = poses_np.shape[0]
@@ -98,7 +98,7 @@ class PVGO_Dataset(Data.Dataset):
         self.imu_drots = pp.SO3(imu_drots_np).to(self.dtype).to(device)
         self.imu_dtrans = torch.from_numpy(imu_dtrans_np).to(self.dtype).to(device)
         self.imu_dvels = torch.from_numpy(imu_dvels_np).to(self.dtype).to(device)
-        self.dt = torch.tensor(dt_).to(self.dtype).to(device)
+        self.dts = torch.tensor(dts).view(-1, 1).to(self.dtype).to(device)
         
         init_with_imu_rot = True
         if init_with_imu_rot:
@@ -114,20 +114,19 @@ class PVGO_Dataset(Data.Dataset):
         else:
             nodes_ = pp.SE3(poses_np).to(self.dtype).to(device)
         self.nodes = self.align_nodes(imu_init['rot'], imu_init['pos'], 0, nodes_)
-        self.node0 = self.nodes[0].clone()
 
         init_with_imu_vel = False
         if init_with_imu_vel:
             vels_np = np.cumsum(np.concatenate([imu_init['vel'].reshape(1, -1), imu_dvels_np], axis=0), axis=0)
             self.vels = torch.from_numpy(vels_np).to(self.dtype).to(device)
         else:
-            vels_ = torch.diff(self.nodes.translation(), dim=0) / self.dt
+            vels_ = torch.diff(self.nodes.translation(), dim=0) / self.dts
             self.vel0 = torch.from_numpy(imu_init['vel']).to(self.dtype).to(device)
             self.vels = torch.cat((self.vel0.view(1, -1), vels_), dim=0)
             
-        assert N == self.ids.size(0) == self.nodes.size(0) == self.vels.size(0) and \
-               M == self.edges.size(0) == self.poses.size(0) and \
-               N-1 == self.imu_drots.size(0) == self.imu_dtrans.size(0) == self.imu_dvels.size(0)
+        assert N == self.ids.size(0) == self.nodes.size(0) == self.vels.size(0)
+        assert M == self.edges.size(0) == self.poses.size(0)
+        assert N-1 == self.imu_drots.size(0) == self.imu_dtrans.size(0) == self.imu_dvels.size(0) == self.dts.size(0)
     
     def __getitem__(self, i):
         return self.edges[i], self.poses[i], self.infos[i]

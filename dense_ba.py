@@ -10,10 +10,16 @@ from timer import Timer
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim, RandomResizeCrop, RandomHSV, save_images
 
 
+def is_inside_image_1D(u, width):
+    return torch.logical_and(u >= 0, u <= width)
+
+def is_inside_image(uv, width, height):
+    return torch.logical_and(is_inside_image_1D(uv[0], width), is_inside_image_1D(uv[1], height))
+
 def proj(x):
     return x / x[..., -1:]
 
-def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=None):
+def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=None, mask=None):
     height, width = flow.shape[-2:]
     device = motion.device
 
@@ -21,42 +27,39 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
         T = pp.SE3(motion)
     else:
         T = pp.se3(motion).Exp()
-    # T.requires_grad = True
 
-    flow_th = 0.1*height
-    flow_norm = torch.linalg.norm(flow, dim=0)
-    mask = flow_norm <= flow_th
-
-    if depth is None:
-        disp_th = 1
-        mask = torch.logical_and(disp >= disp_th, mask)
-        # mask2 = torch.stack([mask, mask])
-        # m_disp = masked_tensor(disp, mask)
-        # m_flow = masked_tensor(flow, mask2)
-        m_disp = torch.where(mask, disp, disp_th)
-        # m_disp = disp
-        # m_flow = flow
-
-        # m_disp_gray = to_image(m_disp.numpy())
-        # cv2.imwrite('m_disp_gray.png', m_disp_gray)
-
-        z = fx*baseline / m_disp
-
-    else:
-        depth_th = fx*baseline
-        mask = torch.logical_and(depth <= depth_th, mask)
-        m_depth = torch.where(mask, depth, depth_th)
-
-        z = m_depth
-
-    # z_gray = to_image(z.numpy()*10)
-    # cv2.imwrite('z_gray.png', z_gray)
-    
     u_lin = torch.linspace(0, width-1, width)
     v_lin = torch.linspace(0, height-1, height)
     u, v = torch.meshgrid(u_lin, v_lin, indexing='xy')
-    uv = torch.stack([u, v]).to(device=device)
-    uv1 = torch.stack([u, v, torch.ones_like(u)]).to(device=device)
+    u = u.to(device=device)
+    v = v.to(device=device)
+    uv = torch.stack([u, v])
+    uv1 = torch.stack([u, v, torch.ones_like(u)])
+
+    flow_norm = torch.linalg.norm(flow, dim=0)
+    flow_mask = torch.logical_and(is_inside_image(flow + uv, width, height), flow_norm > 0)
+    # flow_mask = flow_norm > 0
+    if mask is None:
+        mask = flow_mask
+    else:
+        mask = torch.logical_and(flow_mask, mask)
+
+    if depth is None:
+        disp_mask = torch.logical_and(is_inside_image_1D(-disp + u, width), disp >= 5)
+        # disp_mask = disp >= 5
+        mask = torch.logical_and(disp_mask, mask)
+
+        z = torch.where(disp_mask, fx*baseline / disp, 0)
+
+    else:
+        depth_th = fx*baseline
+        depth_mask = torch.logical_and(depth <= depth_th, depth > 0)
+        mask = torch.logical_and(depth_mask, mask)
+
+        z = torch.where(depth_mask, depth, 0)
+
+    # z_gray = to_image(z.numpy()*10)
+    # cv2.imwrite('z_gray.png', z_gray)
 
     # u_gray = to_image(u.numpy()*0.5)
     # v_gray = to_image(v.numpy()*0.5)
@@ -120,7 +123,7 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
     # reproj_flow_rgb = np.concatenate([reproj_flow.permute(1, 2, 0).numpy(), np.expand_dims(np.zeros(reproj_flow.shape[1:]), axis=-1)], axis=-1)*0.5
     # cv2.imwrite('reproj_flow_rgb.png', reproj_flow_rgb)
 
-    return r, s
+    return r, s, mask
 
 
 path = '/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000'

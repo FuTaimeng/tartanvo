@@ -34,6 +34,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel
 
+import cv2
 import time
 import random
 import numpy as np
@@ -44,13 +45,14 @@ from Network.StereoVONet import StereoVONet
 
 from dense_ba import scale_from_disp_flow
 from Datasets.transformation import tartan2kitti_pypose
+from Datasets.utils import save_images, warp_images
 
 np.set_printoptions(precision=4, suppress=True, threshold=10000)
 
 
 class TartanVO:
     def __init__(self, vo_model_name=None, pose_model_name=None, flow_model_name=None, stereo_model_name=None,
-                    use_imu=False, use_stereo=0, device_id=0, correct_scale=True, fix_parts=(),
+                    use_imu=False, use_stereo=0, device_id=0, correct_scale=True, fix_parts=(), use_DDP=True,
                     extrinsic_encoder_layers=2, trans_head_layers=3, normalize_extrinsic=False):
         
         # import ipdb;ipdb.set_trace()
@@ -94,7 +96,9 @@ class TartanVO:
         self.vonet.flowNet = self.vonet.flowNet.cuda(self.device_id)
         if use_stereo==1:
             self.vonet.stereoNet = self.vonet.stereoNet.cuda(self.device_id)
-        self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet.cuda(self.device_id), device_ids=[self.device_id])
+        self.vonet.flowPoseNet = self.vonet.flowPoseNet.cuda(self.device_id)
+        if use_DDP:
+            self.vonet.flowPoseNet = DistributedDataParallel(self.vonet.flowPoseNet, device_ids=[self.device_id])
 
 
     def load_model(self, model, modelname):
@@ -153,9 +157,9 @@ class TartanVO:
         if self.use_stereo==1:
             img0_norm = sample['img0_norm'].cuda(self.device_id, non_blocking=nb)
             img0_r_norm = sample['img0_r_norm'].cuda(self.device_id, non_blocking=nb)
-            # blxfx = sample['blxfx'].view(1, 1, 1, 1).cuda(self.device_id, non_blocking=nb)
-            # blxfx = torch.tensor([0.25 * 320]).view(1, 1, 1, 1).cuda(self.device_id, non_blocking=nb)
-            # scale_w = sample['scale_w'].view(-1, 1, 1, 1).cuda(self.device_id, non_blocking=nb)
+            intrinsic_calib = sample['intrinsic_calib']
+            baseline = torch.linalg.norm(sample['extrinsic'][:, :3], dim=1)
+            precalc_flow = sample['flow'] if 'flow' in sample else None
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             extrinsic = sample['extrinsic'].cuda(self.device_id, non_blocking=nb)
             if self.normalize_extrinsic:
@@ -176,18 +180,30 @@ class TartanVO:
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
 
-            pose_gt = sample['motion'].cuda(self.device_id)
-            pose = pose_gt
+            # pose_gt = sample['motion'].cuda(self.device_id)
+            # pose = pose_gt
 
-            flow *= 5
-            flow_gt = sample['flow'].cuda(self.device_id)
-            flow_gt /= 4
-            flow = flow_gt
+            if precalc_flow is None:
+                flow *= 5
+                # flow_gt = sample['flow'].cuda(self.device_id)
+                # flow_gt /= 4
+                # flow = flow_gt
+            else:
+                flow = precalc_flow
             
             disp *= 50/4
-            depth = sample['depth0'].cuda(self.device_id)
-            disp_gt = 320/4*0.25 / depth
-            disp = disp_gt
+            # depth = sample['depth0'].cuda(self.device_id)
+            # disp_gt = 320/4*0.25 / depth
+            # disp = disp_gt
+
+            # img0_warp = warp_images('temp', img1, flow)
+            # save_images('temp', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
+            # save_images('temp', img1, prefix='', suffix='_x', fx=1/4, fy=1/4)
+
+            # img0_r = sample['img0_r']
+            # disp_warp = warp_images('temp2', img0_r, -disp)
+            # save_images('temp2', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
+            # save_images('temp2', img0_r, prefix='', suffix='_x', fx=1/4, fy=1/4)
 
             # flow_scale = flow[0] / flow_gt[0]
             # print('flow_scale', flow_scale.mean(), flow_scale.median())
@@ -197,23 +213,36 @@ class TartanVO:
 
             # print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
             # print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
-            # print('disp', torch.min(disp), torch.max(disp), torch.mean(disp))
+            # print('disp', torch.min(disp), torch.max(disp), torch.mean(disp), torch.median(disp))
             
             pose_ENU_SE3 = tartan2kitti_pypose(pose)
 
             # print('pose_ENU_SE3', pose_ENU_SE3)
 
+            img0_np = img0.cpu().numpy()
+            img0_np = img0_np.transpose(0, 2, 3, 1)
+            img0_np = (img0_np*255).astype(np.uint8)
+            edge = []
+            for i in range(img0_np.shape[0]):
+                im = cv2.resize(img0_np[i], None, fx=1/4, fy=1/4)
+                e = cv2.Canny(im, 50, 100)
+                e = cv2.dilate(e, np.ones((5,5), np.uint8))
+                e = e > 0
+                edge.append(e)
+            edge = torch.from_numpy(np.stack(edge)).cuda(self.device_id)
+
             scale = []
+            mask = []
             for i in range(pose.shape[0]):
-                fx = fy = cx = 320/4
-                cy = 224/4
-                baseline = 0.25
-                r, s = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline)
+                fx, fy, cx, cy = intrinsic_calib[i] / 4
+                r, s, m = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline[i], mask=edge[i])
                 scale.append(s)
+                mask.append(m)
             scale = torch.stack(scale)
+            mask = torch.stack(mask)
 
-            # print('scale', scale)
-
+            # save_images('temp', mask, prefix='', suffix='_mask')
+            
             trans = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1, 1)
             pose = torch.cat([trans, pose[:, 3:]], dim=1)
 
@@ -222,17 +251,22 @@ class TartanVO:
             res['disp'] = disp
             res['scale'] = scale
 
-            # gt_pose = sample['motion'].cuda(self.device_id)
-            # gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
+            gt_pose = sample['motion'].cuda(self.device_id)
+            gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
+
+            # print('scale', scale.view(-1))
+            # print('gt_scale', gt_scale.view(-1))
+            # print('frac', (scale / gt_scale).view(-1))
+
             # gt_trans_norm = torch.nn.functional.normalize(gt_pose[:, :3], dim=1)
             # trans_norm = torch.nn.functional.normalize(pose[:, :3], dim=1)
             # cross = torch.sum(gt_trans_norm * trans_norm, dim=1)
             # trans_angle = torch.arccos(torch.clamp(cross, min=-1, max=1)) * 180 / 3.14
             # scale_err = torch.abs(gt_scale - scale)
             # scale_err_percent = scale_err / gt_scale
-            # print('trans_angle', trans_angle)
-            # print('scale_err', scale_err)
-            # print('scale_err_percent', scale_err_percent)
+            # print('trans_angle', trans_angle.view(-1))
+            # print('scale_err', scale_err.view(-1))
+            # print('scale_err_percent', scale_err_percent.view(-1))
             # print('trans', pose)
 
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
@@ -268,6 +302,47 @@ class TartanVO:
             print('    scale is not given, using 1 as the default scale value.')
         
         return pose
+
+
+    def pred_flow(self, img0, img1):
+        img0 = img0.cuda(self.device_id)
+        img1 = img1.cuda(self.device_id)
+
+        batched = len(img0.shape) == 4
+        if not batched:
+            img0 = img0.unsqueeze(0)
+            img1 = img1.unsqueeze(0)
+
+        flow, _ = self.vonet.flowNet(torch.cat([img0, img1], dim=1))
+        flow = flow[0] * 5
+
+        if not batched:
+            flow = flow.squeeze(0)
+
+        return flow
+
+
+    def join_flow(self, flow_to_join):
+        height, width = flow_to_join[0].shape[-2:]
+
+        u_lin = torch.linspace(0, width-1, width)
+        v_lin = torch.linspace(0, height-1, height)
+        u, v = torch.meshgrid(u_lin, v_lin, indexing='xy')
+        uv = torch.stack([u, v]).cuda(self.device_id)
+
+        x = uv.unsqueeze(0)
+        flow_to_join.reverse()
+        for f in flow_to_join:
+            grid = (f + uv).permute(1, 2, 0).unsqueeze(0)
+            grid[..., 0] = grid[..., 0] / width * 2 - 1
+            grid[..., 1] = grid[..., 1] / height * 2 - 1
+            x = torch.nn.functional.grid_sample(x, grid, mode='bilinear', padding_mode='zeros', align_corners=False)
+
+        x = x.squeeze(0)
+        zero_mask = torch.logical_and(x[0]==0, x[1]==0).repeat(2, 1, 1)
+        x = torch.where(zero_mask, -1, x)
+
+        return x - uv
 
 
     # def validate_model_result(self, train_step_cnt=None,writer =None):

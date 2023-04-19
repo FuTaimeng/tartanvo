@@ -46,7 +46,7 @@ class PoseVelGraph(nn.Module):
         return torch.cat([self.vel0.to(self.device).view(1, -1), self.para_vels], dim=0)
 
 
-    def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dt):
+    def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dts):
         nodes = self.nodes()
         vels = self.vels()
         
@@ -71,7 +71,7 @@ class PoseVelGraph(nn.Module):
         imuroterr = error.Log().tensor()
 
         # trans vel constraint
-        transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dt + imu_dtrans)
+        transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dts + imu_dtrans)
 
         # stop constraint
         stopvelerr = vels[self.stop_frames]
@@ -111,14 +111,14 @@ class PoseVelGraph(nn.Module):
         return loss
 
 
-def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, 
+def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
                 device='cuda:0', radius=1e4, loss_weight=(1,1,1,1), stop_frames=[]):
 
-    data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dt_, device)
+    data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device)
     nodes, vels = data.nodes, data.vels
     edges, poses = data.edges, data.poses
     imu_drots, imu_dtrans, imu_dvels = data.imu_drots, data.imu_dtrans, data.imu_dvels
-    dt, node0, vel0 = data.dt, data.node0, data.vel0
+    dts = data.dts
 
     graph = PoseVelGraph(nodes, vels, device, loss_weight, stop_frames).to(device)
     solver = ppos.Cholesky()
@@ -129,19 +129,18 @@ def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np
     ### the 1st implementation: for customization and easy to extend
     while scheduler.continual:
         # TODO: weights
-        loss = optimizer.step(input=(edges, poses, imu_drots, imu_dtrans, imu_dvels, dt))
+        loss = optimizer.step(input=(edges, poses, imu_drots, imu_dtrans, imu_dvels, dts))
         scheduler.step(loss)
-        # graph.nodes[0].data = node0
-        # graph.vels[0].data = vel0
 
     ### The 2nd implementation: equivalent to the 1st one, but more compact
     # scheduler.optimize(input=(edges, poses), weight=infos)
 
-    # fix_nodes = initial_node0 @ graph.nodes[0].detach().Inv() @ graph.nodes.detach()
-    # fix_nodes = fix_nodes.cpu().numpy()
-    # np.savetxt(os.path.join(savedir, 'pgo_pose.txt'), fix_nodes)
-    nodes_np = graph.nodes().detach().cpu().numpy()
-    vels_np = graph.vels().detach().cpu().numpy()
-
     loss = graph.vo_loss(edges, data.poses_withgrad)
-    return loss, nodes_np, vels_np
+
+    nodes = graph.nodes().detach().cpu()
+    vels = graph.vels().detach().cpu()
+    
+    edges = edges.cpu()
+    motions = nodes[edges[:, 0]].Inv() @ nodes[edges[:, 1]]
+
+    return loss, nodes.numpy(), vels.numpy(), motions.numpy()

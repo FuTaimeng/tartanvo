@@ -231,22 +231,46 @@ def tartan2kitti(traj):
         
     return np.array(new_traj)
 
-def tartan2kitti_pypose(traj):
+def cvtSE3_pypose(motion):
+    motion = motion.clone()
+
+    if motion.shape[-1] == 6:
+        if not isinstance(motion, pp.LieTensor):
+            motion = pp.SE3(torch.cat([motion[..., :3], pp.so3(motion[..., 3:]).Exp().tensor()], dim=-1))
+        else:
+            motion = motion.Exp()
+    else:
+        if not isinstance(motion, pp.LieTensor):
+            motion = pp.SE3(motion)
+
+    return motion
+
+def tartan2kitti_pypose(motion):
     T= [[0.,1.,0.,0.],
         [0.,0.,1.,0.],
         [1.,0.,0.,0.],
         [0.,0.,0.,1.]]
-    T = pp.from_matrix(T, ltype=pp.SE3_type).to(traj.device)
+    T = pp.from_matrix(T, ltype=pp.SE3_type).to(motion.device)
 
-    if traj.shape[-1] == 6:
-        if not isinstance(traj, pp.LieTensor):
-            traj = pp.se3(traj) # ???
-        traj = traj.Exp()
+    motion = cvtSE3_pypose(motion)
+
+    return T @ motion @ T.Inv()
+
+def motion2pose_pypose(motion, T=None):
+    motion = cvtSE3_pypose(motion)
+
+    if T is None:
+        T = pp.SE3([0,0,0, 0,0,0,1]).to(motion.device)
     else:
-        if not isinstance(traj, pp.LieTensor):
-            traj = pp.SE3(traj)
+        T = cvtSE3_pypose(T).to(motion.device)
 
-    return (T @ traj) @ T.Inv()
+    pose = [T]
+    for m in motion:
+        T = T @ m
+        pose.append(T)
+    pose = torch.stack(pose)
+
+    return pose
 
 def SE32ws(pose_output):    
     pose_output = pp.SE3(pose_output)

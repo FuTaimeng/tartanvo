@@ -104,7 +104,7 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device
     gyros = torch.tensor(gyros, dtype=dtype).to(device)
     dts = torch.tensor(dts, dtype=dtype).unsqueeze(-1).to(device)
 
-    N = accels.shape[0]
+    N = accels.shape[0] - 1
     if motion_mode:
         # for relative pose
         poses, rots, covs, vels = [], [], [], []
