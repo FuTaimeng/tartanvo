@@ -92,16 +92,6 @@ class TartanAirTrajFolderLoader:
 
             self.rgb2imu_pose = pp.SE3([0, 0, 0,   0, 0, 0, 1]).to(dtype=torch.float32)
 
-            if self.poses is not None:
-                init_pos = self.poses[0, :3]
-                init_rot = self.poses[0, 3:]
-                init_vel = self.vels[0, :]
-            else:
-                init_pos = np.zeros(3, dtype=np.float32)
-                init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
-                init_vel = np.zeros(3, dtype=np.float32)
-            self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
-
             self.gravity = -9.81
 
             self.has_imu = True
@@ -193,16 +183,6 @@ class EuRoCTrajFolderLoader:
                 T_IL = np.matmul(np.linalg.inv(T_BI), T_BL)
                 self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
 
-            if self.poses is not None:
-                init_pos = self.poses[0, :3]
-                init_rot = self.poses[0, 3:]
-                init_vel = self.vels[0, :]
-            else:
-                init_pos = np.zeros(3, dtype=np.float32)
-                init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
-                init_vel = np.zeros(3, dtype=np.float32)
-            self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
-
             self.gravity = 9.81
 
             self.has_imu = True
@@ -269,10 +249,10 @@ class KITTITrajFolderLoader:
         self.vels = self.vels.numpy()
 
         ############################## load imu data ######################################################################
-        # self.accels = np.array([[oxts_frame.packet.af, oxts_frame.packet.al, oxts_frame.packet.au] for oxts_frame in dataset.oxts])
-        # self.gyros = np.array([[oxts_frame.packet.wf, oxts_frame.packet.wl, oxts_frame.packet.wu] for oxts_frame in dataset.oxts])
-        self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
-        self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
+        self.accels = np.array([[oxts_frame.packet.af, oxts_frame.packet.al, oxts_frame.packet.au] for oxts_frame in dataset.oxts])
+        self.gyros = np.array([[oxts_frame.packet.wf, oxts_frame.packet.wl, oxts_frame.packet.wu] for oxts_frame in dataset.oxts])
+        # self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
+        # self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
 
         self.rgb2imu_sync = np.array([i for i in range(len(self.rgbfiles))])
 
@@ -280,16 +260,6 @@ class KITTITrajFolderLoader:
 
         T_IL = np.linalg.inv(T_LI)
         self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
-
-        if self.poses is not None:
-            init_pos = self.poses[0, :3]
-            init_rot = self.poses[0, 3:]
-            init_vel = self.vels[0, :]
-        else:
-            init_pos = np.zeros(3, dtype=np.float32)
-            init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
-            init_vel = np.zeros(3, dtype=np.float32)
-        self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
 
         self.gravity = 9.81
 
@@ -350,7 +320,7 @@ class TrajFolderDataset(Dataset):
             self.imu_dts = loader.imu_dts[start_imu:end_imu-1]
             
             self.rgb2imu_pose = loader.rgb2imu_pose
-            self.imu_init = loader.imu_init
+            self.imu_init = {'rot':self.poses[0, 3:], 'pos':self.poses[0, :3], 'vel':self.vels[0]}
             self.gravity = loader.gravity
 
             self.imu_motions = None

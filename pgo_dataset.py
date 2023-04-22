@@ -113,7 +113,9 @@ class PVGO_Dataset(Data.Dataset):
             nodes_ = pp.SE3(torch.cat([trans, rots.tensor()], dim=1)).to(self.dtype).to(device)
         else:
             nodes_ = pp.SE3(poses_np).to(self.dtype).to(device)
-        self.nodes = self.align_nodes(imu_init['rot'], imu_init['pos'], 0, nodes_)
+        # self.nodes = self.align_nodes(imu_init['rot'], imu_init['pos'], 0, nodes_)
+        # print('test in pvgo dataset:', imu_init, self.nodes[0])
+        self.nodes = nodes_
 
         init_with_imu_vel = False
         if init_with_imu_vel:

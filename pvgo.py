@@ -19,12 +19,12 @@ class PoseVelGraph(nn.Module):
     def __init__(self, nodes, vels, device, loss_weight, stop_frames=[]):
         super().__init__()
         assert nodes.size(0) == vels.size(0)
-        # self.nodes = pp.Parameter(nodes)
-        # self.vels = torch.nn.Parameter(vels)
-        self.para_nodes = pp.Parameter(nodes[1:])
-        self.para_vels = torch.nn.Parameter(vels[1:])
-        self.node0 = nodes[0].cpu()
-        self.vel0 = vels[0].cpu()
+        self.nodes = pp.Parameter(nodes)
+        self.vels = torch.nn.Parameter(vels)
+        # self.para_nodes = pp.Parameter(nodes[1:])
+        # self.para_vels = torch.nn.Parameter(vels[1:])
+        # self.node0 = nodes[0].cpu()
+        # self.vel0 = vels[0].cpu()
         # self.nodes = torch.cat([self.node0.view(1, -1), self.para_nodes], dim=0)
         # self.vels = torch.cat([self.vel0.view(1, -1), self.para_vels], dim=0)
         self.device = device
@@ -39,16 +39,16 @@ class PoseVelGraph(nn.Module):
         self.stop_frames = stop_frames
 
 
-    def nodes(self):
-        return torch.cat([self.node0.to(self.device).view(1, -1), self.para_nodes], dim=0)
+    # def nodes(self):
+    #     return torch.cat([self.node0.to(self.device).view(1, -1), self.para_nodes], dim=0)
     
-    def vels(self):
-        return torch.cat([self.vel0.to(self.device).view(1, -1), self.para_vels], dim=0)
+    # def vels(self):
+    #     return torch.cat([self.vel0.to(self.device).view(1, -1), self.para_vels], dim=0)
 
 
     def forward(self, edges, poses, imu_drots, imu_dtrans, imu_dvels, dts):
-        nodes = self.nodes()
-        vels = self.vels()
+        nodes = self.nodes
+        vels = self.vels
         
         # E = edges.size(0)
         # M = nodes.size(0) - 1
@@ -97,8 +97,8 @@ class PoseVelGraph(nn.Module):
 
 
     def vo_loss(self, edges, poses):
-        nodes = self.nodes()
-        vels = self.vels()
+        nodes = self.nodes
+        vels = self.vels
 
         node1 = nodes[edges[..., 0]].detach()
         node2 = nodes[edges[..., 1]].detach()
@@ -110,15 +110,26 @@ class PoseVelGraph(nn.Module):
         loss = torch.norm(error, dim=1, p=1)
         return loss
 
+    
+    def align_to(self, target, idx=0):
+        source = self.nodes[idx].detach()
+        vels = target.rotation() @ source.rotation().Inv() @ self.vels
+        nodes = target @ source.Inv() @ self.nodes
+        return nodes, vels
+
+
 
 def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
                 device='cuda:0', radius=1e4, loss_weight=(1,1,1,1), stop_frames=[]):
+
+    print(imu_init)
 
     data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device)
     nodes, vels = data.nodes, data.vels
     edges, poses = data.edges, data.poses
     imu_drots, imu_dtrans, imu_dvels = data.imu_drots, data.imu_dtrans, data.imu_dvels
     dts = data.dts
+    node0 = nodes[0].clone()
 
     graph = PoseVelGraph(nodes, vels, device, loss_weight, stop_frames).to(device)
     solver = ppos.Cholesky()
@@ -137,8 +148,10 @@ def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np
 
     loss = graph.vo_loss(edges, data.poses_withgrad)
 
-    nodes = graph.nodes().detach().cpu()
-    vels = graph.vels().detach().cpu()
+    nodes, vels = graph.align_to(node0)
+    nodes = nodes.detach().cpu()
+    vels = vels.detach().cpu()
+    # print('test in run pvgo:', node0, nodes[0])
     
     edges = edges.cpu()
     motions = nodes[edges[:, 0]].Inv() @ nodes[edges[:, 1]]

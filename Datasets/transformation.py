@@ -232,18 +232,21 @@ def tartan2kitti(traj):
     return np.array(new_traj)
 
 def cvtSE3_pypose(motion):
-    motion = motion.clone()
-
-    if motion.shape[-1] == 6:
-        if not isinstance(motion, pp.LieTensor):
-            motion = pp.SE3(torch.cat([motion[..., :3], pp.so3(motion[..., 3:]).Exp().tensor()], dim=-1))
-        else:
-            motion = motion.Exp()
+    if isinstance(motion, pp.LieTensor):
+        if motion.ltype == pp.SE3_type:
+            return motion.clone()
+        elif motion.ltype == pp.se3_type:
+            return motion.Exp()
     else:
-        if not isinstance(motion, pp.LieTensor):
-            motion = pp.SE3(motion)
-
-    return motion
+        if not isinstance(motion, torch.Tensor):
+            motion = torch.tensor(motion)
+        if motion.shape[-1] == 6:
+            trans = motion[..., :3]
+            rot = pp.so3(motion[..., 3:]).Exp().tensor()
+            return pp.SE3(torch.cat([trans, rot], dim=-1))
+        elif motion.shape[-1] == 7:
+            return pp.SE3(motion)
+    assert False, "Not valid input."
 
 def tartan2kitti_pypose(motion):
     T= [[0.,1.,0.,0.],

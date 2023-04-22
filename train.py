@@ -146,7 +146,6 @@ if __name__ == '__main__':
         imu_poses = np.concatenate((imu_trans, imu_rots), axis=1)
         np.savetxt(trainroot+'/imu_pose.txt', imu_poses)
         np.savetxt(trainroot+'/imu_vel.txt', imu_vels)
-        # dataset.load_imu_motion(imu_poses)
 
         imu_motion_mode = True
 
@@ -226,7 +225,8 @@ if __name__ == '__main__':
         motions = tartan2kitti_pypose(motions)
         T_ic = dataset.rgb2imu_pose.to(args.device)
         motions = T_ic @ motions @ T_ic.Inv()
-        poses = motion2pose_pypose(motions[:args.batch_size])
+        T0 = np.concatenate([init_state['pos'], init_state['rot']])
+        poses = motion2pose_pypose(motions[:args.batch_size], T0)
 
         motions_np = motions.detach().cpu().numpy()
         poses_np = poses.detach().cpu().numpy()
@@ -278,7 +278,8 @@ if __name__ == '__main__':
                 motions_gt = tartan2kitti_pypose(motions_gt)
             else:
                 motions_gt = cvtSE3_pypose(motions_gt)
-            poses_gt = motion2pose_pypose(motions_gt[:args.batch_size])
+            T0 = np.concatenate([init_state['pos'], init_state['rot']])
+            poses_gt = motion2pose_pypose(motions_gt[:args.batch_size], T0)
 
             motions_gt = motions_gt.numpy()
             poses_gt = poses_gt.numpy()
@@ -290,6 +291,10 @@ if __name__ == '__main__':
             print('PVGO: R:%.5f t:%.5f' % (np.mean(R_errs), np.mean(t_errs)))
 
             print('Norm: R:%.5f t:%.5f' % (np.mean(R_norms), np.mean(t_norms)))
+
+            # print('poses', np.concatenate((poses_np[:, :3], pgo_poses[:, :3]), axis=1))
+            # print('motions', np.concatenate((motions_np, pgo_motions), axis=1))
+            # print('vels', pgo_vels)
 
         timer.toc('print')
 
@@ -316,3 +321,4 @@ if __name__ == '__main__':
 
         current_idx += args.batch_size
         init_state = {'rot':pgo_poses[-1][3:], 'pos':pgo_poses[-1][:3], 'vel':pgo_vels[-1]}
+        init_state['rot'] /= np.linalg.norm(init_state['rot'])
