@@ -15,10 +15,15 @@ import pypose as pp
 import numpy as np
 import cv2
 
+import os
 import argparse
 from os import mkdir
 from os.path import isdir
 from timer import Timer
+
+import wandb
+os.environ["WANDB_SILENT"] = "true"
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='HRL')
@@ -53,6 +58,8 @@ def get_args():
                         help='the interval for printing the loss (default: 1)')
     parser.add_argument('--snapshot-interval', type=int, default=1000,
                         help='the interval for snapshot results (default: 1000)')
+    parser.add_argument('--project-name', default='',
+                        help='name of the peoject (default: "")')
     parser.add_argument('--train-name', default='',
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
@@ -79,6 +86,8 @@ def get_args():
                         help='data type: tartanair, kitti, euroc (default: "tartanair")')
     parser.add_argument('--fix-model-parts', default=[], nargs='+',
                         help='fix some parts of the model (default: [])')
+    parser.add_argument('--not-write-log', action='store_true', default=False,
+                        help='not write log to wandb (default: "False")')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -94,6 +103,23 @@ if __name__ == '__main__':
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
         device_id = int(args.device[5:])
+
+    if not args.not_write_log:
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project=args.project_name,
+            name=args.train_name,
+            # track hyperparameters and run metadata
+            config={
+                'learning_rate': args.lr,
+                'batch_size': args.batch_size,
+                'optimizer': args.vo_optimizer,
+                'data_dir': args.data_root,
+                'start_frame': args.start_frame,
+                'end_frame': args.end_frame,
+                'loss_weight': args.loss_weight
+            }
+        )
         
     if args.use_stereo == 1:
         mean = [0.485, 0.456, 0.406]
@@ -278,23 +304,35 @@ if __name__ == '__main__':
                 motions_gt = tartan2kitti_pypose(motions_gt)
             else:
                 motions_gt = cvtSE3_pypose(motions_gt)
-            T0 = np.concatenate([init_state['pos'], init_state['rot']])
-            poses_gt = motion2pose_pypose(motions_gt[:args.batch_size], T0)
-
+            # T0 = np.concatenate([init_state['pos'], init_state['rot']])
+            # poses_gt = motion2pose_pypose(motions_gt[:args.batch_size], T0)
+            poses_gt = dataset.poses[current_idx:current_idx+args.batch_size+1]
             motions_gt = motions_gt.numpy()
-            poses_gt = poses_gt.numpy()
+            # poses_gt = poses_gt.numpy()
 
-            R_errs, t_errs, R_norms, t_norms = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
-            print('Pred: R:%.5f t:%.5f' % (np.mean(R_errs), np.mean(t_errs)))
+            vo_R_errs, vo_t_errs, R_norms, t_norms = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
+            print('Pred: R:%.5f t:%.5f' % (np.mean(vo_R_errs), np.mean(vo_t_errs)))
             
-            R_errs, t_errs, R_norms, t_norms = calc_motion_error(motions_gt, pgo_motions, allow_rescale=False)
-            print('PVGO: R:%.5f t:%.5f' % (np.mean(R_errs), np.mean(t_errs)))
+            pgo_R_errs, pgo_t_errs, _, _ = calc_motion_error(motions_gt, pgo_motions, allow_rescale=False)
+            print('PVGO: R:%.5f t:%.5f' % (np.mean(pgo_R_errs), np.mean(pgo_t_errs)))
 
             print('Norm: R:%.5f t:%.5f' % (np.mean(R_norms), np.mean(t_norms)))
 
-            # print('poses', np.concatenate((poses_np[:, :3], pgo_poses[:, :3]), axis=1))
-            # print('motions', np.concatenate((motions_np, pgo_motions), axis=1))
-            # print('vels', pgo_vels)
+            pose_R_errs, pose_t_errs, _, _ = calc_motion_error(poses_gt, pgo_poses, allow_rescale=False)
+            print('Pose: R:%.5f t:%.5f' % (np.mean(pose_R_errs), np.mean(pose_t_errs)))
+
+            if not args.not_write_log:
+                for i in range(args.batch_size):
+                    wandb.log({
+                        'vo mrot err': vo_R_errs[i],
+                        'vo mtrans err': vo_t_errs[i],
+                        'pgo mrot err': pgo_R_errs[i],
+                        'pgo mtrans err': pgo_t_errs[i],
+                        'gt mrot norm': R_norms[i],
+                        'gt mtrans norm': t_norms[i],
+                        'pose rot err': pose_R_errs[i],
+                        'pose trans err': pose_t_errs[i]
+                    }, step = current_idx + i)
 
         timer.toc('print')
 
@@ -322,3 +360,6 @@ if __name__ == '__main__':
         current_idx += args.batch_size
         init_state = {'rot':pgo_poses[-1][3:], 'pos':pgo_poses[-1][:3], 'vel':pgo_vels[-1]}
         init_state['rot'] /= np.linalg.norm(init_state['rot'])
+
+    if not args.not_write_log:
+        wandb.finish(quiet=True)
