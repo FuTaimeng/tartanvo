@@ -80,7 +80,9 @@ class VOPGO(Data.Dataset):
 
 
 class PVGO_Dataset(Data.Dataset):
-    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, device='cpu'):
+    def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
+                    device='cpu', init_with_imu_rot=True, init_with_imu_vel=False):
+        
         super().__init__()
 
         N = poses_np.shape[0]
@@ -100,7 +102,6 @@ class PVGO_Dataset(Data.Dataset):
         self.imu_dvels = torch.from_numpy(imu_dvels_np).to(self.dtype).to(device)
         self.dts = torch.tensor(dts).view(-1, 1).to(self.dtype).to(device)
         
-        init_with_imu_rot = True
         if init_with_imu_rot:
             rot = pp.SO3(poses_np[0, 3:])
             rots = [rot]
@@ -117,7 +118,6 @@ class PVGO_Dataset(Data.Dataset):
         # print('test in pvgo dataset:', imu_init, self.nodes[0])
         self.nodes = nodes_
 
-        init_with_imu_vel = False
         if init_with_imu_vel:
             vels_np = np.cumsum(np.concatenate([imu_init['vel'].reshape(1, -1), imu_dvels_np], axis=0), axis=0)
             self.vels = torch.from_numpy(vels_np).to(self.dtype).to(device)

@@ -1,7 +1,7 @@
 from Datasets.utils import ToTensor, Compose, CropCenter, DownscaleFlow, Normalize, SqueezeBatchDim
 from Datasets.transformation import tartan2kitti_pypose, motion2pose_pypose, cvtSE3_pypose
 from Datasets.TrajFolderDataset import TrajFolderDatasetPVGO
-from evaluator.evaluate_rpe import calc_motion_error
+from evaluator.evaluate_rpe import calc_motion_error, calc_rot_error
 from TartanVO import TartanVO
 
 from pvgo import run_pvgo
@@ -66,8 +66,8 @@ def get_args():
                         help='root directory of results (default: "")')
     parser.add_argument('--use-imu', action='store_true', default=True,
                         help='use imu (default: "True")')
-    parser.add_argument('--use-pvgo', action='store_true', default=True,
-                        help='use pose-velocity graph optimization (default: "True")')
+    parser.add_argument('--use-pvgo', action='store_true', default=False,
+                        help='use pose-velocity graph optimization (default: "False")')
     parser.add_argument('--loss-weight', default='(1,1,1,1)',
                         help='weight of the loss terms (default: \'(1,1,1,1)\')')
     parser.add_argument('--mode', default='train-all', choices=['test', 'train-all'],
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     dataset = TrajFolderDatasetPVGO(datadir=args.data_root, datatype=args.data_type, transform=transform,
                                     start_frame=args.start_frame, end_frame=args.end_frame, batch_size=args.batch_size)
     vo_batch_size = args.batch_size*2 - 1
-    dataloader = DataLoader(dataset, batch_size=vo_batch_size, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=vo_batch_size, shuffle=False, drop_last=True)
     dataiter = iter(dataloader)
 
     trainroot = args.result_dir
@@ -189,7 +189,7 @@ if __name__ == '__main__':
 
         np.savetxt(trainroot+'/imu_accel.txt', dataset.accels.reshape(-1, 3))
         np.savetxt(trainroot+'/imu_gyro.txt', dataset.gyros.reshape(-1, 3))
-        np.savetxt(trainroot+'/imu_gt_vel.txt', dataset.vels.reshape(-1, 3))
+        np.savetxt(trainroot+'/gt_vel.txt', dataset.vels.reshape(-1, 3))
         np.savetxt(trainroot+'/imu_dt.txt', dataset.imu_dts.reshape(-1, 1))
         # exit(0)
 
@@ -205,6 +205,12 @@ if __name__ == '__main__':
 
     current_idx = 0
     init_state = dataset.imu_init
+    init_state['pose_vo'] = np.concatenate((init_state['pos'], init_state['rot']))
+
+    vo_motions_list = []
+    vo_poses_list = [np.concatenate((init_state['pos'], init_state['rot']))]
+    pgo_motions_list = []
+    pgo_poses_list = [np.concatenate((init_state['pos'], init_state['rot']))]
     
     for train_step_cnt in range(args.train_step):
         timer.tic('step')
@@ -251,11 +257,18 @@ if __name__ == '__main__':
         motions = tartan2kitti_pypose(motions)
         T_ic = dataset.rgb2imu_pose.to(args.device)
         motions = T_ic @ motions @ T_ic.Inv()
-        T0 = np.concatenate([init_state['pos'], init_state['rot']])
+
+        T0 = np.concatenate((init_state['pos'], init_state['rot']))
         poses = motion2pose_pypose(motions[:args.batch_size], T0)
 
         motions_np = motions.detach().cpu().numpy()
         poses_np = poses.detach().cpu().numpy()
+
+        T0_vo = init_state['pose_vo']
+        poses_vo = motion2pose_pypose(motions[:args.batch_size], T0)
+        poses_vo = poses_vo.detach().cpu().numpy()
+        vo_motions_list.extend(motions_np)
+        vo_poses_list.extend(poses_vo[1:])
 
         # motions_np = motions.detach().cpu().numpy()
         # poses_np = ses2poses_quat(motions_np[:args.batch_size])
@@ -277,7 +290,17 @@ if __name__ == '__main__':
             current_dts = dataset.rgb_dts[current_idx:current_idx+args.batch_size]
             loss, pgo_poses, pgo_vels, pgo_motions = run_pvgo(poses_np, motions, current_links, 
                 current_imu_rots, current_imu_trans, current_imu_vels, init_state, current_dts, 
-                device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames)
+                device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames,
+                init_with_imu_rot=True, init_with_imu_vel=False)
+        else:
+            current_dts = dataset.rgb_dts[current_idx:current_idx+args.batch_size]
+            # for debug
+            pgo_poses = poses_np
+            pgo_vels = np.concatenate((init_state['vel'].reshape(1, -1), np.diff(poses_np[:, :3], axis=0) / current_dts.reshape(-1, 1)), axis=0)
+            pgo_motions = motions_np
+
+        pgo_motions_list.extend(pgo_motions)
+        pgo_poses_list.extend(pgo_poses[1:])
 
         timer.toc('pgo')
         
@@ -304,7 +327,7 @@ if __name__ == '__main__':
                 motions_gt = tartan2kitti_pypose(motions_gt)
             else:
                 motions_gt = cvtSE3_pypose(motions_gt)
-            # T0 = np.concatenate([init_state['pos'], init_state['rot']])
+            # T0 = np.concatenate((init_state['pos'], init_state['rot']))
             # poses_gt = motion2pose_pypose(motions_gt[:args.batch_size], T0)
             poses_gt = dataset.poses[current_idx:current_idx+args.batch_size+1]
             motions_gt = motions_gt.numpy()
@@ -312,6 +335,9 @@ if __name__ == '__main__':
 
             vo_R_errs, vo_t_errs, R_norms, t_norms = calc_motion_error(motions_gt, motions_np, allow_rescale=False)
             print('Pred: R:%.5f t:%.5f' % (np.mean(vo_R_errs), np.mean(vo_t_errs)))
+
+            imu_R_errs, _ = calc_rot_error(motions_gt[:args.batch_size, 3:], current_imu_rots)
+            print('IMU : R:%.5f' % (np.mean(imu_R_errs)))
             
             pgo_R_errs, pgo_t_errs, _, _ = calc_motion_error(motions_gt, pgo_motions, allow_rescale=False)
             print('PVGO: R:%.5f t:%.5f' % (np.mean(pgo_R_errs), np.mean(pgo_t_errs)))
@@ -326,39 +352,61 @@ if __name__ == '__main__':
                     wandb.log({
                         'vo mrot err': vo_R_errs[i],
                         'vo mtrans err': vo_t_errs[i],
+                        'imu mrot err': imu_R_errs[i],
                         'pgo mrot err': pgo_R_errs[i],
                         'pgo mtrans err': pgo_t_errs[i],
                         'gt mrot norm': R_norms[i],
                         'gt mtrans norm': t_norms[i],
                         'pose rot err': pose_R_errs[i],
-                        'pose trans err': pose_t_errs[i]
+                        'pose trans err': pose_t_errs[i],
+                        'vo-pgo mrot': vo_R_errs[i] - pgo_R_errs[i],
+                        'vo-pgo mtrans': vo_t_errs[i] - pgo_t_errs[i],
                     }, step = current_idx + i)
+                    j = i + args.batch_size
+                    if j < args.batch_size*2-1:
+                        wandb.log({
+                            'vo skip mrot err': vo_R_errs[j],
+                            'vo skip mtrans err': vo_t_errs[j],
+                            'pgo skip mrot err': pgo_R_errs[j],
+                            'pgo skip mtrans err': pgo_t_errs[j],
+                            'gt skip mrot norm': R_norms[j],
+                            'gt skip mtrans norm': t_norms[j],
+                            'vo-pgo skip mrot': vo_R_errs[j] - pgo_R_errs[j],
+                            'vo-pgo skip mtrans': vo_t_errs[j] - pgo_t_errs[j],
+                        }, step = current_idx + i)
 
         timer.toc('print')
 
         timer.tic('snapshot')
 
-        if train_step_cnt % args.snapshot_interval == 0:
-            traindir = trainroot+'/'+str(train_step_cnt)
-            if not isdir(traindir):
-                mkdir(traindir)
+        # if train_step_cnt % args.snapshot_interval == 0:
+        #     traindir = trainroot+'/'+str(train_step_cnt)
+        #     if not isdir(traindir):
+        #         mkdir(traindir)
             
-            np.savetxt(traindir+'/pose.txt', poses_np)
-            np.savetxt(traindir+'/motion.txt', motions_np)
+        #     np.savetxt(traindir+'/pose.txt', poses_np)
+        #     np.savetxt(traindir+'/motion.txt', motions_np)
 
-            np.savetxt(traindir+'/pgo_pose.txt', pgo_poses)
-            np.savetxt(traindir+'/pgo_motion.txt', pgo_motions)
-            np.savetxt(traindir+'/pgo_vel.txt', pgo_vels)
+        #     np.savetxt(traindir+'/pgo_pose.txt', pgo_poses)
+        #     np.savetxt(traindir+'/pgo_motion.txt', pgo_motions)
+        #     np.savetxt(traindir+'/pgo_vel.txt', pgo_vels)
 
-            np.savetxt(traindir+'/gt_pose.txt', poses_gt)
-            np.savetxt(traindir+'/gt_motion.txt', motions_gt)
+        #     np.savetxt(traindir+'/gt_pose.txt', poses_gt)
+        #     np.savetxt(traindir+'/gt_motion.txt', motions_gt)
+
+        np.savetxt(trainroot+'/vo_pose.txt', np.stack(vo_poses_list))
+        np.savetxt(trainroot+'/vo_motion.txt', np.stack(vo_motions_list))
+        np.savetxt(trainroot+'/pgo_pose.txt', np.stack(pgo_poses_list))
+        np.savetxt(trainroot+'/pgo_motion.txt', np.stack(pgo_motions_list))
 
         timer.toc('snapshot')
 
-        print('[time] step: {}, print: {}, snapshot: {}'.format(timer.last('step'), timer.last('print'), timer.last('snapshot')))
+        print('[time] step: {}, vo: {}, pgo: {}, opt: {}, print: {}, snapshot: {}'.format(
+            timer.last('step'), timer.last('vo'), timer.last('pgo'), timer.last('opt'), 
+            timer.last('print'), timer.last('snapshot')))
 
         current_idx += args.batch_size
-        init_state = {'rot':pgo_poses[-1][3:], 'pos':pgo_poses[-1][:3], 'vel':pgo_vels[-1]}
+        init_state = {'rot':pgo_poses[-1][3:], 'pos':pgo_poses[-1][:3], 'vel':pgo_vels[-1], 'pose_vo':poses_vo[-1]}
         init_state['rot'] /= np.linalg.norm(init_state['rot'])
 
     if not args.not_write_log:

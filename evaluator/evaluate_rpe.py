@@ -166,6 +166,26 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
     return R_errs, t_errs, R_norms, t_norms
 
 
+def calc_rot_error(rot_gt, rot_est):
+    from scipy.spatial.transform import Rotation
+
+    if rot_gt.shape[1] == 4:
+        R_gt = Rotation.from_quat(rot_gt)
+    else:
+        R_gt = Rotation.from_rotvec(rot_gt)
+
+    if rot_est.shape[1] == 4:
+        R_est = Rotation.from_quat(rot_est)
+    else:
+        R_est = Rotation.from_rotvec(rot_est)
+
+    R_errs = np.rad2deg((R_gt.inv() * R_est).magnitude())
+
+    R_norms = np.rad2deg(R_gt.magnitude())
+
+    return R_errs, R_norms
+
+
 def calc_trans_angle_scale(motions_gt, motions_est):
     t_gt = motions_gt[:, :3]
     t_est = motions_est[:, :3]
