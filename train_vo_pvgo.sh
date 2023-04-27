@@ -5,15 +5,15 @@
 data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0016_sync
 # data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0016_sync
 
-loss_weight='(1,0,10,0)'
+loss_weight='(10,0,1,0)'
 lr=1e-5
 project_name=test_16
-train_name=IMUxyz_canny_${loss_weight}
+train_name=noskip_IMUxyz_canny_${loss_weight}
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
 
-CUDA_VISIBLE_DEVICES=6
+CUDA_VISIBLE_DEVICES=5
 CUDA_LAUNCH_BLOCKING=1
 
 python train.py \

@@ -88,6 +88,8 @@ def get_args():
                         help='fix some parts of the model (default: [])')
     parser.add_argument('--not-write-log', action='store_true', default=False,
                         help='not write log to wandb (default: "False")')
+    parser.add_argument('--use-skip-frame', action='store_true', default=False,
+                        help='use 1-skip frames (default: "False")')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -139,8 +141,12 @@ if __name__ == '__main__':
                             ])
 
     dataset = TrajFolderDatasetPVGO(datadir=args.data_root, datatype=args.data_type, transform=transform,
-                                    start_frame=args.start_frame, end_frame=args.end_frame, batch_size=args.batch_size)
-    vo_batch_size = args.batch_size*2 - 1
+                                    start_frame=args.start_frame, end_frame=args.end_frame,
+                                    batch_size=(args.batch_size if args.use_skip_frame else None))
+    if args.use_skip_frame:
+        vo_batch_size = args.batch_size*2 - 1
+    else:
+        vo_batch_size = args.batch_size
     dataloader = DataLoader(dataset, batch_size=vo_batch_size, shuffle=False, drop_last=True)
     dataiter = iter(dataloader)
 
@@ -222,7 +228,7 @@ if __name__ == '__main__':
             
         print('Start {} step {} ...'.format(args.mode, train_step_cnt))
 
-        use_joint_flow = True
+        use_joint_flow = args.use_skip_frame
         if use_joint_flow:
             links = sample['link'] - current_idx
             img0 = sample['img0']
@@ -238,7 +244,6 @@ if __name__ == '__main__':
                     flow.append(f)
             flow = torch.stack(flow)
             sample['flow'] = flow
-
 
         timer.tic('vo')
             
@@ -362,8 +367,9 @@ if __name__ == '__main__':
                         'vo-pgo mrot': vo_R_errs[i] - pgo_R_errs[i],
                         'vo-pgo mtrans': vo_t_errs[i] - pgo_t_errs[i],
                     }, step = current_idx + i)
-                    j = i + args.batch_size
-                    if j < args.batch_size*2-1:
+                    
+                    if args.use_skip_frame and i < args.batch_size-1:
+                        j = i + args.batch_size
                         wandb.log({
                             'vo skip mrot err': vo_R_errs[j],
                             'vo skip mtrans err': vo_t_errs[j],
