@@ -81,7 +81,7 @@ class VOPGO(Data.Dataset):
 
 class PVGO_Dataset(Data.Dataset):
     def __init__(self, poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
-                    device='cpu', init_with_imu_rot=True, init_with_imu_vel=False):
+                    device='cpu', init_with_imu_rot=True, init_with_imu_vel=True):
         
         super().__init__()
 

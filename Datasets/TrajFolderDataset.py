@@ -220,11 +220,15 @@ class KITTITrajFolderLoader:
         # dataset.get_velo(idx): Returns the velodyne scan at idx
 
         ############################## load times ######################################################################
-        timestamps = np.array([t.timestamp() for t in dataset.timestamps])
+        # timestamps = np.array([t.timestamp() for t in dataset.timestamps])
+        ts_imu = self.load_timestamps(datadir, 'oxts')
+        ts_rgb = self.load_timestamps(datadir, 'image_02')
+        # self.rgb2imu_sync = np.array([i for i in range(len(self.rgbfiles))])
+        self.rgb2imu_sync = np.array(self.sync_data(ts_imu, ts_rgb))
 
         ############################## load images ######################################################################
         self.rgbfiles = dataset.cam2_files
-        self.rgb_dts = np.diff(timestamps).astype(np.float32)
+        self.rgb_dts = np.diff(ts_rgb).astype(np.float32)
 
         ############################## load stereo right images ######################################################################
         self.rgbfiles_right = dataset.cam3_files
@@ -242,9 +246,13 @@ class KITTITrajFolderLoader:
 
         ############################## load gt poses ######################################################################
         T_w_imu = np.array([oxts_frame.T_w_imu for oxts_frame in dataset.oxts])
+        T_w_imu = T_w_imu[self.rgb2imu_sync]
         self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type).to(dtype=torch.float32)
+        
         vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float32)
+        vels_local = vels_local[self.rgb2imu_sync]
         self.vels = self.poses.rotation() @ vels_local
+
         self.poses = self.poses.numpy()
         self.vels = self.vels.numpy()
 
@@ -254,9 +262,7 @@ class KITTITrajFolderLoader:
         self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
         self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
 
-        self.rgb2imu_sync = np.array([i for i in range(len(self.rgbfiles))])
-
-        self.imu_dts = self.rgb_dts
+        self.imu_dts = np.diff(ts_imu).astype(np.float32)
 
         T_IL = np.linalg.inv(T_LI)
         self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
@@ -264,6 +270,34 @@ class KITTITrajFolderLoader:
         self.gravity = 9.81
 
         self.has_imu = True
+
+    def load_timestamps(self, datapath, subfolder):
+        import datetime as dt
+
+        """Load timestamps from file."""
+        timestamp_file = path.join(
+            datapath, subfolder, 'timestamps.txt')
+
+        # Read and parse the timestamps
+        timestamps = []
+        with open(timestamp_file, 'r') as f:
+            for line in f.readlines():
+                # NB: datetime only supports microseconds, but KITTI timestamps
+                # give nanoseconds, so need to truncate last 4 characters to
+                # get rid of \n (counts as 1) and extra 3 digits
+                t = dt.datetime.strptime(line[:-4], '%Y-%m-%d %H:%M:%S.%f')
+                timestamps.append(t.timestamp())
+
+        return timestamps
+
+    def sync_data(self, ts_src, ts_tar):
+        res = []
+        j = 0
+        for t in ts_tar:
+            while j+1 < len(ts_src) and abs(ts_src[j+1]-t) < abs(ts_src[j]-t):
+                j += 1
+            res.append(j)
+        return res
 
 
 class TrajFolderDataset(Dataset):

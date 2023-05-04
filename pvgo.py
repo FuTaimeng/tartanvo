@@ -62,45 +62,43 @@ class PoseVelGraph(nn.Module):
         pgerr = error.Log().tensor()
 
         # adj vel constraint
-        error = imu_dvels - torch.diff(vels, dim=0)
-        adjvelerr = torch.cat((error, torch.zeros_like(error)), dim=1)
+        # error = imu_dvels - torch.diff(vels, dim=0)
+        # adjvelerr = torch.cat((error, torch.zeros_like(error)), dim=1)
+        adjvelerr = imu_dvels - torch.diff(vels, dim=0)
 
         # imu rot constraint
         node1 = nodes.rotation()[ :-1]
         node2 = nodes.rotation()[1:  ]
         error = imu_drots.Inv() @ node1.Inv() @ node2
-        error = error.Log().tensor()
-        imuroterr = torch.cat((torch.zeros_like(error), error), dim=1)
+        # error = error.Log().tensor()
+        # imuroterr = torch.cat((torch.zeros_like(error), error), dim=1)
+        imuroterr = error.Log().tensor()
 
         # trans vel constraint
-        error = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dts + imu_dtrans)
-        transvelerr = torch.cat((error / dts, torch.zeros_like(error)), dim=1)
+        # error = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dts + imu_dtrans)
+        # transvelerr = torch.cat((error / dts, torch.zeros_like(error)), dim=1)
+        transvelerr = torch.diff(nodes.translation(), dim=0) - (vels[:-1] * dts + imu_dtrans)
 
         # test_run
-        return torch.cat((  self.l1 * pgerr, 
-                            self.l2 * adjvelerr, 
-                            self.l3 * imuroterr, 
-                            self.l4 * transvelerr  ), dim=0)
-
-        # # test_run_pg
-        # return pgerr.view(-1, 1)
-
-        # # test_run_pg-imurot
-        # return torch.cat((pgerr.view(-1, 1), imuroterr.view(-1, 1)), dim=0)
+        # return torch.cat((  self.l1 * pgerr, 
+        #                     self.l2 * adjvelerr, 
+        #                     self.l3 * imuroterr, 
+        #                     self.l4 * transvelerr  ), dim=0)
+        return torch.cat((  self.l1 * pgerr.view(-1), 
+                            self.l2 * adjvelerr.view(-1), 
+                            self.l3 * imuroterr.view(-1), 
+                            self.l4 * transvelerr.view(-1)  ), dim=0)
 
 
     def vo_loss(self, edges, poses):
         nodes = self.nodes
         vels = self.vels
 
-        node1 = nodes[edges[..., 0]].detach()
-        node2 = nodes[edges[..., 1]].detach()
-        motion = node1.Inv() @ node2
-        error = poses.Inv() @ motion 
-        # trans_loss = torch.norm(error.translation(), dim=1, p=1) / torch.norm(motion.translation(), dim=1, p=1)
-        # rot_loss = torch.norm(error.rotation(), dim=1, p=1)
-        # loss = rot_loss + trans_loss
-        loss = torch.norm(error, dim=1, p=1)
+        node1 = nodes[edges[:, 0]].detach()
+        node2 = nodes[edges[:, 1]].detach()
+        error = poses.Inv() @ node1.Inv() @ node2
+        loss = error.Log().tensor()
+
         return loss
 
     
@@ -113,10 +111,10 @@ class PoseVelGraph(nn.Module):
 
 
 def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
-                device='cuda:0', init_with_imu_rot=True, init_with_imu_vel=False,
+                device='cuda:0', init_with_imu_rot=True, init_with_imu_vel=True,
                 radius=1e4, loss_weight=(1,1,1,1), stop_frames=[]):
 
-    print(imu_init)
+    # print(imu_init)
 
     data = PVGO_Dataset(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np, imu_init, dts, 
                         device, init_with_imu_rot, init_with_imu_vel)

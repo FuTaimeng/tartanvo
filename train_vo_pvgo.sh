@@ -2,18 +2,18 @@
 # data_dir=data/EuRoC_V102
 # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
 # data_dir=/user/taimengf/projects/kitti_raw/2011_10_03/2011_10_03_drive_0042_sync
-data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0016_sync
+data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync
 # data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0016_sync
 
-loss_weight='(10,0,1,0)'
-lr=1e-5
-project_name=test_16
-train_name=noskip_IMUxyz_canny_${loss_weight}
+loss_weight='(1,0.1,10,1)'
+lr=1e-6
+project_name=opt_34
+train_name=Rn95_tc95_epoch10_lr=${lr}_${loss_weight}
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
 
-CUDA_VISIBLE_DEVICES=5
+CUDA_VISIBLE_DEVICES=0
 CUDA_LAUNCH_BLOCKING=1
 
 python train.py \
@@ -26,7 +26,7 @@ python train.py \
     --data-root ${data_dir} \
     --start-frame 0 \
     --end-frame -1 \
-    --train-step 1000 \
+    --train-epoch 10 \
     --print-interval 1 \
     --snapshot-interval 1 \
     --lr ${lr} \
@@ -36,5 +36,4 @@ python train.py \
     --data-type kitti \
     --fix-model-parts 'flow' 'stereo' \
     --use-pvgo \
-| tee train_results/${project_name}/${train_name}/log.txt
-    
+# | tee train_results/${project_name}/${train_name}/log.txt

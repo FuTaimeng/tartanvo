@@ -78,7 +78,9 @@ if __name__ == '__main__':
         print("Saved to", figure)
 
 
-def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device='cuda:0', motion_mode=False):
+def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, 
+                          device='cuda:0', motion_mode=False, rgb2imu_sync=None):
+
     dtype = torch.get_default_dtype()
     
     if init is not None:
@@ -104,7 +106,11 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device
     gyros = torch.tensor(gyros, dtype=dtype).to(device)
     dts = torch.tensor(dts, dtype=dtype).unsqueeze(-1).to(device)
 
-    N = accels.shape[0] - 1
+    if rgb2imu_sync is None:
+        N = accels.shape[0] - 1
+    else:
+        N = len(rgb2imu_sync) - 1
+
     if motion_mode:
         # for relative pose
         poses, rots, covs, vels = [], [], [], []
@@ -116,11 +122,18 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007, device
         vels = [init_vel.cpu().numpy()]
 
     for i in range(N):
-        # print(dts[i].shape, gyros[i].shape, accels[i].shape)
-        if motion_mode:
-            state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i], init_state=last_state)
+        if rgb2imu_sync is None:
+            if motion_mode:
+                state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i], init_state=last_state)
+            else:
+                state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i])
         else:
-            state = integrator(dt=dts[i], gyro=gyros[i], acc=accels[i])
+            st = rgb2imu_sync[i]
+            end = rgb2imu_sync[i+1]
+            if motion_mode:
+                state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end], init_state=last_state)
+            else:
+                state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end])
 
         poses.append(state['pos'][..., -1, :].squeeze().cpu().numpy())
         if motion_mode:
