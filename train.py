@@ -213,9 +213,10 @@ if __name__ == '__main__':
     elif args.vo_optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
 
-    epoch = 1
-    rot_th = 1.982635854754768
-    trans_th = 0.013683050676729371
+    epoch = 0
+    train_step_cnt = 0
+    # rot_th = 1.982635854754768
+    # trans_th = 0.013683050676729371
 
     current_idx = 0
     init_state = dataset.imu_init
@@ -231,7 +232,6 @@ if __name__ == '__main__':
     vo_batches_per_train_step = 1
     
     # for train_step_cnt in range(args.train_step):
-    train_step_cnt = 0
     while epoch <= args.train_epoch:
         timer.tic('step')
         
@@ -310,6 +310,7 @@ if __name__ == '__main__':
 
         if vo_new_frames_cnt == 0:
             epoch += 1
+            dataiter = iter(dataloader)
 
             R_changes, t_changes, R_norms, t_norms = calc_motion_error(np.stack(vo_motions_list), np.stack(pgo_motions_list), allow_rescale=False)
             percent = 0.95
@@ -359,14 +360,22 @@ if __name__ == '__main__':
         timer.tic('opt')
 
         if args.mode.startswith('train') and epoch > 0:
-            # print('loss shape', loss.shape)
+            # use masks
             R_changes, t_changes, R_norms, t_norms = calc_motion_error(vo_new_motions_np, pgo_motions, allow_rescale=False)
             rot_mask = R_norms >= rot_th
             trans_mask = t_changes >= trans_th
+            # not use masks
+            # rot_mask = R_norms >= 0
+            # trans_mask = t_changes >= 0
 
             if np.any(rot_mask) or np.any(trans_mask):
                 posenetOptimizer.zero_grad()
+
+                # rot + trans
                 loss_bp = torch.cat((loss[rot_mask, 3:], loss[trans_mask, :3]), dim=0)
+                # only trans
+                # loss_bp = loss[trans_mask, :3]
+
                 loss_bp.backward(torch.ones_like(loss_bp))
                 posenetOptimizer.step()
 

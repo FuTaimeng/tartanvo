@@ -8,12 +8,12 @@ data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync
 loss_weight='(1,0.1,10,1)'
 lr=1e-6
 project_name=opt_34
-train_name=Rn95_tc95_epoch10_lr=${lr}_${loss_weight}
+train_name=all_epoch5_lr=${lr}_${loss_weight}
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
 
-CUDA_VISIBLE_DEVICES=0
+CUDA_VISIBLE_DEVICES=1
 CUDA_LAUNCH_BLOCKING=1
 
 python train.py \
@@ -26,7 +26,7 @@ python train.py \
     --data-root ${data_dir} \
     --start-frame 0 \
     --end-frame -1 \
-    --train-epoch 10 \
+    --train-epoch 5 \
     --print-interval 1 \
     --snapshot-interval 1 \
     --lr ${lr} \
