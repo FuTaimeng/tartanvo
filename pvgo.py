@@ -97,9 +97,11 @@ class PoseVelGraph(nn.Module):
         node1 = nodes[edges[:, 0]].detach()
         node2 = nodes[edges[:, 1]].detach()
         error = poses.Inv() @ node1.Inv() @ node2
-        loss = error.Log().tensor()
+        error = error.Log().tensor()
+        trans_loss = torch.sum(error[:, :3]**2, dim=1)
+        rot_loss = torch.sum(error[:, 3:]**2, dim=1)
 
-        return loss
+        return trans_loss, rot_loss
 
     
     def align_to(self, target, idx=0):
@@ -139,7 +141,7 @@ def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np
     ### The 2nd implementation: equivalent to the 1st one, but more compact
     # scheduler.optimize(input=(edges, poses), weight=infos)
 
-    loss = graph.vo_loss(edges, data.poses_withgrad)
+    trans_loss, rot_loss = graph.vo_loss(edges, data.poses_withgrad)
 
     nodes, vels = graph.align_to(node0)
     nodes = nodes.detach().cpu()
@@ -149,4 +151,4 @@ def run_pvgo(poses_np, motions, links, imu_drots_np, imu_dtrans_np, imu_dvels_np
     edges = edges.cpu()
     motions = nodes[edges[:, 0]].Inv() @ nodes[edges[:, 1]]
 
-    return loss, nodes.numpy(), vels.numpy(), motions.numpy()
+    return trans_loss, rot_loss, nodes.numpy(), vels.numpy(), motions.numpy()

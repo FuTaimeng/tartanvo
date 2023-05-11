@@ -1,6 +1,7 @@
 *.pyc
 models/
 train_results/
+train_results_models/
 train_multicamvo/
 test_results/
 slurm_logs/

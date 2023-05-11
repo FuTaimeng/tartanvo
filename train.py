@@ -17,7 +17,7 @@ import cv2
 
 import os
 import argparse
-from os import mkdir
+from os import makedirs
 from os.path import isdir
 from timer import Timer
 
@@ -66,6 +66,8 @@ def get_args():
                         help='name of the training (default: "")')
     parser.add_argument('--result-dir', default='',
                         help='root directory of results (default: "")')
+    parser.add_argument('--save-model-dir', default='',
+                        help='root directory for saving models (default: "")')
     parser.add_argument('--use-imu', action='store_true', default=True,
                         help='use imu (default: "True")')
     parser.add_argument('--use-pvgo', action='store_true', default=False,
@@ -92,6 +94,12 @@ def get_args():
                         help='not write log to wandb (default: "False")')
     parser.add_argument('--use-skip-frame', action='store_true', default=False,
                         help='use 1-skip frames (default: "False")')
+    parser.add_argument('--rot-w', type=float, default=1,
+                        help='loss rot part weight (default: 1)')
+    parser.add_argument('--trans-w', type=float, default=1,
+                        help='loss trans part weight (default: 1)')
+    parser.add_argument('--delay-optm', action='store_true', default=False,
+                        help='optimize once per traj (default: "False")')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -155,8 +163,6 @@ if __name__ == '__main__':
     trainroot = args.result_dir
     print('Train root:', trainroot)
 
-    if not isdir(trainroot):
-        mkdir(trainroot)
     with open(trainroot+'/args.txt', 'w') as f:
         f.write(str(args))
     np.savetxt(trainroot+'/gt_pose.txt', dataset.poses)
@@ -213,10 +219,10 @@ if __name__ == '__main__':
     elif args.vo_optimizer == 'sgd':
         posenetOptimizer = optim.SGD(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)
 
-    epoch = 0
+    epoch = 1
     train_step_cnt = 0
-    # rot_th = 1.982635854754768
-    # trans_th = 0.013683050676729371
+    rot_th = 1.982635854754768
+    trans_th = 0.013683050676729371
 
     current_idx = 0
     init_state = dataset.imu_init
@@ -309,6 +315,16 @@ if __name__ == '__main__':
             timer.toc('cvt')
 
         if vo_new_frames_cnt == 0:
+            if args.delay_optm:
+                posenetOptimizer.step()
+                posenetOptimizer.zero_grad()
+
+            if args.save_model_dir is not None and len(args.save_model_dir) > 0:
+                if not isdir('{}/{}'.format(args.save_model_dir, epoch)):
+                    makedirs('{}/{}'.format(args.save_model_dir, epoch))
+                save_model_name = '{}/{}/vonet.pkl'.format(args.save_model_dir, epoch)
+                torch.save(tartanvo.vonet.state_dict(), save_model_name)
+
             epoch += 1
             dataiter = iter(dataloader)
 
@@ -346,7 +362,8 @@ if __name__ == '__main__':
             current_imu_trans = imu_trans[st:end]
             current_imu_vels = imu_vels[st:end]
             current_dts = dataset.rgb_dts[st:end]
-            loss, pgo_poses, pgo_vels, pgo_motions = run_pvgo(vo_new_poses_np, vo_new_motions, vo_new_links, 
+            trans_loss, rot_loss, pgo_poses, pgo_vels, pgo_motions = run_pvgo(
+                vo_new_poses_np, vo_new_motions, vo_new_links, 
                 current_imu_rots, current_imu_trans, current_imu_vels, init_state, current_dts, 
                 device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames,
                 init_with_imu_rot=True, init_with_imu_vel=True)
@@ -362,22 +379,25 @@ if __name__ == '__main__':
         if args.mode.startswith('train') and epoch > 0:
             # use masks
             R_changes, t_changes, R_norms, t_norms = calc_motion_error(vo_new_motions_np, pgo_motions, allow_rescale=False)
-            rot_mask = R_norms >= rot_th
-            trans_mask = t_changes >= trans_th
-            # not use masks
-            # rot_mask = R_norms >= 0
-            # trans_mask = t_changes >= 0
+            # rot_mask = R_norms >= rot_th
+            # trans_mask = t_changes >= trans_th
+            rot_mask = np.ones(R_norms.shape[0]).astype(bool)
+            # trans_mask = np.zeros(t_norms.shape[0]).astype(bool)
+            trans_mask = np.ones(t_norms.shape[0]).astype(bool)
 
             if np.any(rot_mask) or np.any(trans_mask):
-                posenetOptimizer.zero_grad()
+                if np.any(rot_mask) and np.any(trans_mask):
+                    loss_bp = torch.cat((args.rot_w * rot_loss[rot_mask], args.trans_w * trans_loss[trans_mask]))
+                elif np.any(rot_mask):
+                    loss_bp = rot_loss[rot_mask]
+                else:
+                    loss_bp = trans_loss[trans_mask]
 
-                # rot + trans
-                loss_bp = torch.cat((loss[rot_mask, 3:], loss[trans_mask, :3]), dim=0)
-                # only trans
-                # loss_bp = loss[trans_mask, :3]
-
+                if not args.delay_optm:
+                    posenetOptimizer.zero_grad()
                 loss_bp.backward(torch.ones_like(loss_bp))
-                posenetOptimizer.step()
+                if not args.delay_optm:
+                    posenetOptimizer.step()
 
             opt_mask[0].extend(rot_mask)
             opt_mask[1].extend(trans_mask)
@@ -449,7 +469,7 @@ if __name__ == '__main__':
         # if train_step_cnt % args.snapshot_interval == 0:
         #     traindir = trainroot+'/'+str(train_step_cnt)
         #     if not isdir(traindir):
-        #         mkdir(traindir)
+        #         makedirs(traindir)
             
         #     np.savetxt(traindir+'/pose.txt', poses_np)
         #     np.savetxt(traindir+'/motion.txt', motions_np)
@@ -462,7 +482,7 @@ if __name__ == '__main__':
         #     np.savetxt(traindir+'/gt_motion.txt', motions_gt)
 
         if not isdir('{}/{}'.format(trainroot, epoch)):
-            mkdir('{}/{}'.format(trainroot, epoch))
+            makedirs('{}/{}'.format(trainroot, epoch))
         np.savetxt('{}/{}/vo_pose.txt'.format(trainroot, epoch), np.stack(vo_poses_list))
         np.savetxt('{}/{}/vo_motion.txt'.format(trainroot, epoch), np.stack(vo_motions_list))
         np.savetxt('{}/{}/pgo_pose.txt'.format(trainroot, epoch), np.stack(pgo_poses_list))
