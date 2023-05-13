@@ -1,4 +1,6 @@
 import torch
+from torch import nn
+
 import pypose as pp
 
 
@@ -26,11 +28,13 @@ def to_tensor(x):
         return torch.tensor(x, dtype=torch.float32)
 
 
-class IMUModel:
+class IMUModel(nn.Module):
     def __init__(self, gyro_measurments, accel_measurments, deltatimes, keyframe_idx=None, 
-                    init_gyro_bias=None, init_accel_bias=None, gravity=9.81007, 
+                    init_gyro_bias=None, init_accel_bias=None, gravity=(0,0,9.81007), 
                     init_rot=None, init_pos=None, init_vel=None,
-                    device='cuda'):
+                    device='cuda', para_list=('gyro_bias', 'accel_bias', 'gravity')):
+
+        super().__init__()
 
         gyro_measurments = to_tensor(gyro_measurments)
         accel_measurments = to_tensor(accel_measurments)
@@ -64,7 +68,8 @@ class IMUModel:
             init_accel_bias = to_tensor(init_gyro_bias)
             assert init_accel_bias.shape == (3,)
 
-        assert isinstance(gravity, float)
+        gravity = to_tensor(gravity)
+        assert gravity.shape == (3,)
 
         if init_rot is not None:
             if isinstance(init_rot, pp.LieTensor):
@@ -92,14 +97,25 @@ class IMUModel:
         self.dt = deltatimes.to(device)
         self.kf = keyframe_idx
         self.kf_dt = keyframe_deltatimes.to(device)
-        # TODO: reequire grad
-        self.bias_a = init_accel_bias.repeat(N, 1).to(device)
+        
+        self.bias_a = init_accel_bias.repeat(N, 1).to(device)   
         self.bias_w = init_gyro_bias.repeat(N, 1).to(device)
-        self.g = torch.tensor([0, 0, gravity]).to(device)
+        self.g = gravity.to(device)
         self.init_rot = init_rot
         self.init_pos = init_pos
         self.init_vel = init_vel
         self.device = device
+
+        for para in para_list:
+            if para == 'accel_bias':
+                self.bias_a = nn.Parameter(self.bias_a)
+            elif para == 'gyro_bias':
+                self.bias_w = nn.Parameter(self.bias_w)
+            elif para == 'gravity':
+                self.g = nn.Parameter(self.g)
+            else:
+                supported_para_types = ('gyro_bias', 'accel_bias', 'gravity')
+                raise ValueError('Unknown para type in IMUModel: {}. Supported types: {}'.format(para, supported_para_types))
         
         self.__preintegrate()
 
@@ -231,13 +247,16 @@ if __name__ == '__main__':
 
     rot, pos, vel = imu_model.trajectory()
 
-    gt_pos = ds.poses[:, :3]
+    gt_pos = torch.tensor(ds.poses[:, :3])
     gt_rot = pp.SO3(ds.poses[:, 3:])
 
     rot_errs = torch.norm((gt_rot.Inv() @ rot).Log(), dim=1) * 180 / 3.14
-    pos_errs = torch.nomr(gt_pos - pos, dim=1)
+    pos_errs = torch.norm(gt_pos - pos, dim=1)
     print('Rot Errs:', rot_errs)
     print('Pos Errs:', pos_errs)
+
+    pos = pos.detach().numpy()
+    gt_pos = gt_pos.numpy()
 
     plt.figure('XY')
     plt.plot(pos[:, 0], pos[:, 1], color='r')
