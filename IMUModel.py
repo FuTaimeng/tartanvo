@@ -55,6 +55,7 @@ class IMUModel(nn.Module):
             keyframe_idx = [i for i in range(N)]
         else:
             assert max(keyframe_idx) < N
+        K = len(keyframe_idx)
 
         if init_gyro_bias is None:
             init_gyro_bias = torch.zeros(3)
@@ -106,6 +107,9 @@ class IMUModel(nn.Module):
         self.init_vel = init_vel
         self.device = device
 
+        self.num_measurements = N
+        self.num_keyframes = K
+
         for para in para_list:
             if para == 'accel_bias':
                 self.bias_a = nn.Parameter(self.bias_a)
@@ -123,19 +127,18 @@ class IMUModel(nn.Module):
         self.preintegrator = pp.module.IMUPreintegrator(gravity=0., prop_cov=False, reset=True)
         self.preintegrator = self.preintegrator.to(self.device)
 
-        M = len(self.kf) - 1
+        M = self.num_keyframes - 1
         alpha = torch.zeros(M, 3).to(self.device)
         beta = torch.zeros(M, 3).to(self.device)
-        gamma = torch.zeros(M, 4).to(self.device)
+        gamma = pp.identity_SO3(M).to(self.device)
         Jac = torch.zeros(M, 15, 15).to(self.device)
 
         for i in range(M):
             a, b, c, J = self.__propergate(self.kf[i], self.kf[i+1])
             alpha[i] = a
             beta[i] = b
-            gamma[i] = c.tensor()
+            gamma[i] = c
             Jac[i] = J
-        gamma = pp.SO3(gamma)
 
         self.alpha_hat = alpha
         self.beta_hat = beta
@@ -162,6 +165,10 @@ class IMUModel(nn.Module):
         gamma = state['rot'][..., -1, :].squeeze()
 
         return alpha, beta, gamma, J
+
+    def init_pose(self):
+        assert self.init_pos is not None and self.init_rot is not None
+        return pp.SE3(torch.cat((self.init_pos, self.init_rot.tensor())))
 
     def alpha(self, k0=None, k1=None):
         if k0 == None and k1 == None:
@@ -214,11 +221,16 @@ class IMUModel(nn.Module):
     def world_drot(self):
         return self.gamma()
 
-    def trajectory(self):
-        rot = [self.init_rot]
-        for drot in self.world_drot():
-            rot.append(rot[-1] @ drot)
-        rot = torch.stack(rot)
+    def trajectory(self, return_delta=False):
+        assert self.init_rot is not None and \
+               self.init_vel is not None and \
+               self.init_pos is not None
+
+        drot = self.world_drot()
+        rot = pp.identity_SO3(self.num_keyframes)
+        rot[0] = self.init_rot
+        for i, dr in enumerate(drot):
+            rot[i+1] = rot[i] @ dr
 
         dvel = self.world_dvel(rot[:-1])
         vel = torch.cumsum(torch.cat((self.init_vel[None, :], dvel), dim=0), dim=0)
@@ -226,7 +238,10 @@ class IMUModel(nn.Module):
         dpos = self.world_dpos(rot[:-1], vel[:-1])
         pos = torch.cumsum(torch.cat((self.init_pos[None, :], dpos), dim=0), dim=0)
 
-        return rot, pos, vel
+        if not return_delta:
+            return rot, pos, vel
+        else:
+            return drot, dpos, dvel
 
 
 if __name__ == '__main__':
