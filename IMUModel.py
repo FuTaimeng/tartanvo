@@ -210,13 +210,15 @@ class IMUModel(nn.Module):
         return res.squeeze()
 
     def world_dpos(self, R_wb, vel_w):
-        return vel_w * self.kf_dt[:, None] \
+        M = self.num_keyframes - 1
+        return vel_w[:M] * self.kf_dt[:, None] \
                - 0.5 * self.g[None, :] * self.kf_dt[:, None]**2 \
-               + R_wb.Act(self.alpha())
+               + R_wb[:M].Act(self.alpha())
     
     def world_dvel(self, R_wb):
+        M = self.num_keyframes - 1
         return -self.g[None, :] * self.kf_dt[:, None] \
-               + R_wb.Act(self.beta())
+               + R_wb[:M].Act(self.beta())
 
     def world_drot(self):
         return self.gamma()
@@ -232,10 +234,10 @@ class IMUModel(nn.Module):
         for i, dr in enumerate(drot):
             rot[i+1] = rot[i] @ dr
 
-        dvel = self.world_dvel(rot[:-1])
+        dvel = self.world_dvel(rot)
         vel = torch.cumsum(torch.cat((self.init_vel[None, :], dvel), dim=0), dim=0)
 
-        dpos = self.world_dpos(rot[:-1], vel[:-1])
+        dpos = self.world_dpos(rot, vel)
         pos = torch.cumsum(torch.cat((self.init_pos[None, :], dpos), dim=0), dim=0)
 
         if not return_delta:

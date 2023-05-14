@@ -62,7 +62,9 @@ class VIGraph(nn.Module):
         vel = self.vel
         
         # IMU knowledge
-        imu_drot, imu_dpos, imu_dvel = imu_model.trajectory(return_delta=True)
+        imu_drot = self.imu_model.world_drot()
+        imu_dvel = self.imu_model.world_dvel(pose.rotation())
+        imu_dpos = self.imu_model.world_dpos(pose.rotation(), vel)
         
         # pose graph constraint
         pose1 = pose[self.vlink[:, 0]]
@@ -146,7 +148,7 @@ if __name__ == '__main__':
     from Datasets.TrajFolderDataset import TrajFolderDatasetPVGO
 
     dataroot = '/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync'
-    ds = TrajFolderDatasetPVGO(datadir=dataroot, datatype='kitti', start_frame=0, end_frame=8)
+    ds = TrajFolderDatasetPVGO(datadir=dataroot, datatype='kitti', start_frame=0, end_frame=80)
     print('Load data done.')
 
     t0 = time.time()
@@ -165,7 +167,10 @@ if __name__ == '__main__':
     graph = VIGraph(visual_motions=gt_motions, visual_links=links, imu_model=imu_model, 
                     loss_weight=(1,1,10,1))
 
+    t2 = time.time()
     trans_loss, rot_loss, pgo_pose, pgo_vel, pgo_motion = graph_optimization(graph)
+    t3 = time.time()
+    print('Graph optimization done. Time:', t3 - t2)
 
     imu_pos = imu_pos.detach().numpy()
     pgo_pos = pgo_pose[:, :3]
@@ -178,3 +183,11 @@ if __name__ == '__main__':
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.savefig('graph_optm_test_traj_XY.png')
+
+    plt.figure('XZ')
+    plt.plot(imu_pos[:, 0], imu_pos[:, 2], color='r')
+    plt.plot(pgo_pos[:, 0], pgo_pos[:, 2], color='b')
+    plt.plot(gt_pos[:, 0], gt_pos[:, 2], color='g')
+    plt.xlabel('X')
+    plt.ylabel('Z')
+    plt.savefig('graph_optm_test_traj_XZ.png')

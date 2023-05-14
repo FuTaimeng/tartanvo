@@ -1,27 +1,59 @@
+#!/bin/sh
+
+#SBATCH --cluster=ub-hpc
+###SBATCH --cluster=faculty
+
+#SBATCH --partition=general-compute --qos=general-compute
+###SBATCH --partition=scavenger --qos=scavenger
+
+#SBATCH --time=48:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+
+#SBATCH --gres=gpu:1
+###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
+###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
+###SBATCH --gres=gpu:nvidia_a16:12
+
+#SBATCH --mem=40000
+
+#SBATCH --job-name="train_vo_pvgo"
+
+###SBATCH --output= "result_$(date +"%Y_%m_%d_%k_%M_%S").out"
+
+###SBATCH --mail-user=taimengf@buffalo.edu
+###SBATCH --mail-type=ALL
+
+###SBATCH --requeue
+
+
+source ~/.bashrc
+conda activate impe-learning
+
+
+# CUDA_VISIBLE_DEVICES=2
+
 
 # data_dir=data/EuRoC_V102
 # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
 # data_dir=/user/taimengf/projects/kitti_raw/2011_10_03/2011_10_03_drive_0042_sync
-data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync
-# data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0016_sync
+# data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync
+data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0027_sync
 
 loss_weight='(1,0.1,10,1)'
 rot_w=1
 trans_w=0.1
 lr=1e-5
-project_name=opt_34
+project_name=opt_27
 # project_name=trylw_34
 # train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
-train_name=${rot_w}Ra_${trans_w}ta_lr=${lr}_${loss_weight}
+train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
 # train_name=trylw_${loss_weight}
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
 rm -r train_results_models/${project_name}/${train_name}
 mkdir -p train_results_models/${project_name}/${train_name}
-
-CUDA_VISIBLE_DEVICES=0
-CUDA_LAUNCH_BLOCKING=1
 
 python train.py \
     --result-dir train_results/${project_name}/${train_name} \
@@ -34,7 +66,7 @@ python train.py \
     --data-root ${data_dir} \
     --start-frame 0 \
     --end-frame -1 \
-    --train-epoch 2 \
+    --train-epoch 20 \
     --print-interval 1 \
     --snapshot-interval 1 \
     --lr ${lr} \
@@ -46,4 +78,5 @@ python train.py \
     --use-pvgo \
     --rot-w ${rot_w} \
     --trans-w ${trans_w} \
+    --delay-optm \
 # | tee train_results/${project_name}/${train_name}/log.txt
