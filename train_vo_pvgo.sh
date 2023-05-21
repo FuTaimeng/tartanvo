@@ -10,8 +10,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 
-#SBATCH --gres=gpu:1
-###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
+###SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:tesla_v100-pcie-32gb:1
 ###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
 ###SBATCH --gres=gpu:nvidia_a16:12
 
@@ -34,17 +34,23 @@ conda activate impe-learning
 # CUDA_VISIBLE_DEVICES=2
 
 
+ds_date=2011_10_03
+ds_idx=42
+# ds_date=2011_09_30
+# ds_idx=27
+
 # data_dir=data/EuRoC_V102
 # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
-# data_dir=/user/taimengf/projects/kitti_raw/2011_10_03/2011_10_03_drive_0042_sync
-# data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync
-data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0027_sync
+data_dir=/user/taimengf/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
+# data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0027_sync
 
 loss_weight='(1,0.1,10,1)'
 rot_w=1
 trans_w=0.1
 lr=1e-5
-project_name=opt_27
+epoch=20
+train_portion=1
+project_name=opt_${ds_idx}_p${train_portion}
 # project_name=trylw_34
 # train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
 train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
@@ -66,7 +72,7 @@ python train.py \
     --data-root ${data_dir} \
     --start-frame 0 \
     --end-frame -1 \
-    --train-epoch 20 \
+    --train-epoch ${epoch} \
     --print-interval 1 \
     --snapshot-interval 1 \
     --lr ${lr} \
@@ -79,4 +85,5 @@ python train.py \
     --rot-w ${rot_w} \
     --trans-w ${trans_w} \
     --delay-optm \
+    --train-portion ${train_portion}
 # | tee train_results/${project_name}/${train_name}/log.txt

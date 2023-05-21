@@ -100,6 +100,8 @@ def get_args():
                         help='loss trans part weight (default: 1)')
     parser.add_argument('--delay-optm', action='store_true', default=False,
                         help='optimize once per traj (default: "False")')
+    parser.add_argument('--train-portion', type=float, default=1,
+                        help='portion to bp loss (default: "False")')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -376,7 +378,7 @@ if __name__ == '__main__':
         
         timer.tic('opt')
 
-        if args.mode.startswith('train') and epoch > 0:
+        if args.mode.startswith('train') and epoch > 0 and current_idx < args.train_portion * dataset.num_img:
             # use masks
             R_changes, t_changes, R_norms, t_norms = calc_motion_error(vo_new_motions_np, pgo_motions, allow_rescale=False)
             # rot_mask = R_norms >= rot_th

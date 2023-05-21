@@ -133,6 +133,7 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
             if motion_mode:
                 state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end], init_state=last_state)
             else:
+                # print(st, end, dts[st:end].shape, gyros[st:end].shape, accels[st:end].shape)
                 state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end])
 
         poses.append(state['pos'][..., -1, :].squeeze().cpu().numpy())

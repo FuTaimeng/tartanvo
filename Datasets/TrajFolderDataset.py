@@ -287,6 +287,7 @@ class KITTITrajFolderLoader:
                 # get rid of \n (counts as 1) and extra 3 digits
                 t = dt.datetime.strptime(line[:-4], '%Y-%m-%d %H:%M:%S.%f')
                 timestamps.append(t.timestamp())
+        timestamps.sort()
 
         return timestamps
 
@@ -294,9 +295,12 @@ class KITTITrajFolderLoader:
         res = []
         j = 0
         for t in ts_tar:
-            while j+1 < len(ts_src) and abs(ts_src[j+1]-t) < abs(ts_src[j]-t):
+            while j+1 < len(ts_src) and abs(ts_src[j+1]-t) <= abs(ts_src[j]-t):
                 j += 1
             res.append(j)
+        for i in range(len(res)-1):
+            if res[i+1] - res[i] <= 0:
+                print('sync_data error', ts_tar[i:i+2], ts_src[max(0,res[i]-5):min(len(ts_src), res[i]+5)])
         return res
 
 
