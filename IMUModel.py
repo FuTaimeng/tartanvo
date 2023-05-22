@@ -2,6 +2,11 @@ import torch
 from torch import nn
 
 import pypose as pp
+import pypose.optim.solver as ppos
+import pypose.optim.kernel as ppok
+import pypose.optim.corrector as ppoc
+import pypose.optim.strategy as ppost
+from pypose.optim.scheduler import StopOnPlateau
 
 
 def skew_symmetric(x):
@@ -178,9 +183,11 @@ class IMUModel(nn.Module):
             k1 = k0 + 1
         J_alpha_ba = self.Jac[k0:k1, 0:3, 9:12]
         J_alpha_bw = self.Jac[k0:k1, 0:3, 12:15]
+        b_a = self.bias_a[self.kf[k0:k1], :, None]
+        b_w = self.bias_w[self.kf[k0:k1], :, None]
         res = self.alpha_hat[k0:k1, :, None] \
-              + J_alpha_ba @ self.bias_a[k0:k1, :, None] \
-              + J_alpha_bw @ self.bias_w[k0:k1, :, None]
+              + J_alpha_ba @ b_a \
+              + J_alpha_bw @ b_w
         return res.squeeze()
     
     def beta(self, k0=None, k1=None):
@@ -191,9 +198,11 @@ class IMUModel(nn.Module):
             k1 = k0 + 1
         J_beta_ba = self.Jac[k0:k1, 3:6, 9:12]
         J_beta_bw = self.Jac[k0:k1, 3:6, 12:15]
+        b_a = self.bias_a[self.kf[k0:k1], :, None]
+        b_w = self.bias_w[self.kf[k0:k1], :, None]
         res = self.beta_hat[k0:k1, :, None] \
-              + J_beta_ba @ self.bias_a[k0:k1, :, None] \
-              + J_beta_bw @ self.bias_w[k0:k1, :, None]
+              + J_beta_ba @ b_a \
+              + J_beta_bw @ b_w
         return res.squeeze()
 
     def gamma(self, k0=None, k1=None):
@@ -203,7 +212,8 @@ class IMUModel(nn.Module):
         elif k1 == None:
             k1 = k0 + 1
         J_gamma_bw = self.Jac[k0:k1, 6:9, 12:15]
-        dtheta = 0.5 * J_gamma_bw @ self.bias_w[k0:k1,:, None]
+        b_w = self.bias_w[self.kf[k0:k1], :, None]
+        dtheta = 0.5 * J_gamma_bw @ b_w
         dtheta = dtheta.squeeze()
         dquat = pp.SO3(torch.cat((dtheta, torch.ones(k1-k0, 1)), dim=1))
         res = self.gamma_hat[k0:k1] @ dquat.to(self.device)
@@ -229,10 +239,10 @@ class IMUModel(nn.Module):
                self.init_pos is not None
 
         drot = self.world_drot()
-        rot = pp.identity_SO3(self.num_keyframes)
-        rot[0] = self.init_rot
-        for i, dr in enumerate(drot):
-            rot[i+1] = rot[i] @ dr
+        rot = [self.init_rot]
+        for dr in drot:
+            rot.append(rot[-1] @ dr)
+        rot = torch.stack(rot)
 
         dvel = self.world_dvel(rot)
         vel = torch.cumsum(torch.cat((self.init_vel[None, :], dvel), dim=0), dim=0)
@@ -245,14 +255,45 @@ class IMUModel(nn.Module):
         else:
             return drot, dpos, dvel
 
+    def forward(self, gt_rot=None, gt_pos=None, gt_vel=None, weights=(1,1,1)):
+        rot, pos, vel = self.trajectory()
+
+        loss = []
+        if gt_rot is not None:
+            loss.extend(weights[0] * (gt_rot.Inv() @ rot).Log())
+        if gt_pos is not None:
+            loss.extend(weights[1] * (gt_pos - pos) ** 2)
+        if gt_vel is not None:
+            loss.extend(weights[2] * (gt_vel - vel) ** 2)
+        loss = torch.stack(loss)
+
+        return loss
+
+
+def imu_model_optimization(imu_model, radius=1e4, gt_rot=None, gt_pos=None, gt_vel=None, weights=(1,1,1)):
+    solver = ppos.Cholesky()
+    strategy = ppost.TrustRegion(radius=radius)
+    optimizer = pp.optim.LM(imu_model, solver=solver, strategy=strategy, min=1e-4, vectorize=False)
+    scheduler = StopOnPlateau(optimizer, steps=10, patience=3, decreasing=1e-3, verbose=False)
+
+    ### the 1st implementation: for customization and easy to extend
+    while scheduler.continual:
+        loss = optimizer.step(input=(gt_rot, gt_pos, gt_vel, weights))
+        scheduler.step(loss)
+
+    ### The 2nd implementation: equivalent to the 1st one, but more compact
+    # scheduler.optimize()
+
 
 if __name__ == '__main__':
     import time
     import matplotlib.pyplot as plt
     from Datasets.TrajFolderDataset import TrajFolderDatasetPVGO
 
+    torch.autograd.set_detect_anomaly(True)
+
     dataroot = '/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0034_sync'
-    ds = TrajFolderDatasetPVGO(datadir=dataroot, datatype='kitti')
+    ds = TrajFolderDatasetPVGO(datadir=dataroot, datatype='kitti', start_frame=0, end_frame=80)
     print('Load data done.')
 
     t0 = time.time()
@@ -267,16 +308,31 @@ if __name__ == '__main__':
     gt_pos = torch.tensor(ds.poses[:, :3])
     gt_rot = pp.SO3(ds.poses[:, 3:])
 
+    t2 = time.time()
+    imu_model_optimization(imu_model, gt_rot=gt_rot, gt_pos=gt_pos, weights=(1,1,0))
+    t3 = time.time()
+    print('IMU optimization done. Time:', t3 - t2)
+
+    print('accel bias ({})'.format(imu_model.bias_a.shape), imu_model.bias_a)
+    print('gyro bias ({})'.format(imu_model.bias_w.shape), imu_model.bias_w)
+    print('gravity', imu_model.g)
+
+    rot2, pos2, vel2 = imu_model.trajectory()
+
     rot_errs = torch.norm((gt_rot.Inv() @ rot).Log(), dim=1) * 180 / 3.14
     pos_errs = torch.norm(gt_pos - pos, dim=1)
-    print('Rot Errs:', rot_errs)
-    print('Pos Errs:', pos_errs)
+    rot2_errs = torch.norm((gt_rot.Inv() @ rot2).Log(), dim=1) * 180 / 3.14
+    pos2_errs = torch.norm(gt_pos - pos2, dim=1)
+    print('Rot Errs:', torch.mean(rot_errs), torch.mean(rot2_errs))
+    print('Pos Errs:', torch.mean(pos_errs), torch.mean(pos2_errs))
 
     pos = pos.detach().numpy()
+    pos2 = pos2.detach().numpy()
     gt_pos = gt_pos.numpy()
 
     plt.figure('XY')
     plt.plot(pos[:, 0], pos[:, 1], color='r')
+    plt.plot(pos2[:, 0], pos2[:, 1], color='b')
     plt.plot(gt_pos[:, 0], gt_pos[:, 1], color='g')
     plt.xlabel('X')
     plt.ylabel('Y')
@@ -284,6 +340,7 @@ if __name__ == '__main__':
 
     plt.figure('XZ')
     plt.plot(pos[:, 0], pos[:, 2], color='r')
+    plt.plot(pos2[:, 0], pos2[:, 2], color='b')
     plt.plot(gt_pos[:, 0], gt_pos[:, 2], color='g')
     plt.xlabel('X')
     plt.ylabel('Z')
@@ -291,6 +348,7 @@ if __name__ == '__main__':
 
     plt.figure('YZ')
     plt.plot(pos[:, 1], pos[:, 2], color='r')
+    plt.plot(pos2[:, 0], pos2[:, 2], color='b')
     plt.plot(gt_pos[:, 1], gt_pos[:, 2], color='g')
     plt.xlabel('Y')
     plt.ylabel('Z')

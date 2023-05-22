@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 from torch import nn
 
@@ -8,7 +10,7 @@ import pypose.optim.corrector as ppoc
 import pypose.optim.strategy as ppost
 from pypose.optim.scheduler import StopOnPlateau
 
-from IMUModel import IMUModel
+from IMUModel import IMUModel, imu_model_optimization
 
 
 def to_SE3(x):
@@ -135,9 +137,6 @@ def graph_optimization(graph, radius=1e4):
 
     pose, vel = graph.align_to_imu_init()
     motion = graph.motions()
-    pose = pose.detach().cpu().numpy()
-    vel = vel.detach().cpu().numpy()
-    motion = motion.detach().cpu().numpy()
 
     return trans_loss, rot_loss, pose, vel, motion
 
@@ -165,19 +164,42 @@ if __name__ == '__main__':
     gt_motions = gt_poses[links[:, 0]].Inv() @ gt_poses[links[:, 1]]
 
     graph = VIGraph(visual_motions=gt_motions, visual_links=links, imu_model=imu_model, 
-                    loss_weight=(1,1,10,1))
+                    loss_weight=(1,0.1,10,1))
 
     t2 = time.time()
     trans_loss, rot_loss, pgo_pose, pgo_vel, pgo_motion = graph_optimization(graph)
     t3 = time.time()
     print('Graph optimization done. Time:', t3 - t2)
 
+    pgo_rot = pgo_pose.rotation().detach()
+    pgo_pos = pgo_pose.translation().detach()
+
+    t4 = time.time()
+    imu_model_optimization(imu_model, gt_rot=pgo_rot, gt_pos=pgo_pos, weights=(0.1,10,0))
+    t5 = time.time()
+    print('IMU optimization done. Time:', t5 - t4)
+
+    imu_rot2, imu_pos2, imu_vel2 = imu_model.trajectory()
+
+    gt_rot = gt_poses.rotation()
+    gt_pos = gt_poses.translation()
+    imu_rot_errs = torch.norm((gt_rot.Inv() @ imu_rot).Log(), dim=1) * 180 / 3.14
+    imu_rot2_errs = torch.norm((gt_rot.Inv() @ imu_rot2).Log(), dim=1) * 180 / 3.14
+    pgo_rot_errs = torch.norm((gt_rot.Inv() @ pgo_rot).Log(), dim=1) * 180 / 3.14
+    imu_pos_errs = torch.norm(gt_pos - imu_pos, dim=1)
+    imu_pos2_errs = torch.norm(gt_pos - imu_pos2, dim=1)
+    pgo_pos_errs = torch.norm(gt_pos - pgo_pos, dim=1)
+    print('Rot Errs:', torch.mean(imu_rot_errs), torch.mean(pgo_rot_errs), torch.mean(imu_rot2_errs))
+    print('Pos Errs:', torch.mean(imu_pos_errs), torch.mean(pgo_pos_errs), torch.mean(imu_pos2_errs))
+
     imu_pos = imu_pos.detach().numpy()
-    pgo_pos = pgo_pose[:, :3]
+    imu_pos2 = imu_pos2.detach().numpy()
+    pgo_pos = pgo_pos.numpy()
     gt_pos = ds.poses[:, :3]
 
     plt.figure('XY')
     plt.plot(imu_pos[:, 0], imu_pos[:, 1], color='r')
+    plt.plot(imu_pos2[:, 0], imu_pos2[:, 1], color='pink')
     plt.plot(pgo_pos[:, 0], pgo_pos[:, 1], color='b')
     plt.plot(gt_pos[:, 0], gt_pos[:, 1], color='g')
     plt.xlabel('X')
@@ -186,6 +208,7 @@ if __name__ == '__main__':
 
     plt.figure('XZ')
     plt.plot(imu_pos[:, 0], imu_pos[:, 2], color='r')
+    plt.plot(imu_pos2[:, 0], imu_pos2[:, 2], color='pink')
     plt.plot(pgo_pos[:, 0], pgo_pos[:, 2], color='b')
     plt.plot(gt_pos[:, 0], gt_pos[:, 2], color='g')
     plt.xlabel('X')
