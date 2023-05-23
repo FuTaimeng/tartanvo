@@ -3,6 +3,8 @@ from Datasets.transformation import tartan2kitti_pypose, motion2pose_pypose, cvt
 from Datasets.TrajFolderDataset import TrajFolderDatasetPVGO
 from evaluator.evaluate_rpe import calc_motion_error, calc_rot_error
 from TartanVO import TartanVO
+from VIGraph import VIGraph, graph_optimization
+from IMUModel import IMUModel, imu_model_optimization
 
 from pvgo import run_pvgo
 from imu_integrator import run_imu_preintegrator
@@ -20,6 +22,7 @@ import argparse
 from os import makedirs
 from os.path import isdir
 from timer import Timer
+import time
 
 import wandb
 os.environ["WANDB_SILENT"] = "true"
@@ -175,42 +178,6 @@ if __name__ == '__main__':
         print("No IMU data! Turn use_imu to False.")
         args.use_imu = False
 
-    if args.use_imu:
-        timer.tic('imu')
-
-        imu_motion_mode = False
-
-        imu_trans, imu_rots, imu_covs, imu_vels = run_imu_preintegrator(
-            dataset.accels, dataset.gyros, dataset.imu_dts, 
-            init=dataset.imu_init, gravity=dataset.gravity, 
-            device=args.device, motion_mode=imu_motion_mode,
-            rgb2imu_sync=dataset.rgb2imu_sync)
-
-        imu_poses = np.concatenate((imu_trans, imu_rots), axis=1)
-        np.savetxt(trainroot+'/imu_pose.txt', imu_poses)
-        np.savetxt(trainroot+'/imu_vel.txt', imu_vels)
-
-        imu_motion_mode = True
-
-        imu_trans, imu_rots, imu_covs, imu_vels = run_imu_preintegrator(
-            dataset.accels, dataset.gyros, dataset.imu_dts, 
-            init=dataset.imu_init, gravity=dataset.gravity, 
-            device=args.device, motion_mode=imu_motion_mode,
-            rgb2imu_sync=dataset.rgb2imu_sync)
-
-        imu_motions = np.concatenate((imu_trans, imu_rots), axis=1)
-        np.savetxt(trainroot+'/imu_motion.txt', imu_motions)
-        np.savetxt(trainroot+'/imu_dvel.txt', imu_vels)
-        
-        timer.toc('imu')
-        print('imu preintegration time:', timer.tot('imu'))
-
-        np.savetxt(trainroot+'/imu_accel.txt', dataset.accels.reshape(-1, 3))
-        np.savetxt(trainroot+'/imu_gyro.txt', dataset.gyros.reshape(-1, 3))
-        np.savetxt(trainroot+'/gt_vel.txt', dataset.vels.reshape(-1, 3))
-        np.savetxt(trainroot+'/imu_dt.txt', dataset.imu_dts.reshape(-1, 1))
-        # exit(0)
-
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
                         device_id=device_id, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), 
                         fix_parts=args.fix_model_parts, use_DDP=False)
@@ -358,17 +325,33 @@ if __name__ == '__main__':
         timer.tic('pgo')
 
         if args.use_imu and args.use_pvgo:
-            st = current_idx
-            end = current_idx + vo_new_frames_cnt
-            current_imu_rots = imu_rots[st:end]
-            current_imu_trans = imu_trans[st:end]
-            current_imu_vels = imu_vels[st:end]
-            current_dts = dataset.rgb_dts[st:end]
-            trans_loss, rot_loss, pgo_poses, pgo_vels, pgo_motions = run_pvgo(
-                vo_new_poses_np, vo_new_motions, vo_new_links, 
-                current_imu_rots, current_imu_trans, current_imu_vels, init_state, current_dts, 
-                device=args.device, loss_weight=args.loss_weight, stop_frames=dataset.stop_frames,
-                init_with_imu_rot=True, init_with_imu_vel=True)
+            st = dataset.rgb2imu_sync[current_idx]
+            end = dataset.rgb2imu_sync[current_idx + vo_new_frames_cnt] + 1
+            accels = dataset.accels[st:end]
+            gyros = dataset.gyros[st:end]
+            dts = dataset.imu_dts[st:end-1]
+            kfs = dataset.rgb2imu_sync[current_idx : current_idx + vo_new_frames_cnt + 1] - st
+
+            print(vo_new_motions.shape, kfs, accels.shape)
+
+            t0 = time.time()
+            imu_model = IMUModel(
+                gyro_measurments=gyros, accel_measurments=accels, 
+                deltatimes=dts, keyframe_idx=kfs, device=args.device,
+                init_rot=init_state['rot'], init_pos=init_state['pos'], init_vel=init_state['vel']
+            ).to(args.device)
+            t1 = time.time()
+            print('Init IMU model done. Time:', t1 - t0)
+
+            graph = VIGraph(
+                visual_motions=vo_new_motions, visual_links=vo_new_links, 
+                imu_model=imu_model, loss_weight=args.loss_weight
+            ).to(args.device)
+
+            t2 = time.time()
+            trans_loss, rot_loss, pgo_poses, pgo_vels, pgo_motions = graph_optimization(graph, imu_model)
+            t3 = time.time()
+            print('Graph optimization done. Time:', t3 - t2)
 
         pgo_motions_list.extend(pgo_motions)
         pgo_poses_list.extend(pgo_poses[1:])

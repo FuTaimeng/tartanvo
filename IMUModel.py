@@ -107,9 +107,9 @@ class IMUModel(nn.Module):
         self.bias_a = init_accel_bias.repeat(N, 1).to(device)   
         self.bias_w = init_gyro_bias.repeat(N, 1).to(device)
         self.g = gravity.to(device)
-        self.init_rot = init_rot
-        self.init_pos = init_pos
-        self.init_vel = init_vel
+        self.init_rot = init_rot.to(device)
+        self.init_pos = init_pos.to(device)
+        self.init_vel = init_vel.to(device)
         self.device = device
 
         self.num_measurements = N
@@ -159,11 +159,11 @@ class IMUModel(nn.Module):
 
         state = self.preintegrator(dt=dt[:, None], acc=acc, gyro=gyro)
 
-        J = torch.eye(15)
+        J = torch.eye(15).to(self.device)
         for i in range(end_idx - start_idx):
             R = state['rot'][..., i, :].squeeze().matrix()
             F = F_t(R, acc[i], b_a[i], gyro[i], b_w[i])
-            J = (torch.eye(15) + dt[i] * F) @ J
+            J = (torch.eye(15).to(self.device) + dt[i] * F) @ J
         
         alpha = state['pos'][..., -1, :].squeeze()
         beta = state['vel'][..., -1, :].squeeze()
@@ -215,8 +215,8 @@ class IMUModel(nn.Module):
         b_w = self.bias_w[self.kf[k0:k1], :, None]
         dtheta = 0.5 * J_gamma_bw @ b_w
         dtheta = dtheta.squeeze()
-        dquat = pp.SO3(torch.cat((dtheta, torch.ones(k1-k0, 1)), dim=1))
-        res = self.gamma_hat[k0:k1] @ dquat.to(self.device)
+        dquat = pp.SO3(torch.cat((dtheta, torch.ones(k1-k0, 1).to(self.device)), dim=1))
+        res = self.gamma_hat[k0:k1] @ dquat
         return res.squeeze()
 
     def world_dpos(self, R_wb, vel_w):
@@ -276,6 +276,13 @@ def imu_model_optimization(imu_model, radius=1e4, gt_rot=None, gt_pos=None, gt_v
     optimizer = pp.optim.LM(imu_model, solver=solver, strategy=strategy, min=1e-4, vectorize=False)
     scheduler = StopOnPlateau(optimizer, steps=10, patience=3, decreasing=1e-3, verbose=False)
 
+    if gt_rot is not None:
+        gt_rot = gt_rot.to(imu_model.device)
+    if gt_pos is not None:
+        gt_pos = gt_pos.to(imu_model.device)
+    if gt_vel is not None:
+        gt_vel = gt_vel.to(imu_model.device)
+
     ### the 1st implementation: for customization and easy to extend
     while scheduler.continual:
         loss = optimizer.step(input=(gt_rot, gt_pos, gt_vel, weights))
@@ -298,7 +305,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     imu_model = IMUModel(gyro_measurments=ds.gyros, accel_measurments=ds.accels, 
-        deltatimes=ds.imu_dts, keyframe_idx=ds.rgb2imu_sync, device='cpu',
+        deltatimes=ds.imu_dts, keyframe_idx=ds.rgb2imu_sync, device='cuda:0',
         init_rot=ds.imu_init['rot'], init_pos=ds.imu_init['pos'], init_vel=ds.imu_init['vel'])
     t1 = time.time()
     print('Init IMU model done. Time:', t1 - t0)

@@ -34,10 +34,10 @@ conda activate impe-learning
 # CUDA_VISIBLE_DEVICES=2
 
 
-ds_date=2011_10_03
-ds_idx=42
-# ds_date=2011_09_30
-# ds_idx=27
+# ds_date=2011_10_03
+# ds_idx=42
+ds_date=2011_09_30
+ds_idx=16
 
 # data_dir=data/EuRoC_V102
 # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
@@ -50,11 +50,11 @@ trans_w=0.1
 lr=1e-5
 epoch=20
 train_portion=1
-project_name=opt_${ds_idx}_p${train_portion}
-# project_name=trylw_34
+# project_name=opt_${ds_idx}_p${train_portion}
+project_name=test
 # train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
-train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
-# train_name=trylw_${loss_weight}
+# train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
+train_name=test_vigraph
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
@@ -85,5 +85,6 @@ python train.py \
     --rot-w ${rot_w} \
     --trans-w ${trans_w} \
     --delay-optm \
-    --train-portion ${train_portion}
+    --train-portion ${train_portion} \
+    --not-write-log \
 # | tee train_results/${project_name}/${train_name}/log.txt

@@ -13,25 +13,23 @@ from pypose.optim.scheduler import StopOnPlateau
 from IMUModel import IMUModel, imu_model_optimization
 
 
-def to_SE3(x):
-    if isinstance(x, pp.LieTensor):
-        if x.ltype == pp.SE3_type:
-            return x.to(dtype=torch.float32)
-        elif x.ltype == pp.se3_type:
-            return x.Exp().to(dtype=torch.float32)
-        else:
-            raise RuntimeError('Cannot convert to SE3: {}'.format(x))
-    else:
-        return pp.SE3(x, dtype=torch.float32)
-
-
 class VIGraph(nn.Module):
     def __init__(self, visual_motions, visual_links, imu_model, loss_weight):
         super().__init__()
 
-        assert isinstance(visual_motions, pp.LieTensor) and visual_motions.ltype == pp.SE3_type
-        assert isinstance(visual_links, torch.Tensor)
         assert isinstance(imu_model, IMUModel)
+        device = imu_model.device
+
+        if not isinstance(visual_motions, pp.LieTensor):
+            visual_motions = pp.SE3(visual_motions).to(device)
+        else:
+            assert visual_motions.ltype == pp.SE3_type
+            visual_motions = visual_motions.to(device)
+
+        if not isinstance(visual_links, torch.Tensor):
+            visual_links = torch.tensor(visual_links, dtype=int, device=device)
+        else:
+            visual_links = visual_links.to(dtype=int, device=device)
 
         assert visual_motions.shape[0] == visual_links.shape[0]
         assert torch.max(visual_links) < imu_model.num_keyframes
@@ -49,7 +47,6 @@ class VIGraph(nn.Module):
         self.pose = pp.Parameter(pose)
         self.vel = torch.nn.Parameter(ivel)
         self.vlink = visual_links
-        self.imu_model = imu_model
 
         assert len(loss_weight) == 4
         # loss weight hyper para
@@ -58,15 +55,15 @@ class VIGraph(nn.Module):
         self.l3 = loss_weight[2]
         self.l4 = loss_weight[3]
 
-    def forward(self):
+    def forward(self, imu_model):
         # parameters
         pose = self.pose
         vel = self.vel
         
         # IMU knowledge
-        imu_drot = self.imu_model.world_drot()
-        imu_dvel = self.imu_model.world_dvel(pose.rotation())
-        imu_dpos = self.imu_model.world_dpos(pose.rotation(), vel)
+        imu_drot = imu_model.world_drot()
+        imu_dvel = imu_model.world_dvel(pose.rotation())
+        imu_dpos = imu_model.world_dpos(pose.rotation(), vel)
         
         # pose graph constraint
         pose1 = pose[self.vlink[:, 0]]
@@ -106,9 +103,9 @@ class VIGraph(nn.Module):
 
         return trans_loss, rot_loss
 
-    def align_to_imu_init(self):
+    def align_to_imu_init(self, imu_model):
         source = self.pose[0].detach()
-        target = self.imu_model.init_pose()
+        target = imu_model.init_pose()
         aligned_vel = target.rotation() @ source.rotation().Inv() @ self.vel
         aligned_pose = target @ source.Inv() @ self.pose
         return aligned_pose, aligned_vel
@@ -117,7 +114,7 @@ class VIGraph(nn.Module):
         return self.pose[self.vlink[:, 0]].Inv() @ self.pose[self.vlink[:, 1]]
 
 
-def graph_optimization(graph, radius=1e4):
+def graph_optimization(graph, imu_model, radius=1e4):
     assert isinstance(graph, VIGraph)
 
     solver = ppos.Cholesky()
@@ -127,7 +124,7 @@ def graph_optimization(graph, radius=1e4):
 
     ### the 1st implementation: for customization and easy to extend
     while scheduler.continual:
-        loss = optimizer.step(input=())
+        loss = optimizer.step(input=(imu_model))
         scheduler.step(loss)
 
     ### The 2nd implementation: equivalent to the 1st one, but more compact
@@ -135,7 +132,7 @@ def graph_optimization(graph, radius=1e4):
 
     trans_loss, rot_loss = graph.vo_loss()
 
-    pose, vel = graph.align_to_imu_init()
+    pose, vel = graph.align_to_imu_init(imu_model)
     motion = graph.motions()
 
     return trans_loss, rot_loss, pose, vel, motion
