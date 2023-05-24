@@ -136,7 +136,7 @@ def evaluate_trajectory(traj_gt, traj_est, param_max_pairs=10000, param_fixed_de
     return result
 
 
-def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
+def calc_motion_error(motions_gt, motions_est, allow_rescale=False,allow_gt_rescale= True):
     from scipy.spatial.transform import Rotation
 
     factor = 1
@@ -145,13 +145,25 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
         s2 = np.linalg.norm(motions_est[:, :3], axis=1)
         factor = np.median(s1 / s2)
 
+    if allow_gt_rescale:
+        trans_est_norm = np.linalg.norm(motions_est[:, :3], axis=1)
+        scale = np.linalg.norm(motions_gt[:, :3], axis=1)
+
+        trans_est = motions_est[:, :3] 
+        eps = 1e-12 * np.ones(trans_est_norm.shape)
+        
     t_gt = motions_gt[:, :3]
     if motions_gt.shape[1] == 7:
         R_gt = Rotation.from_quat(motions_gt[:, 3:])
     else:
         R_gt = Rotation.from_rotvec(motions_gt[:, 3:])
 
-    t_est = motions_est[:, :3] * factor
+    if allow_gt_rescale:
+        t_est = trans_est / \
+                np.max((trans_est_norm, eps)) * scale.reshape(-1, 1)
+    else:
+        t_est = motions_est[:, :3] * factor
+
     if motions_est.shape[1] == 7:
         R_est = Rotation.from_quat(motions_est[:, 3:])
     else:
@@ -163,4 +175,7 @@ def calc_motion_error(motions_gt, motions_est, allow_rescale=False):
     R_norms = np.rad2deg(R_gt.magnitude())
     t_norms = np.linalg.norm(t_gt, axis=1)
 
-    return R_errs, t_errs, R_norms, t_norms
+    if allow_gt_rescale:
+        return R_errs, t_errs, R_norms, t_norms, np.concatenate((t_est, motions_est[:, 3:]), axis = 1)
+    else:
+        return R_errs, t_errs, R_norms, t_norms

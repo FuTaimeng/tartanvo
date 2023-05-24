@@ -4,14 +4,14 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Python: Current File",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "${file}",
-        //     "console": "integratedTerminal",
-        //     "justMyCode": true
-        // },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
         {
             "name": "autotune_taimeng",
             "type": "python",
@@ -25,11 +25,12 @@
                 "--flow-model-name", "./models/pwc_net.pth.tar",
                 "--pose-model-name", "./models/MulticamVO_SOnly_lrFix_Proc2_B32_lr8.000e-04_Oadam_nel2_ntl3_st60000.pkl",
                 // "--pose-model-name", "./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl",
-                "--batch-size", "16",
-                "--worker-num", "2",
+                "--batch-size", "1",
+                // "--batch-size", "1",
+                "--worker-num", "4",
                 "--data-root", "/home/data2/TartanAir/TartanAir_comb",
             //   "--data-root", "${data_dir}",
-                "--print-interval", "5",
+                "--print-interval", "1",
                 "--snapshot-interval", "500",
                 "--mode", "train-all",
                 "--random-intrinsic", "800",
@@ -55,6 +56,7 @@
                 "--val-interval", "1",
                 "--euroc-path", "/home/data2/euroc_raw",
                 "--kitti-path", "/home/data2/kitti_raw",
+                "--gpu-id", "1"
                 ]
           },
 

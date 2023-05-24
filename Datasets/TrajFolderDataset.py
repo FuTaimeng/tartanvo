@@ -18,6 +18,10 @@ from .stopDetector import gt_vel_stop_detector
 from .loopDetector import multicam_frame_selector
 from tqdm import tqdm
 
+# import matplotlib
+# matplotlib.use('WebAgg')
+# import matplotlib.pyplot as plt
+
 class TartanAirTrajFolderLoader:
     def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
         ############################## load images ######################################################################
@@ -95,7 +99,7 @@ class TartanAirTrajFolderLoader:
 
 
 class EuRoCTrajFolderLoader:
-    def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
+    def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1,enable_stereorectify = True):
         all_timestamps = []
 
         ############################## load images ######################################################################
@@ -133,6 +137,13 @@ class EuRoCTrajFolderLoader:
         else:
             self.right2left_pose = None
 
+        if enable_stereorectify:
+            self.right2left_pose = \
+                pp.SE3([ 1.1007e-01, -1.6888e-04,  8.8537e-04,  7.0547e-03, -1.6206e-04,
+                1.1015e-03,  9.9997e-01])
+            self.intrinsic = np.array([436.2345864,  436.2345864,  364.44123459, 256.95167542])
+
+        
         ############################## load gt poses ######################################################################
         df = pandas.read_csv(datadir + '/state_groundtruth_estimate0/data.csv')
         timestamps_pose = df.values[:, 0].astype(int) // int(1e6)
@@ -204,6 +215,124 @@ class EuRoCTrajFolderLoader:
             self.has_imu = False
 
 
+# class EuRoCStereoRectifyTrajFolderLoader:
+#     def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1,stereorectify = True):
+#         all_timestamps = []
+
+#         ############################## load images ######################################################################
+#         df = pandas.read_csv(datadir + '/cam0/data.csv')
+#         timestamps_left = df.values[:, 0].astype(int) // int(1e6)
+#         all_timestamps.append(timestamps_left)
+#         self.rgbfiles = datadir + '/cam0/data/' + df.values[:, 1]
+
+#         ############################## load stereo right images ######################################################################
+#         if isfile(datadir + '/cam1/data.csv'):
+#             df = pandas.read_csv(datadir + '/cam1/data.csv')
+#             timestamps_right = df.values[:, 0].astype(int) // int(1e6)
+#             all_timestamps.append(timestamps_right)
+#             self.rgbfiles_right = datadir + '/cam1/data/' + df.values[:, 1]
+#         else:
+#             self.rgbfiles_right = None
+
+#         ############################## load calibrations ######################################################################
+#         with open(datadir + '/cam0/sensor.yaml') as f:
+#             res = yaml.load(f.read(), Loader=yaml.FullLoader)
+#             self.intrinsic = np.array(res['intrinsics'])
+#             T_BL = np.array(res['T_BS']['data']).reshape(4, 4)
+        
+#         if self.rgbfiles_right is not None:
+#             with open(datadir + '/cam1/sensor.yaml') as f:
+#                 res = yaml.load(f.read(), Loader=yaml.FullLoader)
+#                 self.intrinsic_right = np.array(res['intrinsics'])
+#                 T_BR = np.array(res['T_BS']['data']).reshape(4, 4)
+#         else:
+#             self.intrinsic_right = None
+        
+#         '''
+#         if self.rgbfiles_right is not None:
+#             T_LR = np.matmul(np.linalg.inv(T_BL), T_BR)
+#             self.right2left_pose = pp.from_matrix(torch.tensor(T_LR), ltype=pp.SE3_type).to(dtype=torch.float32)
+#         else:
+#             self.right2left_pose = None
+#         '''
+        
+#         self.right2left_pose = \
+#             pp.SE3([ 1.1007e-01, -1.6888e-04,  8.8537e-04,  7.0547e-03, -1.6206e-04,
+#             1.1015e-03,  9.9997e-01])
+#         self.intrinsic = np.array([436.2345864,  436.2345864,  364.44123459, 256.95167542])
+
+
+#         ############################## load gt poses ######################################################################
+#         df = pandas.read_csv(datadir + '/state_groundtruth_estimate0/data.csv')
+#         timestamps_pose = df.values[:, 0].astype(int) // int(1e6)
+#         all_timestamps.append(timestamps_pose)
+#         self.poses = (df.values[:, 1:8])[:, (0,1,2, 4,5,6,3)]
+#         self.vels = df.values[:, 8:11]
+#         accel_bias = np.mean(df.values[:, 14:17], axis=0)
+#         gyro_bias = np.mean(df.values[:, 11:14], axis=0)
+
+#         ############################## align timestamps ######################################################################
+#         timestamps = set(all_timestamps[0])
+#         for i in range(1, len(all_timestamps)):
+#             timestamps = timestamps.intersection(set(all_timestamps[i]))
+#         self.rgbfiles = self.rgbfiles[[i for i, t in enumerate(timestamps_left) if t in timestamps]]
+#         if self.rgbfiles_right is not None:
+#             self.rgbfiles_right = self.rgbfiles_right[[i for i, t in enumerate(timestamps_left) if t in timestamps]]
+#         self.poses = self.poses[[i for i, t in enumerate(timestamps_pose) if t in timestamps]]
+#         self.vels = self.vels[[i for i, t in enumerate(timestamps_pose) if t in timestamps]]
+#         timestamps = np.array(list(timestamps))
+#         timestamps.sort()
+#         self.rgb_dts = np.diff(timestamps).astype(np.float32) * 1e-3
+
+#         ############################## load imu data ######################################################################
+#         if isfile(datadir + '/imu0/data.csv'):
+#             df = pandas.read_csv(datadir + '/imu0/data.csv')
+#             timestamps_imu = df.values[:, 0].astype(int) // int(1e6)
+#             accels = df.values[:, 4:7]
+#             gyros = df.values[:, 1:4]
+            
+#             self.accels = accels - accel_bias
+#             self.gyros = gyros - gyro_bias
+
+#             self.imu_dts = np.diff(timestamps_imu).astype(np.float32) * 1e-3
+            
+#             self.rgb2imu_sync = np.searchsorted(timestamps_imu, timestamps)
+
+#             T_C1C2 = np.array([ 0., 1.,0.,0.,
+#                                 0., 0.,1.,0.,
+#                                 1., 0.,0.,0.,
+#                                 0., 0.,0.,1.]).reshape(4,4)
+
+#             T_C1C2 = pp.from_matrix(T_C1C2, ltype=pp.SE3_type).to(dtype=torch.float32)
+
+#             with open(datadir + '/imu0/sensor.yaml') as f:
+#                 res = yaml.load(f.read(), Loader=yaml.FullLoader)
+#                 T_BI = np.array(res['T_BS']['data']).reshape(4, 4)
+#                 T_IL = np.matmul(np.linalg.inv(T_BI), T_BL)
+#                 self.rgb2imu_pose = pp.from_matrix(torch.tensor(T_IL), ltype=pp.SE3_type).to(dtype=torch.float32)
+#                 T_IMU_CAM = self.rgb2imu_pose
+
+#             if self.poses is not None:
+#                 init_pos = self.poses[0, :3]
+#                 init_rot = self.poses[0, 3:]
+#                 init_vel = self.vels[0, :]
+#             else:
+#                 init_pos = np.zeros(3, dtype=np.float32)
+#                 init_rot = np.array([0, 0, 0, 1], dtype=np.float32)
+#                 init_vel = np.zeros(3, dtype=np.float32)
+#             self.imu_init = {'pos':init_pos, 'rot':init_rot, 'vel':init_vel}
+            
+#             pose_cam_ned = pp.SE3(self.poses) * T_IMU_CAM * T_C1C2
+#             self.poses =  pose_cam_ned[0,:].Inv() * pose_cam_ned
+#             self.poses = self.poses.numpy().astype(np.float32)
+#             self.gravity = 9.81
+
+#             self.has_imu = True
+
+#         else:
+#             self.has_imu = False
+
+
 class KITTITrajFolderLoader:
     def __init__(self, datadir, sample_step=1, start_frame=0, end_frame=-1):
         import pykitti
@@ -257,13 +386,15 @@ class KITTITrajFolderLoader:
         T_w_imu = np.array([oxts_frame.T_w_imu for oxts_frame in dataset.oxts])
         self.poses = pp.from_matrix(torch.tensor(T_w_imu), ltype=pp.SE3_type).to(dtype=torch.float32)
         vels_local = torch.tensor([[oxts_frame.packet.vf, oxts_frame.packet.vl, oxts_frame.packet.vu] for oxts_frame in dataset.oxts], dtype=torch.float32)
+        # vels_global = torch.tensor([[oxts_frame.packet.vn, oxts_frame.packet.ve, 0] for oxts_frame in dataset.oxts], dtype=torch.float32)
+
         self.vels = self.poses.rotation() @ vels_local
         self.poses = self.poses.numpy()
         self.vels = self.vels.numpy()
 
         ############################## load imu data ######################################################################
         # self.accels = np.array([[oxts_frame.packet.af, oxts_frame.packet.al, oxts_frame.packet.au] for oxts_frame in dataset.oxts])
-        # self.gyros = np.array([[oxts_frame.packet.wf, oxts_frame.packet.wl, oxts_frame.packet.wu] for oxts_frame in dataset.oxts])
+        self.gyro_local = np.array([[oxts_frame.packet.wf, oxts_frame.packet.wl, oxts_frame.packet.wu] for oxts_frame in dataset.oxts])
         self.accels = np.array([[oxts_frame.packet.ax, oxts_frame.packet.ay, oxts_frame.packet.az] for oxts_frame in dataset.oxts])
         self.gyros = np.array([[oxts_frame.packet.wx, oxts_frame.packet.wy, oxts_frame.packet.wz] for oxts_frame in dataset.oxts])
 
@@ -310,7 +441,8 @@ class TrajFolderDataset(Dataset):
             if datatype == 'tartanair':
                 loader = TartanAirTrajFolderLoader(datadir)
             elif datatype == 'euroc':
-                loader = EuRoCTrajFolderLoader(datadir)
+                loader = EuRoCTrajFolderLoader(datadir,enable_stereorectify = True)
+                # loader = EuRoCStereoRectifyTrajFolderLoader(datadir,stereorectify)
             elif datatype == 'kitti':
                 loader = KITTITrajFolderLoader(datadir)
 
@@ -383,6 +515,17 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
     def __init__(self, datadir, datatype, transform=None, start_frame=0, end_frame=-1, loader=None,
                     use_loop_closure=False, use_stop_constraint=False):
 
+        # if datatype == 'euroc':
+        #     self.enable_stereorectify = True
+        # else:
+        #     self.enable_stereorectify = False
+        
+        if datatype == 'euroc':
+            self.enable_stereorectify = True
+            print("Euroc enable_stereorectify",self.enable_stereorectify)
+        else:
+            self.enable_stereorectify = False
+
         super(TrajFolderDatasetPVGO, self).__init__(datadir, datatype, transform, start_frame, end_frame, loader)
 
         ############################## generate links ######################################################################
@@ -407,6 +550,10 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
         ############################## calc motions ######################################################################
         self.motions = self.calc_motions_by_links(self.links)
 
+        if self.enable_stereorectify:
+            self.mapLx, self.mapLy, self.mapRx, self.mapRy = np.load("remap_variables.npy", allow_pickle=True)
+
+
         ############################## pick stop frames ######################################################################
         self.stop_frames = []
         if use_stop_constraint and self.vels_world is not None:
@@ -417,10 +564,48 @@ class TrajFolderDatasetPVGO(TrajFolderDataset):
 
         img0 = cv2.imread(self.rgbfiles[self.links[idx][0]], cv2.IMREAD_COLOR)
         img1 = cv2.imread(self.rgbfiles[self.links[idx][1]], cv2.IMREAD_COLOR)
+        
+        if self.enable_stereorectify:
+            img0 = cv2.remap(img0, self.mapLx, self.mapLy, cv2.INTER_LINEAR)
+            img1 = cv2.remap(img1, self.mapRx, self.mapRy, cv2.INTER_LINEAR)
+
         res['img0'] = [img0]
         res['img1'] = [img1]
         res['path_img0'] = self.rgbfiles[self.links[idx][0]]
         res['path_img1'] = self.rgbfiles[self.links[idx][1]]
+
+        '''
+        if self.enable_stereorectify:
+            plt.close('all')
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+            axes[0].imshow(img0)
+            axes[0].axis('off')
+            axes[0].set_title('Image left')
+            # print("rectifyImageL.shape:{}".format(rectifyImageL.shape))
+
+            axes[1].imshow(img1)
+            axes[1].axis('off')
+            axes[1].set_title('Image right')
+            # print("rectifyImageR.shape:{}".format(rectifyImageR.shape))
+            # show the plot
+            # plt.show()
+            # Create a 1x2 subplot and plot the images side by side
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+            axes[0].imshow(img0_rc)
+            axes[0].axis('off')
+            axes[0].set_title('Image left undistorted and rectified')
+            # print("rectifyImageL.shape:{}".format(rectifyImageL.shape))
+
+            axes[1].imshow(img1_rc)
+            axes[1].axis('off')
+            axes[1].set_title('Image right undistorted and rectified')
+            # print("rectifyImageR.shape:{}".format(rectifyImageR.shape))
+            # show the plot
+            # plt.show()
+            print()   
+        '''
 
         if self.rgbfiles_right is not None:
             img0_r = cv2.imread(self.rgbfiles_right[self.links[idx][0]], cv2.IMREAD_COLOR)
@@ -546,7 +731,8 @@ class MultiTrajFolderDataset(Dataset):
             return []
         else:
             dataroot = self.datatype_root['tartanair']
-
+        
+        '''
         scenedirs = [
             'abandonedfactory',    'abandonedfactory_night',   'amusement',        'carwelding',   'ocean',
             'gascola',             'hospital',                 'japanesealley',    'neighborhood', 'seasonsforest',
@@ -561,6 +747,16 @@ class MultiTrajFolderDataset(Dataset):
         elif self.mode == 'test':
             scenedirs = scenedirs[16:18]
             print('\nLoading Testing dataset')
+        '''
+
+        print('Debugging tartanair dataset')
+
+        scenedirs = [
+            'abandonedfactory'
+        ]
+        level_set = ['Easy']
+
+
                 
         res = []
 
@@ -570,6 +766,8 @@ class MultiTrajFolderDataset(Dataset):
                 trajdirs.sort()
                 for traj in trajdirs:
                     if not (len(traj)==4 and traj.startswith('P0')):
+                        continue
+                    if traj != 'P000':
                         continue
                     folder = '{}/{}/{}/{}'.format(dataroot, scene, level, traj)
                     res.append([folder, 'tartanair'])

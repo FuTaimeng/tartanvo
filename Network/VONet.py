@@ -94,7 +94,10 @@ class MultiCamVONet(nn.Module):
         from .VOFlowNet import VOFlowRes as FlowPoseNet
         self.flowPoseNet = FlowPoseNet(intrinsic=True, down_scale=True, config=1, stereo=use_stereo, fix_parts=fix_parts,
                                         extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
-
+        
+        # self.flowPoseNet1 = FlowPoseNet1(intrinsic=True, down_scale=True, config=1, stereo=use_stereo, fix_parts=fix_parts,
+        #                                 extrinsic_encoder_layers=extrinsic_encoder_layers, trans_head_layers=trans_head_layers)
+        
         self.flowNormFactor = flowNormFactor
 
         if "flow" in fix_parts:

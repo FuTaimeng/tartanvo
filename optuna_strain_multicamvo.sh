@@ -39,7 +39,7 @@ data_dir=/home/data2/TartanAir/TartanAir_comb
 
 
 batch=32
-step=60000
+step=200000
 
 nick_name=MulticamVO_SOnly_lrFix_Proc2
 train_name=${nick_name}
@@ -66,18 +66,20 @@ python optuna_train_multicamvo2.py \
     --train-name ${train_name} \
     --debug-flag '' \
     --train-step ${step} \
-    --test-interval 50 \
+    --test-interval 100 \
     --world-size 1 \
     --lr 8e-4 \
     --stereo-data-type 's' \
     --vo-optimizer adam \
     --fix_model_parts 'flow' 'feat' 'rot' \
-    --start-iter 40000 \
     --val-interval 1000 \
     --euroc-path /home/data2/euroc_raw \
     --kitti-path /home/data2/kitti_raw \
-    # --out-to-cml \
-    # --not-write-log \
+    --start-iter 0 \
+    --out-to-cml \
+    --not-write-log \
+    --enable-decay \
+    --gpu-id 1 \
     # --pose-model-name ./train_multicamvo/MulticamVO_SOnly_lrFix_Proc2/models/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3/MulticamVO_SOnly_lrFix_Proc2_B32_lr4.000e-04_Oadam_nel2_ntl3_st40000.pkl \
 
     # --flow-model-name ./models/pwc_net.pth.tar \
@@ -94,7 +96,4 @@ python optuna_train_multicamvo2.py \
     
     # --lr 6e-6 \
     # --enable-decay \
-
-    # --out-to-cml \
-    # --not-write-log \
 

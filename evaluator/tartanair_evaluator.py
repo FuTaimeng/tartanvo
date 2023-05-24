@@ -30,10 +30,10 @@ class TartanAirEvaluator:
             raise Exception("POSEFILE_FORMAT_ILLEGAL")
 
         # transform and scale
-        gt_traj_trans, est_traj_trans, s = transform_trajs(gt_traj, est_traj, scale, verbose=verbose)
+        gt_traj_trans, est_traj_trans, _ = transform_trajs(gt_traj, est_traj, scale, verbose=verbose)
         gt_SEs, est_SEs = quats2SEs(gt_traj_trans, est_traj_trans)
 
-        ate_score, gt_ate_aligned, est_ate_aligned = self.ate_eval.evaluate(gt_traj, est_traj, scale, verbose=verbose)
+        ate_score, gt_ate_aligned, est_ate_aligned, ate_s = self.ate_eval.evaluate(gt_traj, est_traj, scale, verbose=verbose)
         rpe_score = self.rpe_eval.evaluate(gt_SEs, est_SEs)
         kitti_score = self.kitti_eval.evaluate(gt_SEs, est_SEs, kittitype=kittitype)
 
@@ -42,7 +42,7 @@ class TartanAirEvaluator:
                 'kitti_score': kitti_score,
                 'gt_aligned': gt_ate_aligned, 
                 'est_aligned': est_ate_aligned,
-                'scale': s}
+                'scale': ate_s}
 
 if __name__ == "__main__":
     

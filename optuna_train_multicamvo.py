@@ -100,6 +100,16 @@ def get_args():
 
     parser.add_argument('--trail-num', type=int, default=10,
                     help='The number of trails for optuna.')
+    # rnn_hidden_size
+    parser.add_argument('--rnn-hidden-size', type=int, default=1024,
+                    help='The number of hidden state size for RNN.')
+    # rnn_dropout_between
+    parser.add_argument('--rnn-dropout-between', type=float, default=0.0,
+                    help='The dropout rate between RNN layers.')
+    # rnn_dropout_out
+    parser.add_argument('--rnn-dropout-out', type=float, default=0.5,
+                    help='The dropout rate for the output of RNN.')
+
 
     args = parser.parse_args()
 
@@ -190,7 +200,7 @@ def objective(trial, study_name):
     # quit()
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts)
+                            device=args.device, use_stereo=args.use_stereo, correct_scale=False, fix_parts=args.fix_model_parts,args=args)
     # lr = args.lr
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr=lr)

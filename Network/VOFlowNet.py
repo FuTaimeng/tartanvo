@@ -40,7 +40,7 @@ class BasicBlock(nn.Module):
 
 class VOFlowRes(nn.Module):
     def __init__(self, intrinsic=True, down_scale=True, config=1, stereo=0, fix_parts=(),
-                    extrinsic_encoder_layers=2, trans_head_layers=3):
+                    extrinsic_encoder_layers=2, trans_head_layers=3, args=None):
         super(VOFlowRes, self).__init__()
 
         self.intrinsic = intrinsic
@@ -101,6 +101,19 @@ class VOFlowRes(nn.Module):
         if "trans" in fix_parts:
             self.fix_param(self.voflow_trans)
 
+        # __tmp = feat_dim
+        
+        '''
+        # RNN related
+        self.rnn = nn.LSTM(
+                    input_size= feat_dim, 
+                    hidden_size=args.rnn_hidden_size, 
+                    num_layers=2, 
+                    dropout=args.rnn_dropout_between, 
+                    batch_first=True)
+        self.rnn_drop_out = nn.Dropout(args.rnn_dropout_out)
+        self.linear = nn.Linear(in_features=args.rnn_hidden_size, out_features=6)
+        '''
 
     def fix_param(self, model):
         for param in model.parameters():
@@ -178,6 +191,9 @@ class VOFlowRes(nn.Module):
 
     def forward(self, x, extrinsic=None):
         if self.stereo==2.1 or self.stereo==2.2:
+            # if self.enable_rnn == True:
+            #     return self.forward_rnn(x)
+            # else:
             return self.forward_multicam(x, extrinsic)
         else:
             return self.forward_(x)
@@ -216,3 +232,28 @@ class VOFlowRes(nn.Module):
         x_rot = self.voflow_rot(x_AC)
 
         return torch.cat((x_trans, x_rot), dim=1)
+    
+    # def forward_multicam_comb(self, x, extrinsic):
+    #     x_AB = x[:, (0,1, 4,5), ...]
+    #     x_AC = x[:, (2,3, 4,5), ...]
+
+    #     if self.stereo==2.2:
+    #         x_AB = self.feat_net2(x_AB)
+    #     else:
+    #         x_AB = self.feat_net(x_AB)
+    #     x_AC = self.feat_net(x_AC)
+
+    #     x_AB = x_AB.view(x_AB.shape[0], -1)
+    #     x_AC = x_AC.view(x_AC.shape[0], -1)
+
+    #     x_ex = self.extrinsic_encoder(extrinsic)
+    #     x_AB_128 = self.fcAB_trans(x_AB)
+    #     x_AC_128 = self.fcAC_trans(x_AC)
+
+    #     x_trans = torch.cat((x_AC_128, x_AB_128, x_ex), dim=1)
+    #     x_trans = self.voflow_trans(x_trans)
+    #     # assert torch.any(x_trans[0] != x_trans[1]) or torch.any(x_trans[1] != x_trans[2])
+
+    #     x_rot = self.voflow_rot(x_AC)
+
+    #     return torch.cat((x_trans, x_rot), dim=1)

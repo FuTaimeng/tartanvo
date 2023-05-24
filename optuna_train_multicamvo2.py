@@ -136,6 +136,8 @@ def get_args():
                         help='only use the first batch to test overfit')
     parser.add_argument('--stereo-data-type', default=['s', 'd'], nargs='+',
                         help='(default: [\'s\', \'d\'])')
+    parser.add_argument('--gpu-id', type=int, default=1,
+                        help='gpu id (default: 0)')
     args = parser.parse_args()
 
     args.lr_decay_point = (np.array(args.lr_decay_point) * args.train_step).astype(int)
@@ -271,7 +273,14 @@ def objective(trial, study_name, args, local_rank, datasets):
     criterion = torch.nn.L1Loss()
 
     return_value_list = []
+    
+    trans_est = np.zeros((2175, 3))
+    trans_gt = np.zeros((2175, 3))
 
+    trans_est_norm = np.zeros((2175, 1))
+    trans_gt_norm = np.zeros((2175, 1))
+    
+    trans_err_list = []
     for train_step_cnt in range(args.start_iter, args.train_step+1):
         # print('Start {} step {} ...'.format(args.mode, train_step_cnt))
         timer.tic('step')
@@ -307,6 +316,21 @@ def objective(trial, study_name, args, local_rank, datasets):
         timer.tic('bp')
 
         gt_motion = sample['motion'].to(args.device)
+
+        '''
+        # scale = np.linalg.norm(gt_motion[:, :3], axis=1)
+
+        trans_est_norm = motion[:, :3].norm(p = 2, dim=1)
+        scale = np.linalg.norm(gt_motion[:, :3], axis=1)
+
+
+        trans_est = motion[:, :3] 
+        eps = 1e-12 * np.ones(trans_est_norm.shape)
+
+        t_est = trans_est / \
+                np.max((trans_est_norm, eps)) * scale.reshape(-1, 1)
+        '''
+
         loss = criterion(motion, gt_motion)
         posenetOptimizer.zero_grad()
         loss.backward()
@@ -325,15 +349,28 @@ def objective(trial, study_name, args, local_rank, datasets):
         if local_rank != 0:
             continue
         # below section (print, test, snapshot) only runs on process 0
+        # if train_step_cnt == 2176:
+        #     print('break')
 
         if train_step_cnt <= 10 or train_step_cnt % args.print_interval == 0:
             with torch.no_grad():
                 tot_loss = loss.item()
                 trans_loss = criterion(motion[..., :3], gt_motion[..., :3]).item()
+                '''
+                trans_est[train_step_cnt-1] = motion[..., :3].cpu().numpy()
+                trans_est_norm = np.linalg.norm(trans_est, axis=1).reshape(-1, 1)
+                
+                # trans_est_norm[train_step_cnt-1] = np.linalg.norm( trans_est[train_step_cnt-1]  )
+                # trans_gt[train_step_cnt-1] = gt_motion[..., :3].cpu().numpy()
+                # trans_gt_norm[train_step_cnt-1] = np.linalg.norm( trans_gt[train_step_cnt-1] )
+                '''
                 rot_loss = criterion(motion[..., 3:], gt_motion[..., 3:]).item()
                 rot_errs, trans_errs, rot_norms, trans_norms = \
-                    calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False)
+                    calc_motion_error(gt_motion.cpu().numpy(), motion.cpu().numpy(), allow_rescale=False,allow_gt_rescale=False)
                 trans_err = np.mean(trans_errs)
+                '''
+                trans_err_list.append(trans_err)
+                '''
                 rot_err = np.mean(rot_errs)
                 trans_err_percent = np.mean(trans_errs / trans_norms)
                 rot_err_percent = np.mean(rot_errs / rot_norms)
@@ -467,7 +504,7 @@ def objective(trial, study_name, args, local_rank, datasets):
 
 
         if train_step_cnt % args.val_interval == 0:
-            score = tartanvo.validate_model_result(args=args, train_step_cnt=train_step_cnt, writer=writer,verbose= False )
+            score = tartanvo.validate_model_result(args=args, train_step_cnt=train_step_cnt, writer=writer,verbose= True )
             
             if not args.not_write_log:
                 wandb.log({"validation score": score}, step=train_step_cnt)
@@ -517,25 +554,26 @@ def process(local_rank, args):
     print('==========================================')
 
     datasets = {}
+    shuffle = False
     if 's' in args.stereo_data_type:
         traindataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='train')
-        trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=True, 
+        trainsampler_sext = LoopDataSampler(traindataset_sext, batch_size=args.batch_size, shuffle=shuffle, 
                                             num_workers=args.worker_num, distributed=True)
         datasets['train_s'] = trainsampler_sext
 
         testdataset_sext = create_dataset(args, DatasetType=(TrajFolderDatasetPVGO), mode='test')
-        testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=True, 
+        testsampler_sext  = LoopDataSampler(testdataset_sext, batch_size=args.batch_size, shuffle=shuffle, 
                                             num_workers=args.worker_num, distributed=True)
         datasets['test_s'] = testsampler_sext
 
     if 'd' in args.stereo_data_type:
         traindataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='train')
-        trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=True, 
+        trainsampler_dext = LoopDataSampler(traindataset_dext, batch_size=args.batch_size, shuffle=shuffle, 
                                             num_workers=args.worker_num, distributed=True)
         datasets['train_d'] = trainsampler_dext
 
         testdataset_dext = create_dataset(args, DatasetType=(TrajFolderDatasetMultiCam), mode='test')
-        testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=True, 
+        testsampler_dext  = LoopDataSampler(testdataset_dext, batch_size=args.batch_size, shuffle=shuffle, 
                                             num_workers=args.worker_num, distributed=True)
         datasets['test_d'] = testsampler_dext
     
@@ -576,7 +614,7 @@ def process(local_rank, args):
 
 if __name__ == "__main__":
     args = get_args()
-
+    torch.cuda.set_device(args.gpu_id)
     study_name = args.train_name
     trainroot = args.result_dir + '/' + study_name
     if not isdir(trainroot):

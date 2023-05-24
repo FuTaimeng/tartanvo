@@ -134,6 +134,7 @@ class TartanVO:
         for k, v in preTrainDict.items():
             if k in model_dict and v.size() == model_dict[k].size():
                 preTrainDictTemp[k] = v
+                print(f'load{k}...')
 
         # print('model_dict:')
         # for k in model_dict:
@@ -251,15 +252,14 @@ class TartanVO:
         return pose
 
     def validate_model_result(self, args, train_step_cnt=None, writer=None,verbose=False):    
+        print('\nvalidating on euroc dataset...')
+        euroc_ate = self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='euroc')
+
         print('\nvalidating on kitti dataset...')
         kitti_ate, kitti_trans, kitti_rot = \
             self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='kitti')
-        
-        print('\nvalidating on euroc dataset...')
-        euroc_ate = self.validate_model(args,count=train_step_cnt, writer=writer, verbose=verbose, datastr='euroc')
-        
-        
-        
+    
+      
         formatted_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{formatted_date}]  VAL: {train_step_cnt:07d} - KITTI-ATE/T/R/EuRoc-ATE: {kitti_ate:.4f}  {kitti_trans:.4f}  {kitti_rot:.4f} {euroc_ate:.4f}")
 
@@ -283,11 +283,11 @@ class TartanVO:
         result_dict = {}
 
         # kitti do not have trajectory 3
-        kitti_dataset_list = [0,1,2,4,5,6,7,8,9,10]
-        euroc_dataset_list = [0,1,2,3,4,5,6,7,8,9,10]
+        # kitti_dataset_list = [0,1,2,4,5,6,7,8,9,10]
+        # euroc_dataset_list = [0,1,2,3,4,5,6,7,8,9,10]
 
-        # kitti_dataset_list = [7]
-        # euroc_dataset_list = [0]
+        kitti_dataset_list = [7]
+        euroc_dataset_list = [0]
 
         if datastr == 'kitti':
             dataset_list = kitti_dataset_list
@@ -366,7 +366,8 @@ class TartanVO:
                             motionlist_array[batch_size*idx:, :] = motions
                             gtmotionlist_array[batch_size*idx:, :] = gtmotions
 
-                val_rot_errs, val_trans_errs, rot_norms, trans_norms = calc_motion_error(
+                motionlist_array_old = motionlist_array.copy()
+                val_rot_errs, val_trans_errs, rot_norms, trans_norms, motionlist_array = calc_motion_error(
                     gtmotionlist_array, motionlist_array, allow_rescale=False)
                 val_trans_errs = np.mean(val_trans_errs)
                 val_rot_errs = np.mean(val_rot_errs)
