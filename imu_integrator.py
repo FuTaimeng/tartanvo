@@ -118,7 +118,7 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
         # for world pose
         poses = [init_pos.cpu().numpy()]
         rots = [init_rot.rotation().cpu().numpy()]
-        covs = [np.eye(9)]
+        covs = []
         vels = [init_vel.cpu().numpy()]
 
     for i in range(N):
@@ -130,11 +130,17 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
         else:
             st = rgb2imu_sync[i]
             end = rgb2imu_sync[i+1]
-            if motion_mode:
-                state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end], init_state=last_state)
+            if st == end:
+                if motion_mode:
+                    state['pos'] = torch.zeros((1, 3), dtype=dtype).to(device)
+                    state['vel'] = torch.zeros((1, 3), dtype=dtype).to(device)
+                else:
+                    state['vel'] = torch.zeros((1, 3), dtype=dtype).to(device)
             else:
-                # print(st, end, dts[st:end].shape, gyros[st:end].shape, accels[st:end].shape)
-                state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end])
+                if motion_mode:
+                    state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end], init_state=last_state)
+                else:
+                    state = integrator(dt=dts[st:end], gyro=gyros[st:end], acc=accels[st:end])
 
         poses.append(state['pos'][..., -1, :].squeeze().cpu().numpy())
         if motion_mode:
@@ -142,7 +148,6 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
             rots.append(rot.cpu().numpy())
         else:
             rots.append(state['rot'][..., -1, :].squeeze().cpu().numpy())
-        covs.append(state['cov'][..., -1, :, :].squeeze().cpu().numpy())
         vels.append(state['vel'][..., -1, :].squeeze().cpu().numpy())
 
         if motion_mode:
@@ -150,7 +155,6 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
 
     poses = np.stack(poses, axis=0)
     rots = np.stack(rots, axis=0)
-    covs = np.stack(covs, axis=0)
     vels = np.stack(vels, axis=0)
 
     return poses, rots, covs, vels

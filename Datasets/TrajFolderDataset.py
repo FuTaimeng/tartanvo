@@ -300,7 +300,7 @@ class KITTITrajFolderLoader:
             res.append(j)
         for i in range(len(res)-1):
             if res[i+1] - res[i] <= 0:
-                print('sync_data error', ts_tar[i:i+2], ts_src[max(0,res[i]-5):min(len(ts_src), res[i]+5)])
+                print('sync_data error', i, ts_tar[i:i+2], ts_src[max(0,res[i]-5):min(len(ts_src), res[i]+5)])
         return res
 
 

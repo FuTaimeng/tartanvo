@@ -35,9 +35,9 @@ conda activate impe-learning
 
 
 ds_date=2011_10_03
-ds_idx=42
+ds_idx=34
 # ds_date=2011_09_30
-# ds_idx=27
+# ds_idx=18
 
 # data_dir=data/EuRoC_V102
 # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
@@ -48,13 +48,13 @@ loss_weight='(1,0.1,10,1)'
 rot_w=1
 trans_w=0.1
 lr=1e-5
-epoch=20
+epoch=1
 train_portion=1
-project_name=opt_${ds_idx}_p${train_portion}
-# project_name=trylw_34
+# project_name=opt_${ds_idx}_p${train_portion}
+project_name=test
 # train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
-train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
-# train_name=trylw_${loss_weight}
+# train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
+train_name=debug
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
