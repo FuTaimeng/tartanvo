@@ -121,6 +121,8 @@ def run_imu_preintegrator(accels, gyros, dts, init=None, gravity=9.81007,
         covs = []
         vels = [init_vel.cpu().numpy()]
 
+    state = {'pos':init_pos.unsqueeze(0), 'rot':init_rot.unsqueeze(0), 'vel':init_vel.unsqueeze(0)}
+
     for i in range(N):
         if rgb2imu_sync is None:
             if motion_mode:

@@ -28,8 +28,8 @@
 
 
 source ~/.bashrc
-conda activate impe-learning
-# conda activate /projects/academic/cwx/shaoshus/packages/miniconda3/envs/shaoshu
+# conda activate impe-learning
+conda activate /projects/academic/cwx/shaoshus/packages/miniconda3/envs/shaoshu
 
 # CUDA_VISIBLE_DEVICES=2
 
@@ -41,9 +41,9 @@ ds_idx=27
 
 # # data_dir=data/EuRoC_V102
 # # data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
-data_dir=/user/taimengf/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
+# data_dir=/user/taimengf/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
 # # data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0027_sync
-# data_dir=/user/shaoshus/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
+data_dir=/user/shaoshus/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
 
 loss_weight='(1,0.1,10,1)'
 rot_w=1
