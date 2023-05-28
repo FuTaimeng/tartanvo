@@ -19,7 +19,7 @@ def is_inside_image(uv, width, height):
 def proj(x):
     return x / x[..., -1:]
 
-def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=None, mask=None):
+def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=None, mask=None, disp_th=1):
     height, width = flow.shape[-2:]
     device = motion.device
 
@@ -45,7 +45,7 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
         mask = torch.logical_and(flow_mask, mask)
 
     if depth is None:
-        disp_mask = torch.logical_and(is_inside_image_1D(-disp + u, width), disp >= 5)
+        disp_mask = torch.logical_and(is_inside_image_1D(-disp + u, width), disp >= disp_th)
         # disp_mask = disp >= 5
         mask = torch.logical_and(disp_mask, mask)
 
@@ -64,7 +64,10 @@ def scale_from_disp_flow(disp, flow, motion, fx, fy, cx, cy, baseline, depth=Non
     # u_gray = to_image(u.numpy()*0.5)
     # v_gray = to_image(v.numpy()*0.5)
     # cv2.imwrite('u_gray.png', u_gray)
-    # cv2.imwrite('v_gray.png', v_gray)    
+    # cv2.imwrite('v_gray.png', v_gray)  
+
+    if torch.sum(mask) < 1000:
+        print('Warning! mask contains too less points!', torch.sum(mask)) 
 
     K = torch.tensor([fx, 0, cx, 0, fy, cy, 0, 0, 1], dtype=torch.float32).view(3, 3).to(device=device)
     K_inv = torch.linalg.inv(K)

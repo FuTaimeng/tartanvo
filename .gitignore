@@ -10,6 +10,7 @@ IntPlot/
 logdata/
 *try_lw*/
 resimg/
+temp*/
 ORBvoc*
 *.zip
 *.db

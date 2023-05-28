@@ -218,6 +218,7 @@ class TartanVO:
             pose_ENU_SE3 = tartan2kitti_pypose(pose)
 
             # print('pose_ENU_SE3', pose_ENU_SE3)
+            # print('baseline', baseline)
 
             img0_np = img0.cpu().numpy()
             img0_np = img0_np.transpose(0, 2, 3, 1)
@@ -235,15 +236,20 @@ class TartanVO:
             mask = []
             for i in range(pose.shape[0]):
                 fx, fy, cx, cy = intrinsic_calib[i] / 4
-                r, s, m = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline[i], mask=edge[i])
+                disp_th_dict = {'kitti':5, 'euroc':1}
+                r, s, m = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline[i], 
+                                                mask=edge[i], disp_th=disp_th_dict[sample['datatype'][i]])
                 scale.append(s)
                 mask.append(m)
             scale = torch.stack(scale)
             mask = torch.stack(mask)
 
-            # save_images('temp', mask, prefix='', suffix='_mask')
+            # gt_scale = torch.norm(sample['motion'][:, :3], dim=1)
+            # print('scale', scale)
+            # print('gt_scale', gt_scale)
             
             trans = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1, 1)
+            # trans = torch.nn.functional.normalize(pose[:, :3], dim=1)
             pose = torch.cat([trans, pose[:, 3:]], dim=1)
 
             res['pose'] = pose
@@ -253,6 +259,9 @@ class TartanVO:
 
             gt_pose = sample['motion'].cuda(self.device_id)
             gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
+            for i in range(len(edge)):
+                mask_img = mask[i].cpu().numpy().transpose(1, 2, 0).astype(np.uint8)*255
+                cv2.imwrite('temp/{}_mask.png'.format(i), mask_img)
 
             # print('scale', scale.view(-1))
             # print('gt_scale', gt_scale.view(-1))

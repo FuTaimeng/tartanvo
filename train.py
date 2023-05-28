@@ -432,8 +432,10 @@ if __name__ == '__main__':
 
             print('Norm: R:%.5f t:%.5f' % (np.mean(R_norms), np.mean(t_norms)))
 
+            pose_R_errs, pose_t_errs, _, _ = calc_motion_error(poses_gt, np.array(vo_poses_list[st:end+1]), allow_rescale=False)
+            print('VO P: R:%.5f t:%.5f' % (np.mean(pose_R_errs), np.mean(pose_t_errs)))
             pose_R_errs, pose_t_errs, _, _ = calc_motion_error(poses_gt, pgo_poses, allow_rescale=False)
-            print('Pose: R:%.5f t:%.5f' % (np.mean(pose_R_errs), np.mean(pose_t_errs)))
+            print('PG P: R:%.5f t:%.5f' % (np.mean(pose_R_errs), np.mean(pose_t_errs)))
 
             # if not args.not_write_log:
             #     for i in range(args.batch_size):
