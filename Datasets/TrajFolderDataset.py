@@ -464,6 +464,8 @@ class TrajFolderDataset(Dataset):
         return motions
 
     def undistort(self, img, is_right=False):
+        if not self.require_undistort:
+            return img
         imgmap = self.imgmap_right if is_right else self.imgmap
         dst = cv2.remap(img, imgmap[0], imgmap[1], cv2.INTER_AREA)
         return dst
