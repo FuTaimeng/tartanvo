@@ -230,10 +230,10 @@ class EuRoCTrajFolderLoader:
             gyros = df.values[:, 1:4].astype(np.float32)
 
             imu2pose_sync = sync_data(timestamps_pose, timestamps_imu)
-            # self.accels = accels - accel_bias[imu2pose_sync]
-            # self.gyros = gyros - gyro_bias[imu2pose_sync]
-            self.accels = accels
-            self.gyros = gyros
+            self.accels = accels - accel_bias[imu2pose_sync]
+            self.gyros = gyros - gyro_bias[imu2pose_sync]
+            # self.accels = accels
+            # self.gyros = gyros
 
             self.imu_dts = np.diff(timestamps_imu).astype(np.float32) * 1e-3
             
