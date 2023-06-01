@@ -20,7 +20,7 @@ import argparse
 from os import makedirs
 from os.path import isdir
 from timer import Timer
-
+import time
 import wandb
 os.environ["WANDB_SILENT"] = "true"
 
@@ -112,6 +112,8 @@ def get_args():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
+
     timer = Timer()
     args = get_args()
 
@@ -119,7 +121,7 @@ if __name__ == '__main__':
     if args.device.startswith('cuda:'):
         torch.cuda.set_device(args.device)
         device_id = int(args.device[5:])
-
+    
     if not args.not_write_log:
         wandb.init(
             # set the wandb project where this run will be logged
@@ -508,3 +510,6 @@ if __name__ == '__main__':
 
     if not args.not_write_log:
         wandb.finish(quiet=True)
+
+    end_time = time.time()
+    print('\nTotal time consume:', end_time-start_time)

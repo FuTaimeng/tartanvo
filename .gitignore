@@ -27,3 +27,7 @@ test*
 *.png
 *.npy
 slurm-*
+discard*
+*.html
+*.npz
+*.ipynb
