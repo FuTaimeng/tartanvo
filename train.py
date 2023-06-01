@@ -102,6 +102,8 @@ def get_args():
                         help='optimize once per traj (default: "False")')
     parser.add_argument('--train-portion', type=float, default=1,
                         help='portion to bp loss (default: "False")')
+    parser.add_argument('--use-gt-scale', action='store_true', default=False,
+                        help='use gt scale to correct trans scale (default: "False")')
 
     args = parser.parse_args()
     args.loss_weight = eval(args.loss_weight)   # string to tuple
@@ -212,7 +214,7 @@ if __name__ == '__main__':
         # exit(0)
 
     tartanvo = TartanVO(vo_model_name=args.vo_model_name, flow_model_name=args.flow_model_name, pose_model_name=args.pose_model_name,
-                        device_id=device_id, use_stereo=args.use_stereo, correct_scale=(args.use_stereo==0), 
+                        device_id=device_id, use_stereo=args.use_stereo, correct_scale=args.use_gt_scale, 
                         fix_parts=args.fix_model_parts, use_DDP=False)
     if args.vo_optimizer == 'adam':
         posenetOptimizer = optim.Adam(tartanvo.vonet.flowPoseNet.parameters(), lr = args.lr)

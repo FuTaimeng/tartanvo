@@ -180,103 +180,106 @@ class TartanVO:
             flow, disp, pose = self.vonet(img0, img1, img0_norm, img0_r_norm, intrinsic)
             pose = pose * self.pose_std # The output is normalized during training, now scale it back
 
-            # pose_gt = sample['motion'].cuda(self.device_id)
-            # pose = pose_gt
+            if not self.correct_scale:
 
-            if precalc_flow is None:
-                flow *= 5
-                # flow_gt = sample['flow'].cuda(self.device_id)
-                # flow_gt /= 4
-                # flow = flow_gt
-            else:
-                flow = precalc_flow
-            
-            disp *= 50/4
-            # depth = sample['depth0'].cuda(self.device_id)
-            # disp_gt = 320/4*0.25 / depth
-            # disp = disp_gt
+                # pose_gt = sample['motion'].cuda(self.device_id)
+                # pose = pose_gt
 
-            # img0_warp = warp_images('temp', img1, flow)
-            # save_images('temp', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
-            # save_images('temp', img1, prefix='', suffix='_x', fx=1/4, fy=1/4)
+                if precalc_flow is None:
+                    flow *= 5
+                    # flow_gt = sample['flow'].cuda(self.device_id)
+                    # flow_gt /= 4
+                    # flow = flow_gt
+                else:
+                    flow = precalc_flow
+                
+                disp *= 50/4
+                # depth = sample['depth0'].cuda(self.device_id)
+                # disp_gt = 320/4*0.25 / depth
+                # disp = disp_gt
 
-            # img0_r = sample['img0_r']
-            # disp_warp = warp_images('temp2', img0_r, -disp)
-            # save_images('temp2', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
-            # save_images('temp2', img0_r, prefix='', suffix='_x', fx=1/4, fy=1/4)
+                # img0_warp = warp_images('temp', img1, flow)
+                # save_images('temp', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
+                # save_images('temp', img1, prefix='', suffix='_x', fx=1/4, fy=1/4)
 
-            # flow_scale = flow[0] / flow_gt[0]
-            # print('flow_scale', flow_scale.mean(), flow_scale.median())
+                # img0_r = sample['img0_r']
+                # disp_warp = warp_images('temp2', img0_r, -disp)
+                # save_images('temp2', img0, prefix='', suffix='_orig', fx=1/4, fy=1/4)
+                # save_images('temp2', img0_r, prefix='', suffix='_x', fx=1/4, fy=1/4)
 
-            # disp_scale = disp[0] / disp_gt[0]
-            # print('disp_scale', disp_scale.mean(), disp_scale.median())
+                # flow_scale = flow[0] / flow_gt[0]
+                # print('flow_scale', flow_scale.mean(), flow_scale.median())
 
-            # print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
-            # print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
-            # print('disp', torch.min(disp), torch.max(disp), torch.mean(disp), torch.median(disp))
-            
-            pose_ENU_SE3 = tartan2kitti_pypose(pose)
+                # disp_scale = disp[0] / disp_gt[0]
+                # print('disp_scale', disp_scale.mean(), disp_scale.median())
 
-            # print('pose_ENU_SE3', pose_ENU_SE3)
-            # print('baseline', baseline)
+                # print('depth', torch.min(depth), torch.max(depth), torch.mean(depth))
+                # print('flow', torch.min(flow), torch.max(flow), torch.mean(flow))
+                # print('disp', torch.min(disp), torch.max(disp), torch.mean(disp), torch.median(disp))
+                
+                pose_ENU_SE3 = tartan2kitti_pypose(pose)
 
-            img0_np = img0.cpu().numpy()
-            img0_np = img0_np.transpose(0, 2, 3, 1)
-            img0_np = (img0_np*255).astype(np.uint8)
-            edge = []
-            for i in range(img0_np.shape[0]):
-                im = cv2.resize(img0_np[i], None, fx=1/4, fy=1/4)
-                e = cv2.Canny(im, 50, 100)
-                e = cv2.dilate(e, np.ones((5,5), np.uint8))
-                e = e > 0
-                edge.append(e)
-            edge = torch.from_numpy(np.stack(edge)).cuda(self.device_id)
+                # print('pose_ENU_SE3', pose_ENU_SE3)
+                # print('baseline', baseline)
 
-            scale = []
-            mask = []
-            for i in range(pose.shape[0]):
-                fx, fy, cx, cy = intrinsic_calib[i] / 4
-                disp_th_dict = {'kitti':5, 'euroc':1}
-                r, s, m = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline[i], 
-                                                mask=edge[i], disp_th=disp_th_dict[sample['datatype'][i]])
-                scale.append(s)
-                mask.append(m)
-            scale = torch.stack(scale)
-            mask = torch.stack(mask)
+                img0_np = img0.cpu().numpy()
+                img0_np = img0_np.transpose(0, 2, 3, 1)
+                img0_np = (img0_np*255).astype(np.uint8)
+                edge = []
+                for i in range(img0_np.shape[0]):
+                    im = cv2.resize(img0_np[i], None, fx=1/4, fy=1/4)
+                    e = cv2.Canny(im, 50, 100)
+                    e = cv2.dilate(e, np.ones((5,5), np.uint8))
+                    e = e > 0
+                    edge.append(e)
+                edge = torch.from_numpy(np.stack(edge)).cuda(self.device_id)
 
-            # gt_scale = torch.norm(sample['motion'][:, :3], dim=1)
-            # print('scale', scale)
-            # print('gt_scale', gt_scale)
-            
-            trans = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1, 1)
-            # trans = torch.nn.functional.normalize(pose[:, :3], dim=1)
-            pose = torch.cat([trans, pose[:, 3:]], dim=1)
+                scale = []
+                mask = []
+                for i in range(pose.shape[0]):
+                    fx, fy, cx, cy = intrinsic_calib[i] / 4
+                    disp_th_dict = {'kitti':5, 'euroc':1}
+                    r, s, m = scale_from_disp_flow(disp[i], flow[i], pose_ENU_SE3[i], fx, fy, cx, cy, baseline[i], 
+                                                    mask=edge[i], disp_th=disp_th_dict[sample['datatype'][i]])
+                    scale.append(s)
+                    mask.append(m)
+                scale = torch.stack(scale)
+                mask = torch.stack(mask)
+
+                # gt_scale = torch.norm(sample['motion'][:, :3], dim=1)
+                # print('scale', scale)
+                # print('gt_scale', gt_scale)
+                
+                trans = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1, 1)
+                # trans = torch.nn.functional.normalize(pose[:, :3], dim=1)
+                pose = torch.cat([trans, pose[:, 3:]], dim=1)
+
+                # for i in range(len(edge)):
+                #     mask_img = mask[i].cpu().numpy().transpose(1, 2, 0).astype(np.uint8)*255
+                #     cv2.imwrite('temp/{}_mask.png'.format(i), mask_img)
+                
+                # gt_pose = sample['motion'].cuda(self.device_id)
+                # gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
+                # print('scale', scale.view(-1))
+                # print('gt_scale', gt_scale.view(-1))
+                # print('frac', (scale / gt_scale).view(-1))
+
+                # gt_trans_norm = torch.nn.functional.normalize(gt_pose[:, :3], dim=1)
+                # trans_norm = torch.nn.functional.normalize(pose[:, :3], dim=1)
+                # cross = torch.sum(gt_trans_norm * trans_norm, dim=1)
+                # trans_angle = torch.arccos(torch.clamp(cross, min=-1, max=1)) * 180 / 3.14
+                # scale_err = torch.abs(gt_scale - scale)
+                # scale_err_percent = scale_err / gt_scale
+                # print('trans_angle', trans_angle.view(-1))
+                # print('scale_err', scale_err.view(-1))
+                # print('scale_err_percent', scale_err_percent.view(-1))
+                # print('trans', pose)
+
+                res['scale'] = scale
 
             res['pose'] = pose
             res['flow'] = flow
             res['disp'] = disp
-            res['scale'] = scale
-
-            gt_pose = sample['motion'].cuda(self.device_id)
-            gt_scale = torch.linalg.norm(gt_pose[:, :3], dim=1).view(-1, 1)
-            for i in range(len(edge)):
-                mask_img = mask[i].cpu().numpy().transpose(1, 2, 0).astype(np.uint8)*255
-                cv2.imwrite('temp/{}_mask.png'.format(i), mask_img)
-
-            # print('scale', scale.view(-1))
-            # print('gt_scale', gt_scale.view(-1))
-            # print('frac', (scale / gt_scale).view(-1))
-
-            # gt_trans_norm = torch.nn.functional.normalize(gt_pose[:, :3], dim=1)
-            # trans_norm = torch.nn.functional.normalize(pose[:, :3], dim=1)
-            # cross = torch.sum(gt_trans_norm * trans_norm, dim=1)
-            # trans_angle = torch.arccos(torch.clamp(cross, min=-1, max=1)) * 180 / 3.14
-            # scale_err = torch.abs(gt_scale - scale)
-            # scale_err_percent = scale_err / gt_scale
-            # print('trans_angle', trans_angle.view(-1))
-            # print('scale_err', scale_err.view(-1))
-            # print('scale_err_percent', scale_err_percent.view(-1))
-            # print('trans', pose)
 
         elif self.use_stereo==2.1 or self.use_stereo==2.2:
             flowAB, flowAC, pose = self.vonet(img0, img0_r, img1, intrinsic, extrinsic)
@@ -295,20 +298,11 @@ class TartanVO:
 
 
     def handle_scale(self, sample, pose):
-        motion_tar = None
-        if self.use_imu and 'imu_motion' in sample:
-            motion_tar = sample['imu_motion']
-        elif 'motion' in sample:
-            motion_tar = sample['motion']
+        motion_tar = sample['motion']
 
-        # calculate scale
-        if motion_tar is not None:
-            scale = torch.from_numpy(np.linalg.norm(motion_tar[:,:3], axis=1)).cuda()
-            trans_est = pose[:,:3]
-            trans_est = trans_est/torch.linalg.norm(trans_est,dim=1).view(-1,1)*scale.view(-1,1)
-            pose = torch.cat((trans_est, pose[:,3:]), dim=1)
-        else:
-            print('    scale is not given, using 1 as the default scale value.')
+        scale = torch.norm(motion_tar[:, :3], dim=1).cuda(self.device_id)
+        trans_est = torch.nn.functional.normalize(pose[:, :3], dim=1) * scale.view(-1,1)
+        pose = torch.cat((trans_est, pose[:, 3:]), dim=1)
         
         return pose
 

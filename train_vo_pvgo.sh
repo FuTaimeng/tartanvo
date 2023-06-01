@@ -86,5 +86,6 @@ python train.py \
     --rot-w ${rot_w} \
     --trans-w ${trans_w} \
     --delay-optm \
-    --train-portion ${train_portion}
+    --train-portion ${train_portion} \
+    --use-gt-scale \
 # | tee train_results/${project_name}/${train_name}/log.txt
