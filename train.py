@@ -116,6 +116,9 @@ if __name__ == '__main__':
 
     timer = Timer()
     args = get_args()
+    print('\n========================================')
+    print(f'args.use_gt_scale = {args.use_gt_scale}')
+    print('========================================\n')
 
     device_id = 0
     if args.device.startswith('cuda:'):
@@ -163,7 +166,7 @@ if __name__ == '__main__':
         vo_batch_size = args.batch_size*2 - 1
     else:
         vo_batch_size = args.batch_size
-    dataloader = DataLoader(dataset, batch_size=vo_batch_size, shuffle=False, drop_last=True)
+    dataloader = DataLoader(dataset, batch_size=vo_batch_size, shuffle=False, drop_last=False)
     dataiter = iter(dataloader)
 
     trainroot = args.result_dir

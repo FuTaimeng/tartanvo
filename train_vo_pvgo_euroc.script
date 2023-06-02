@@ -19,7 +19,7 @@
 ### just give my job a single gpu
 #SBATCH --gres=gpu:1
 ### give me a node which has the A100 gpus in it
-#​SBATCH --constraint=A100 
+#​SBATCH --constraint=V100 
 
 #SBATCH --mem=65536
 
@@ -46,16 +46,25 @@ ds_name=FILENAME_NAME
 data_dir=/user/shaoshus/projects/euroc/${ds_name}/mav0
 
 
-loss_weight='(1,0.1,10,1)'
+loss_weight='(1,0.1,10,0.1)'
 rot_w=1
 trans_w=0.1
-lr=5e-6
-epoch=20
+lr=3e-6
+epoch=10
 train_portion=1
+
+use_scale=true
+
+if [ "$use_scale" = true ]; then
+    exp_type='mono'
+else
+    exp_type='stereo'
+fi
+
 project_name=euroc_${ds_name}_p${train_portion}
 # project_name=test
 # train_name=sr_imu0b
-train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
+train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}_${exp_type}
 # train_name=debug
 
 
@@ -71,7 +80,38 @@ mkdir -p train_results_models/${project_name}/${train_name}
 
 which python
 
-python train.py \
+if [ "$use_scale" = true ]; then
+    # mono
+    python train.py \
+        --result-dir train_results/${project_name}/${train_name} \
+        --save-model-dir train_results_models/${project_name}/${train_name} \
+        --project-name ${project_name} \
+        --train-name ${train_name} \
+        --vo-model-name ./models/stereo_cvt_tartanvo_1914.pkl \
+        --batch-size 8 \
+        --worker-num 2 \
+        --data-root ${data_dir} \
+        --start-frame 0 \
+        --end-frame -1 \
+        --train-epoch ${epoch} \
+        --print-interval 1 \
+        --snapshot-interval 1 \
+        --lr ${lr} \
+        --loss-weight ${loss_weight} \
+        --mode train-all \
+        --use-stereo 1 \
+        --data-type euroc \
+        --fix-model-parts 'flow' 'stereo' \
+        --use-pvgo \
+        --rot-w ${rot_w} \
+        --trans-w ${trans_w} \
+        --delay-optm \
+        --train-portion ${train_portion} \
+        --use-gt-scale
+    # | tee train_results/${project_name}/${train_name}/log.txt
+else
+    # stereo not use scale
+    python train.py \
     --result-dir train_results/${project_name}/${train_name} \
     --save-model-dir train_results_models/${project_name}/${train_name} \
     --project-name ${project_name} \
@@ -95,5 +135,6 @@ python train.py \
     --rot-w ${rot_w} \
     --trans-w ${trans_w} \
     --delay-optm \
-    --train-portion ${train_portion}
-# | tee train_results/${project_name}/${train_name}/log.txt
+    --train-portion ${train_portion} \
+    # | tee train_results/${project_name}/${train_name}/log.txt
+fi

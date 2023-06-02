@@ -1,1 +1,3 @@
-watch -n 0.5 squeue -M faculty -u shaoshus
+squeue -M faculty  -u shaoshus
+echo
+squeue  -u shaoshus
