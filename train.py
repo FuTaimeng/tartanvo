@@ -385,14 +385,22 @@ if __name__ == '__main__':
         
         timer.tic('opt')
 
-        if args.mode.startswith('train') and epoch > 0 and current_idx < args.train_portion * dataset.num_img:
+        if args.mode.startswith('train') and epoch > 0:
             # use masks
             R_changes, t_changes, R_norms, t_norms = calc_motion_error(vo_new_motions_np, pgo_motions, allow_rescale=False)
             # rot_mask = R_norms >= rot_th
             # trans_mask = t_changes >= trans_th
-            rot_mask = np.ones(R_norms.shape[0]).astype(bool)
-            # trans_mask = np.zeros(t_norms.shape[0]).astype(bool)
-            trans_mask = np.ones(t_norms.shape[0]).astype(bool)
+            if args.train_portion >= 1:
+                rot_mask = np.ones(R_norms.shape[0]).astype(bool)
+                trans_mask = np.ones(t_norms.shape[0]).astype(bool)
+            else:
+                rot_mask = np.zeros(R_norms.shape[0]).astype(bool)
+                trans_mask = np.zeros(t_norms.shape[0]).astype(bool)
+                itv = int(1 / args.train_portion)
+                for i in range(R_norms.shape[0]):
+                    if (current_idx + i) % itv == 0:
+                        rot_mask[i] = True
+                        trans_mask[i] = True
 
             if np.any(rot_mask) or np.any(trans_mask):
                 if np.any(rot_mask) and np.any(trans_mask):

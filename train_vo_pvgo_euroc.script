@@ -51,7 +51,7 @@ rot_w=1
 trans_w=0.1
 lr=3e-6
 epoch=10
-train_portion=1
+train_portion=0.5
 
 use_scale=true
 
@@ -61,7 +61,7 @@ else
     exp_type='stereo'
 fi
 
-project_name=euroc_${ds_name}_p${train_portion}
+project_name=euroc_${ds_name}_frame-p${train_portion}
 # project_name=test
 # train_name=sr_imu0b
 train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}_${exp_type}

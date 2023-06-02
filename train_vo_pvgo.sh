@@ -50,12 +50,12 @@ rot_w=1
 trans_w=0.1
 lr=1e-5
 epoch=1
-train_portion=1
+train_portion=0.25
 # project_name=opt_${ds_idx}_p${train_portion}
 project_name=test
 # train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
 # train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}
-train_name=debug
+train_name=debug_frame-p0.25
 
 rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
