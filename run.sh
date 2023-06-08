@@ -1,77 +1,26 @@
-#!/bin/sh
-
-###SBATCH --cluster=ub-hpc
-#SBATCH --cluster=faculty
-
-###SBATCH --partition=general-compute --qos=general-compute
-#SBATCH --partition=scavenger --qos=scavenger
-
-#SBATCH --time=48:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=4
-
-## Use snodes command to check their status first
-###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
-#SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
-###SBATCH --gres=gpu:a100-pcie-40gb:2
-###SBATCH --gres=gpu:a100-pcie-80gb:2
-
-#SBATCH --gres=gpu:1
-###​SBATCH --constraint=A100 
-#​SBATCH --constraint=V100 
-
-#SBATCH --mem=65536
-
-#SBATCH --job-name="train_vo_pvgo"
-
-###SBATCH --output= "result_$(date +"%Y_%m_%d_%k_%M_%S").out"
-
-###SBATCH --mail-user=taimengf@buffalo.edu
-###SBATCH --mail-type=ALL
-
-###SBATCH --requeue
-
-cat $0
-
 source ~/.bashrc
-# conda activate impe-learning
-conda activate /projects/academic/cwx/shaoshus/packages/miniconda3/envs/shaoshu
+conda activate impe-learning
 
-# CUDA_VISIBLE_DEVICES=2
+ds_date=2011_09_30
+ds_idx=27
+data_dir=/user/taimengf/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
 
-
-
-ds_date=DATE_NAME
-ds_idx=IDX_NAME 
-
-# data_dir=data/EuRoC_V102
-# data_dir=/user/taimengf/projects/tartanair/TartanAir/abandonedfactory/Easy/P000
-data_dir=/user/shaoshus/projects/kitti_raw/${ds_date}/${ds_date}_drive_00${ds_idx}_sync
-# data_dir=/user/taimengf/projects/kitti_raw/2011_09_30/2011_09_30_drive_0027_sync
-# original parameters
-# loss_weight='(1,0.1,10,1)'
 loss_weight='(1,0.1,10,0.1)'
-# loss_weight='(1,1,10,1)'
 rot_w=1
 trans_w=0.1
 lr=3e-6
 epoch=10
-train_portion=0.5
+train_portion=1
 
-use_scale=true
-
+use_scale=false
 if [ "$use_scale" = true ]; then
     exp_type='mono'
 else
     exp_type='stereo'
 fi
 
-project_name=opt_${ds_date}_00${ds_idx}_frame-p${train_portion}
-# project_name=test
-# train_name=${rot_w}Rn95_${trans_w}tc95_delayOptm_lr=${lr}_${loss_weight}
+project_name=test
 train_name=${rot_w}Ra_${trans_w}ta_delayOptm_lr=${lr}_${loss_weight}_${exp_type}
-# train_name=debug
-
 
 echo -e "\n=============================================="
 echo "project name = ${project_name}"
@@ -82,9 +31,6 @@ rm -r train_results/${project_name}/${train_name}
 mkdir -p train_results/${project_name}/${train_name}
 rm -r train_results_models/${project_name}/${train_name}
 mkdir -p train_results_models/${project_name}/${train_name}
-
-which python
-nvidia-smi
 
 if [ "$use_scale" = true ]; then
     # mono
@@ -114,7 +60,6 @@ if [ "$use_scale" = true ]; then
         --delay-optm \
         --train-portion ${train_portion} \
         --use-gt-scale
-    # | tee train_results/${project_name}/${train_name}/log.txt
 else
     # stereo not use scale
     python train.py \
@@ -141,6 +86,5 @@ else
         --rot-w ${rot_w} \
         --trans-w ${trans_w} \
         --delay-optm \
-        --train-portion ${train_portion} \
-        # | tee train_results/${project_name}/${train_name}/log.txt
+        --train-portion ${train_portion}
 fi
