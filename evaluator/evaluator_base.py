@@ -33,7 +33,7 @@ class ATEEvaluator(object):
         est_xyz = np.matrix(est_traj[:, 0:3].transpose())
 
         rot, trans, trans_error, s = align(gt_xyz, est_xyz, scale)
-        print('  ATE scale: {}'.format(s))
+        # print('  ATE scale: {}'.format(s))
         error = np.sqrt(np.dot(trans_error,trans_error) / len(trans_error))
 
         # align two trajs 

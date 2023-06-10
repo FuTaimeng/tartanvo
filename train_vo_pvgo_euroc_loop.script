@@ -52,9 +52,9 @@ rot_w=1
 trans_w=0.1
 lr=1e-6
 epoch=10
-train_portion=0.25
+train_portion=PORTION
 
-use_scale=false
+use_scale=SCALE_STATUS
 
 if [ "$use_scale" = true ]; then
     exp_type='mono'
@@ -62,8 +62,7 @@ else
     exp_type='stereo'
 fi
 
-# project_name=euroc_${ds_name}_frame-p${train_portion}
-project_name=euroc_${ds_name}_p${train_portion}
+project_name=euroc_${ds_name}_frame-p${train_portion}
 
 # project_name=test
 # train_name=sr_imu0b

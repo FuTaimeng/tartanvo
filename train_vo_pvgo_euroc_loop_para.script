@@ -13,10 +13,10 @@
 ## Use snodes command to check their status first
 ###SBATCH --gres=gpu:tesla_v100-pcie-32gb:2
 ###SBATCH --gres=gpu:tesla_v100-pcie-16gb:2
-###SBATCH --gres=gpu:a100-pcie-40gb:2
-#SBATCH --gres=gpu:a100-pcie-80gb:2
+#SBATCH --gres=gpu:a100-pcie-40gb:2
+###SBATCH --gres=gpu:a100-pcie-80gb:2
 
-### just give my job a single gpu
+
 #SBATCH --gres=gpu:1
 ### give me a node which has the A100 gpus in it
 #​SBATCH --constraint=A100 
@@ -41,20 +41,20 @@ conda activate /projects/academic/cwx/shaoshus/packages/miniconda3/envs/shaoshu
 nvidia-smi
 # CUDA_VISIBLE_DEVICES=2
 
-ds_name=FILENAME_NAME
+ds_name=$1
 
 # data_dir=/user/taimengf/projects/euroc/${ds_name}/mav0
 data_dir=/user/shaoshus/projects/euroc/${ds_name}/mav0
 
 
-loss_weight='(3,0.1,1,0.1)'
+loss_weight='(4,0.1,2,0.1)'
 rot_w=1
 trans_w=0.1
-lr=1e-6
+lr=3e-6
 epoch=10
-train_portion=0.25
+train_portion=$2
 
-use_scale=false
+use_scale=$3
 
 if [ "$use_scale" = true ]; then
     exp_type='mono'
@@ -62,8 +62,7 @@ else
     exp_type='stereo'
 fi
 
-# project_name=euroc_${ds_name}_frame-p${train_portion}
-project_name=euroc_${ds_name}_p${train_portion}
+project_name=euroc_${ds_name}_frame-p${train_portion}
 
 # project_name=test
 # train_name=sr_imu0b
