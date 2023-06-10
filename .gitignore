@@ -32,3 +32,6 @@ discard*
 *.html
 *.npz
 *.ipynb
+exp_figures3/
+*.pkl
+!*_final.ipynb
